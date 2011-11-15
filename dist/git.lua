@@ -3,7 +3,6 @@
 module ("dist.git", package.seeall)
 
 local sys = require "dist.sys"
-local lfs = require "lfs"
 
 
 -- Clone the repository from url to dest_dir
@@ -30,18 +29,19 @@ function clone(repository_url, dest_dir, depth, branch)
         command = command .. " " .. dest_dir
 
         if not sys.exists(dest_dir) then
-            lfs.mkdir(dest_dir)
+            sys.make_dir(dest_dir)
         end
 
         -- change the current working directory to dest_dir
-        local prev_current_dir = lfs.currentdir()
-        lfs.chdir(dest_dir)
+        local prev_current_dir = sys.current_dir()
+
+        sys.change_dir(dest_dir)
 
         -- execute git clone
         ok = sys.exec(command)
 
         -- change the current working directory back
-        lfs.chdir(prev_current_dir)
+        sys.change_dir(prev_current_dir)
     else
         ok = sys.exec(command)
     end

@@ -2,8 +2,8 @@
 
 module ("dist.config", package.seeall)
 
+-- TODO: get rid of lfs dependency in this module (replace with dist.sys)
 local lfs = require "lfs"
-
 
 -- System information
 arch = "unix"

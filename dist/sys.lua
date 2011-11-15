@@ -36,12 +36,47 @@ function exists(path)
     return lfs.attributes(path)
 end
 
--- Rename source path to be the destination path
-function move_path(src_path, dest_path)
-    assert(type(src_path) == "string", "dist.sys: Argument 'src_path' is not a string.")
-    assert(type(dest_path) == "string", "dist.sys: Argument 'dest_path' is not a string.")
+-- Move file or directory to the destination directory
+function move(file_or_dir, dest_dir)
+    assert(type(file_or_dir) == "string", "dist.sys: Argument 'file_or_dir' is not a string.")
+    assert(type(dest_dir) == "string", "dist.sys: Argument 'dest_dir' is not a string.")
 
-    return os.rename(src_path, dest_path)
+    -- Extract file/dir name from its path
+    local file_or_dir_name = extract_name(file_or_dir)
+
+    return os.rename(file_or_dir, dest_dir .. "/" .. file_or_dir_name)
+end
+
+-- Extract file or directory name from its path
+function extract_name(path)
+    assert(type(path) == "string", "dist.sys: Argument 'path' is not a string.")
+
+    path = path:gsub("\\", "/")
+
+    -- remove the trailing '/' character
+    if (path:sub(-1) == "/") then
+        path = path:sub(1,-2)
+    end
+
+    return path:gsub("^.*/", "")
+end
+
+-- Return the current working directory
+function current_dir()
+    return lfs.currentdir()
+end
+
+-- Changes the current working directory
+function change_dir(dir_name)
+    assert(type(dir_name) == "string", "dist.sys: Argument 'dir_name' is not a string.")
+    return lfs.chdir(dir_name)
+end
+
+-- Make a new directory
+function make_dir(dir_name)
+    assert(type(dir_name) == "string", "dist.sys: Argument 'dir_name' is not a string.")
+
+    return lfs.mkdir(dir_name)
 end
 
 -- Delete the specified file or directory
