@@ -8,24 +8,24 @@ local sys = require "dist.sys"
 -- Clone the repository from url to dest_dir
 function clone(repository_url, dest_dir, depth, branch)
 
-    assert(type(repository_url) == "string", "dist.git: Argument 'repository_url' is not a string.")
+    assert(type(repository_url) == "string", "git.clone: Argument 'repository_url' is not a string.")
 
     local command = "git clone " .. repository_url
 
     if depth then
-        assert(type(depth) == "number", "dist.git: Argument 'depth' is not a number.")
+        assert(type(depth) == "number", "git.clone: Argument 'depth' is not a number.")
         command = command .. " --depth " .. depth
     end
 
     if branch then
-        assert(type(branch) == "string", "dist.git: Argument 'branch' is not a string.")
+        assert(type(branch) == "string", "git.clone: Argument 'branch' is not a string.")
         command = command .. " -b " .. branch
     end
 
     local ok = nil
 
     if dest_dir then
-        assert(type(dest_dir) == "string", "dist.git: Argument 'dest_dir' is not a string.")
+        assert(type(dest_dir) == "string", "git.clone: Argument 'dest_dir' is not a string.")
         command = command .. " " .. dest_dir
 
         if not sys.exists(dest_dir) then

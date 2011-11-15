@@ -29,8 +29,8 @@ function download_manifest(repository_url, dest_dir)
     repository_url = repository_url or cfg.repository_url
     dest_dir = dest_dir or cfg.cache_dir
 
-    assert(type(repository_url) == "string", "dist.manifest: Argument 'repository_url' is not a string.")
-    assert(type(dest_dir) == "string", "dist.manifest: Argument 'dest_dir' is not a string.")
+    assert(type(repository_url) == "string", "manifest.download_manifest: Argument 'repository_url' is not a string.")
+    assert(type(dest_dir) == "string", "manifest.download_manifest: Argument 'dest_dir' is not a string.")
 
     local clone_dir = cfg.temp_dir .. "/repository"
 
@@ -49,7 +49,7 @@ end
 function load_manifest(manifest_file)
     manifest_file = manifest_file or cfg.manifest_file
 
-    assert(type(manifest_file) == "string", "dist.manifest: Argument 'manifest_file' is not a string.")
+    assert(type(manifest_file) == "string", "manifest.load_manifest: Argument 'manifest_file' is not a string.")
 
     if (sys.exists(manifest_file)) then
         -- evaluate the manifest file
