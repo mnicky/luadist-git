@@ -17,13 +17,10 @@ function install(package_names, deploy_dir)
     local manifest = mf.get_manifest()
 
     -- find matching packages
-    local packages = find_packages(package_names)
-
-
-
+    local packages = find_packages(package_names, manifest)
 end
 
--- Return packages from manifest
+-- Return specified packages from manifest
 function find_packages(package_names, manifest)
 
     if type(package_names) == "string" then package_names = {package_names} end
