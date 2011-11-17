@@ -52,8 +52,14 @@ function load_manifest(manifest_file)
     assert(type(manifest_file) == "string", "manifest.load_manifest: Argument 'manifest_file' is not a string.")
 
     if (sys.exists(manifest_file)) then
-        -- evaluate the manifest file
-        return dofile(manifest_file)
+        -- load the manifest file
+        manifest = loadfile(manifest_file)
+
+        -- set clear environment for the manifest file execution
+        manifest_env = {}
+        setfenv(manifest, manifest_env)
+
+        return manifest()
     else
         return nil, "Error when loading the manifest from file: " .. manifest_file
     end
@@ -65,37 +71,18 @@ function load_distinfo(distinfo_file)
 
     assert(type(distinfo_file) == "string", "manifest.load_distinfo: Argument 'distinfo_file' is not a string.")
 
-    distinfo = {}
 
     if (sys.exists(distinfo_file)) then
 
-        -- TODO: run in local context somehow (to avoid assigning global variables)
+        -- load the distinfo file
+        distinfo = loadfile(distinfo_file)
 
-        -- evaluate the distinfo file
-        dofile(distinfo_file)
+        -- set clear environment for the distinfo file execution and collect values into it
+        distinfo_env = {}
+        setfenv(distinfo, distinfo_env)
+        distinfo()
 
-        -- collect values into distinfo table
-
-        --if type then distinfo.type = type end
-        if arch then distinfo.arch = arch end
-
-        if name then distinfo.name = name end
-        if version then distinfo.version = version end
-
-        if desc then distinfo.desc = desc end
-        if maintainer then distinfo.maintainer = maintainer end
-        if author then distinfo.author = author end
-        if license then distinfo.license = license end
-        if url then distinfo.url = url end
-
-        if files then distinfo.files = files end
-
-        if depends then distinfo.depends = depends end
-        if provides then distinfo.provides = provides end
-        if conflicts then distinfo.conflicts = conflicts end
-        if replaces then distinfo.replaces = replaces end
-
-        return distinfo
+        return distinfo_env
     else
         return nil, "Error when loading the package info from file: " .. distinfo_file
     end
