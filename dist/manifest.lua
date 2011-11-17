@@ -58,3 +58,49 @@ function load_manifest(manifest_file)
         return nil, "Error when loading the manifest from file: " .. manifest_file
     end
 end
+
+-- Load and return package info table from the distinfo_file file.
+-- If file not present, return nil.
+function load_distinfo(distinfo_file)
+
+    assert(type(distinfo_file) == "string", "manifest.load_distinfo: Argument 'distinfo_file' is not a string.")
+
+    distinfo = {}
+
+    if (sys.exists(distinfo_file)) then
+
+        -- TODO: run in local context somehow (to avoid assigning global variables)
+
+        -- evaluate the distinfo file
+        dofile(distinfo_file)
+
+        -- collect values into distinfo table
+
+        --if type then distinfo.type = type end
+        if arch then distinfo.arch = arch end
+
+        if name then distinfo.name = name end
+        if version then distinfo.version = version end
+
+        if desc then distinfo.desc = desc end
+        if maintainer then distinfo.maintainer = maintainer end
+        if author then distinfo.author = author end
+        if license then distinfo.license = license end
+        if url then distinfo.url = url end
+
+        if files then distinfo.files = files end
+
+        if depends then distinfo.depends = depends end
+        if provides then distinfo.provides = provides end
+        if conflicts then distinfo.conflicts = conflicts end
+        if replaces then distinfo.replaces = replaces end
+
+        return distinfo
+    else
+        return nil, "Error when loading the package info from file: " .. distinfo_file
+    end
+end
+
+
+
+

@@ -89,3 +89,29 @@ function delete(path)
         return exec("rm -rf " .. quote(path))
     end
 end
+
+-- Return if file is a file
+function is_file(file)
+    assert(type(file) == "string", "sys.is_file: Argument 'file' is not a string.")
+    return lfs.attributes(file, "mode") == "file"
+end
+
+-- Return if dir is a directory
+function is_dir(dir)
+    assert(type(dir) == "string", "sys.is_dir: Argument 'dir' is not a string.")
+    return lfs.attributes(dir, "mode") == "directory"
+end
+
+-- Return iterator over directory dir.
+-- If dir does not exist or is not a directory, return nil and error message.
+function get_directory(dir)
+    assert(type(dir) == "string", "sys.get_directory: Argument 'dir' is not a string.")
+    if is_dir(dir) then
+        return lfs.dir(dir)
+    else
+        return nil, "Error: '".. dir .. "' is not a directory."
+    end
+end
+
+
+

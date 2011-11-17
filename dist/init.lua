@@ -2,11 +2,14 @@
 
 module ("dist", package.seeall)
 
+local cfg = require "dist.config"
 local git = require "dist.git"
 local mf = require "dist.manifest"
 
 -- Install package_names to deploy_dir
 function install(package_names, deploy_dir)
+
+    deploy_dir = deploy_dir or cfg.root_dir
 
     if type(package_names) == "string" then package_names = {package_names} end
 
@@ -18,6 +21,7 @@ function install(package_names, deploy_dir)
 
     -- find matching packages
     local packages = find_packages(package_names, manifest)
+
 end
 
 -- Return specified packages from manifest
@@ -42,3 +46,34 @@ function find_packages(package_names, manifest)
 
     return packages_found
 end
+
+-- Return manifest consisting of packages installed in specified deploy_dir directory
+function get_installed_manifest(deploy_dir)
+
+    deploy_dir = deploy_dir or cfg.root_dir
+
+    assert(type(deploy_dir) == "string", "dist.get_installed: Argument 'deploy_dir' is not a string.")
+
+    local manifest = {}
+
+    -- from all directories of packages installed in deploy_dir
+    for dir in sys.get_directory(deploy_dir) do
+        if sys.is_dir(dir) then
+
+            -- load the dist.info file
+            for file in sys.get_directory(dir) do
+                if sys.is_file(file) then
+                    table.insert(manifest, load_distinfo(file))
+                end
+            end
+
+        end
+    end
+
+end
+
+
+
+
+
+
