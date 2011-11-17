@@ -13,6 +13,7 @@ type = "x86"
 root_dir = lfs.currentdir()
 temp_dir = root_dir .. "/tmp"
 cache_dir = temp_dir .. "/cache"
+distinfos_dir = "share/luadist/dists"
 
 -- Files
 manifest_file = cache_dir .. "/dist.manifest"
