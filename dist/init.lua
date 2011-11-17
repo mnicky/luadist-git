@@ -54,22 +54,22 @@ function get_installed_manifest(deploy_dir)
 
     assert(type(deploy_dir) == "string", "dist.get_installed: Argument 'deploy_dir' is not a string.")
 
+    local distinfos_path = deploy_dir .. "/" .. cfg.distinfos_dir
     local manifest = {}
-
     -- from all directories of packages installed in deploy_dir
-    for dir in sys.get_directory(deploy_dir) do
-        if sys.is_dir(dir) then
-
+    for dir in sys.get_directory(distinfos_path) do
+        if sys.is_dir(distinfos_path .. "/" .. dir) then
             -- load the dist.info file
-            for file in sys.get_directory(dir) do
-                if sys.is_file(file) then
-                    table.insert(manifest, load_distinfo(file))
+            for file in sys.get_directory(distinfos_path .. "/" .. dir) do
+                if sys.is_file(distinfos_path .. "/" .. dir .. "/" .. file) then
+                    table.insert(manifest, mf.load_distinfo(distinfos_path .. "/" .. dir .. "/" .. file))
                 end
             end
 
         end
     end
 
+    return manifest
 end
 
 
