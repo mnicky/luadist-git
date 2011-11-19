@@ -73,7 +73,7 @@ function get_dependencies(packages, deploy_dir)
     local manifest = mf.get_manifest()
 
     -- find matching packages
-    -- TODO add ability to specify verion constraints?
+    -- TODO add ability to specify version constraints?
     local want_to_install = find_packages(packages, manifest)
 
     -- find installed packages
