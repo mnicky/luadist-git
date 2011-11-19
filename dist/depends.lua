@@ -84,7 +84,9 @@ function get_dependencies(packages, deploy_dir)
 
     -- for all packages wanted to install
     for k, pkg in pairs(want_to_install) do
-        want_to_install[k] = nil
+
+        -- remove this package from table
+        want_to_install[k] = {}
 
         -- whether pkg is already in installed table
         local pkg_is_installed = false
