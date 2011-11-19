@@ -7,6 +7,7 @@ local git = require "dist.git"
 local sys = require "dist.sys"
 
 -- Return manifest table
+-- TODO: add deploy_dir argument ?
 function get_manifest()
 
     -- get manifest from cache
