@@ -58,6 +58,9 @@ function get_installed(deploy_dir)
     return manifest
 end
 
+-- TODO: allow more versions of the same package to be installed when concrete
+--       version number is specified to install
+-- TODO: If dependencies of one candidate fail, check another candidate
 
 -- Resolve dependencies and return all packages needed in order to install 'packages' into 'deploy_dir'
 function get_dependencies(packages, deploy_dir)
