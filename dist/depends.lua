@@ -75,6 +75,7 @@ function get_dependencies(packages, deploy_dir)
     -- find matching packages
     -- TODO add ability to specify version constraints?
     local want_to_install = find_packages(packages, manifest)
+    sort_by_versions(want_to_install)
 
     -- find installed packages
     local installed = get_installed(deploy_dir)
@@ -141,6 +142,7 @@ function get_dependencies(packages, deploy_dir)
 
                     -- find candidates to pkg's dependencies
                     local depend_candidates = find_packages(dep_name, manifest)
+                    sort_by_versions(depend_candidates)
 
                     -- filter candidates according to the constraint
                     depend_candidates = filter_packages(depend_candidates, dep_constraint)
@@ -209,11 +211,25 @@ function filter_packages(packages, constraint)
     return passed_pkgs
 end
 
+-- Sort table of packages descendingly by versions (newer ones are moved to the top).
+function sort_by_versions(packages)
+    assert(type(packages) == "table", "depends.sort_by_versions: Argument 'packages' is not a string or table.")
+
+    table.sort(packages, function (a,b) return compare_versions(a.version, b.version) end)
+end
+
 -- Return if version satisfies the specified constraint
 function satisfies_constraint(version, constraint)
-
     assert(type(version) == "string", "depends.satisfies_constraint: Argument 'version' is not a string.")
     assert(type(constraint) == "string", "depends.satisfies_constraint: Argument 'constraint' is not a string.")
 
     return const.constraint_satisfied(version, constraint)
+end
+
+-- Return for package versions if: 'version_a' > 'version_b'
+function compare_versions(version_a, version_b)
+    assert(type(version_a) == "string", "depends.compare_versions: Argument 'version_a' is not a string.")
+    assert(type(version_b) == "string", "depends.compare_versions: Argument 'version_b' is not a string.")
+
+    return const.compareVersions(version_a,version_b)
 end
