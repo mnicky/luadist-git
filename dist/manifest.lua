@@ -54,10 +54,10 @@ function load_manifest(manifest_file)
 
     if (sys.exists(manifest_file)) then
         -- load the manifest file
-        manifest = loadfile(manifest_file)
+        local manifest = loadfile(manifest_file)
 
         -- set clear environment for the manifest file execution
-        manifest_env = {}
+        local manifest_env = {}
         setfenv(manifest, manifest_env)
 
         return manifest()
@@ -76,10 +76,10 @@ function load_distinfo(distinfo_file)
     if (sys.exists(distinfo_file)) then
 
         -- load the distinfo file
-        distinfo = loadfile(distinfo_file)
+        local distinfo = loadfile(distinfo_file)
 
         -- set clear environment for the distinfo file execution and collect values into it
-        distinfo_env = {}
+        local distinfo_env = {}
         setfenv(distinfo, distinfo_env)
         distinfo()
 
