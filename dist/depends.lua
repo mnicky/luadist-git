@@ -76,8 +76,8 @@ function get_dependencies(packages, deploy_dir)
     local manifest = mf.get_manifest()
 
     -- find matching packages
-    local want_to_install = find_packages(packages, manifest)
-    sort_by_versions(want_to_install)
+    local candidates_to_install = find_packages(packages, manifest)
+    sort_by_versions(candidates_to_install)
 
     -- find installed packages
     local installed = get_installed(deploy_dir)
@@ -93,10 +93,10 @@ function get_dependencies(packages, deploy_dir)
     local to_install = {}
 
     -- for all packages wanted to install
-    for k, pkg in pairs(want_to_install) do
+    for k, pkg in pairs(candidates_to_install) do
 
         -- remove this package from table
-        want_to_install[k] = {}
+        candidates_to_install[k] = {}
 
         -- whether pkg is already in installed table
         local pkg_is_installed = false
@@ -166,7 +166,7 @@ function get_dependencies(packages, deploy_dir)
                             -- remember the required version for checking the installed versions of this dependency
                             depend_candidate.version_wanted = dep_constraint
                             -- add them to the table of packages wanted to install
-                            table.insert(want_to_install, depend_candidate)
+                            table.insert(candidates_to_install, depend_candidate)
                         end
                     else
                         return nil, "No suitable candidate for dependency '" .. dep_name .. dep_constraint .. "' of package '" .. pkg.name .."' found."
