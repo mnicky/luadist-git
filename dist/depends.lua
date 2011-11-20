@@ -63,35 +63,24 @@ end
 -- TODO add ability to specify version constraints?
 -- TODO add arch & type checks
 
--- Resolve dependencies and return all packages needed in order to install 'packages' into 'deploy_dir'
-function get_dependencies(packages, deploy_dir)
-    if not packages then return {} end
+-- Return all packages needed in order to install 'package' according to 'manifest'
+-- and with specified 'installed' packages in the system
+--
+-- All returned packages (and their provides) are also inserted into the table 'installed'
+local function get_packages_to_install(package, installed)
 
-    deploy_dir = deploy_dir or cfg.root_dir
-    if type(packages) == "string" then packages = {packages} end
-
-    assert(type(packages) == "table", "depends.get_dependencies: Argument 'packages' is not a table or string.")
-    assert(type(deploy_dir) == "string", "depends.get_dependencies: Argument 'deploy_dir' is not a string.")
+    assert(type(package) == "string", "depends.get_packages_to_install: Argument 'package' is not a string.")
+    assert(type(installed) == "table", "depends.get_packages_to_install: Argument 'installed' is not a table.")
 
     -- get manifest
     local manifest = mf.get_manifest()
 
-    -- find matching packages
-    local candidates_to_install = find_packages(packages, manifest)
-    sort_by_versions(candidates_to_install)
-
-    -- find installed packages
-    local installed = get_installed(deploy_dir)
-
-    -- add provided packages to installed ones
-    for _, installed_pkg in pairs(installed) do
-        for _, pkg in pairs(get_provides(installed_pkg)) do
-            table.insert(installed, pkg)
-        end
-    end
-
-    -- table of packages needed to install (will be returned)
+    -- table of packages needed to be installed (will be returned)
     local to_install = {}
+
+    -- find candidates of packages wanted to install
+    local candidates_to_install = find_packages(package, manifest)
+    sort_by_versions(candidates_to_install)
 
     -- for all packages wanted to install
     for k, pkg in pairs(candidates_to_install) do
@@ -121,7 +110,7 @@ function get_dependencies(packages, deploy_dir)
             if pkg.conflicts then
                 for _, conflict in pairs (pkg.conflicts) do
                     if conflict == installed_pkg.name then
-                        return nil, "Package '" .. pkg.name .. "' conflicts with installed package '" .. installed_pkg.name .. "'."
+                        return nil, "Package '" .. pkg.name .. "-" .. pkg.version .. "' conflicts with installed package '" .. installed_pkg.name .. "-" .. installed_pkg.version .. "'."
                     end
                 end
             end
@@ -130,7 +119,7 @@ function get_dependencies(packages, deploy_dir)
             if installed_pkg.conflicts then
                 for _, conflict in pairs (installed_pkg.conflicts) do
                     if conflict == pkg.name then
-                        return nil, "Installed package '" .. installed_pkg.name .. "' conflicts with package'" .. pkg.name .. "'."
+                        return nil, "Installed package '" .. installed_pkg.name .. "-" .. installed_pkg.version .. "' conflicts with package'" .. pkg.name .. "-" .. pkg.version .. "'."
                     end
                 end
             end
@@ -170,7 +159,7 @@ function get_dependencies(packages, deploy_dir)
                             table.insert(candidates_to_install, depend_candidate)
                         end
                     else
-                        return nil, "No suitable candidate for dependency '" .. dep_name .. dep_constraint .. "' of package '" .. pkg.name .."' found."
+                        return nil, "No suitable candidate for dependency '" .. dep_name .. dep_constraint .. "' of package '" .. pkg.name .. "-" .. pkg.version .. "' found."
                     end
                 end
             end
@@ -185,6 +174,45 @@ function get_dependencies(packages, deploy_dir)
 
             -- add pkg to the table of packages to install
             table.insert(to_install, pkg)
+        end
+    end
+
+    return to_install
+end
+
+
+
+-- Resolve dependencies and return all packages needed in order to install 'packages' into 'deploy_dir'
+function get_dependencies(packages, deploy_dir)
+    if not packages then return {} end
+
+    deploy_dir = deploy_dir or cfg.root_dir
+    if type(packages) == "string" then packages = {packages} end
+
+    assert(type(packages) == "table", "depends.get_dependencies: Argument 'packages' is not a table or string.")
+    assert(type(deploy_dir) == "string", "depends.get_dependencies: Argument 'deploy_dir' is not a string.")
+
+    -- find installed packages
+    local installed = get_installed(deploy_dir)
+
+    -- add provided packages to installed ones
+    for _, installed_pkg in pairs(installed) do
+        for _, pkg in pairs(get_provides(installed_pkg)) do
+            table.insert(installed, pkg)
+        end
+    end
+
+    local to_install = {}
+
+    for _, pkg in pairs(packages) do
+        local needed_to_install, err = get_packages_to_install(pkg, installed)
+
+        if needed_to_install then
+            for _, needed_pkg in pairs(needed_to_install) do
+                table.insert(to_install, needed_pkg)
+            end
+        else
+            return nil, "Cannot install package '" .. pkg .. "': ".. err
         end
     end
 
