@@ -58,9 +58,9 @@ function get_installed(deploy_dir)
     return manifest
 end
 
--- TODO: allow more versions of the same package to be installed when concrete
---       version number is specified to install
+
 -- TODO: If dependencies of one candidate fail, check another candidate
+-- TODO add ability to specify version constraints?
 
 -- Resolve dependencies and return all packages needed in order to install 'packages' into 'deploy_dir'
 function get_dependencies(packages, deploy_dir)
@@ -76,7 +76,6 @@ function get_dependencies(packages, deploy_dir)
     local manifest = mf.get_manifest()
 
     -- find matching packages
-    -- TODO add ability to specify version constraints?
     local want_to_install = find_packages(packages, manifest)
     sort_by_versions(want_to_install)
 
