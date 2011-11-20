@@ -109,8 +109,14 @@ function get_dependencies(packages, deploy_dir)
 
             -- check if pkg is in installed
             if pkg.name == installed_pkg.name then
-                pkg_is_installed = true
-                break
+
+                -- if pkg was added due to some dependency, check if it's installed in satisfying version
+                if not pkg.version_wanted or satisfies_constraint(installed_pkg.version, pkg.version_wanted) then
+                    pkg_is_installed = true
+                    break
+                else
+                    return nil, "Package '" .. pkg.name .. pkg.version_wanted .. "' needed as dependency, but installed at version '" .. installed_pkg.version .. "'."
+                end
             end
 
             -- check for conflicts of package to install with installed package
@@ -141,6 +147,13 @@ function get_dependencies(packages, deploy_dir)
                 -- for all dependencies of pkg
                 for _, depend in pairs(pkg.depends) do
                     local dep_name, dep_constraint = split_name_constraint(depend)
+
+                    -- if satisfying version of this dependency is installed, skip to the next one
+                    for _, installed_pkg in pairs(installed) do
+                        if installed_pkg.name == dep_name and satisfies_constraint(installed_pkg.version, dep_constraint) then
+                            break
+                        end
+                    end
 
                     -- find candidates to pkg's dependencies
                     local depend_candidates = find_packages(dep_name, manifest)
