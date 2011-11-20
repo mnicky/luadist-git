@@ -83,9 +83,6 @@ function get_dependencies(packages, deploy_dir)
     -- find installed packages
     local installed = get_installed(deploy_dir)
 
-    -- packages provided by installed packages
-    local provided_packages = {}
-
     -- add provided packages to installed ones
     for _, installed_pkg in pairs(installed) do
         local provides = get_provides(installed_pkg)
