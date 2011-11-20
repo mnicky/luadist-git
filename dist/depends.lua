@@ -177,8 +177,13 @@ function get_dependencies(packages, deploy_dir)
                 end
             end
 
-            -- add pkg to the fake table of installed packages
+            -- add pkg and it's provides to the fake table of installed packages
             table.insert(installed, pkg)
+            if pkg.provides then
+                for _, provided_pkg in pairs(get_provides(pkg)) do
+                    table.insert(installed, provided_pkg)
+                end
+            end
 
             -- add pkg to the table of packages to install
             table.insert(to_install, pkg)
