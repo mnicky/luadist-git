@@ -136,6 +136,7 @@ function get_dependencies(packages, deploy_dir)
             end
         end
 
+        -- TODO check if installed package is at the required version to satisfy the dependency !!!
 
         -- if pkg's not in installed and passed all of the above tests
         if not pkg_is_installed then
