@@ -105,8 +105,6 @@ function get_dependencies(packages, deploy_dir)
         -- for all packages in table 'installed'
         for _, installed_pkg in pairs(installed) do
 
-            -- TODO add version checks
-
             -- check if pkg is in installed
             if pkg.name == installed_pkg.name then
 
