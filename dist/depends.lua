@@ -61,6 +61,7 @@ end
 
 -- TODO: If dependencies of one candidate fail, check another candidate
 -- TODO add ability to specify version constraints?
+-- TODO add arch & type checks
 
 -- Resolve dependencies and return all packages needed in order to install 'packages' into 'deploy_dir'
 function get_dependencies(packages, deploy_dir)
