@@ -58,19 +58,21 @@ function get_installed(deploy_dir)
     return manifest
 end
 
-
 -- TODO: If dependencies of one candidate fail, check another candidate
--- TODO add ability to specify version constraints?
 -- TODO add arch & type checks
 
--- Return all packages needed in order to install 'package' according to 'manifest'
--- and with specified 'installed' packages in the system
+-- Return all packages needed in order to install 'package'
+-- and with specified 'installed' packages in the system.
+-- Optional version constraint can be added.
 --
 -- All returned packages (and their provides) are also inserted into the table 'installed'
-local function get_packages_to_install(package, installed)
+local function get_packages_to_install(package, installed, constraint)
+
+    constraint = constraint or ""
 
     assert(type(package) == "string", "depends.get_packages_to_install: Argument 'package' is not a string.")
     assert(type(installed) == "table", "depends.get_packages_to_install: Argument 'installed' is not a table.")
+    assert(type(constraint) == "string", "depends.get_packages_to_install: Argument 'constraint' is not a string.")
 
     -- get manifest
     local manifest = mf.get_manifest()
@@ -80,6 +82,12 @@ local function get_packages_to_install(package, installed)
 
     -- find candidates of packages wanted to install
     local candidates_to_install = find_packages(package, manifest)
+
+    -- filter candidates according to the constraint if provided
+    if constraint ~= "" then
+        candidates_to_install = filter_packages(candidates_to_install, constraint)
+    end
+
     sort_by_versions(candidates_to_install)
 
     -- for all packages wanted to install
@@ -179,8 +187,6 @@ local function get_packages_to_install(package, installed)
 
     return to_install
 end
-
-
 
 -- Resolve dependencies and return all packages needed in order to install 'packages' into 'deploy_dir'
 function get_dependencies(packages, deploy_dir)
