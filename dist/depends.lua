@@ -179,6 +179,26 @@ function get_dependencies(packages, deploy_dir)
     return to_install
 end
 
+-- Return table of packages provided by specified package (from it's 'provides' field)
+function get_provides(package)
+    assert(type(package) == "table", "depends.get_provides: Argument 'package' is not a table.")
+
+    if not package.provides then return {} end
+
+    local provided = {}
+
+    for _, provided_name in pairs(package.provides) do
+        local pkg = {}
+        pkg.name, pkg.version = split_name_constraint(provided_name)
+        pkg.type = package.type
+        pkg.arch = package.arch
+        pkg.provided = package.name .. "-" .. package.version
+        table.insert(provided, pkg)
+    end
+
+    return provided
+end
+
 -- Return package name and version constraint from full package version constraint specification
 -- E. g.:
 --          for 'luaexpat-1.2.3'  return:  'luaexpat' , '1.2.3'
