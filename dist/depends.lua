@@ -58,7 +58,6 @@ function get_installed(deploy_dir)
     return manifest
 end
 
--- TODO: If dependencies of one candidate fail, check another candidate
 -- TODO add arch & type checks
 
 -- Return all packages needed in order to install 'package'
@@ -83,21 +82,38 @@ local function get_packages_to_install(package, installed, constraint)
     -- find candidates of packages wanted to install
     local candidates_to_install = find_packages(package, manifest)
 
+    if #candidates_to_install == 0 then
+        return nil, "No suitable candidate for package '" .. package .. (constraint or "") .. "' found."
+    end
+
     -- filter candidates according to the constraint if provided
     if constraint ~= "" then
         candidates_to_install = filter_packages(candidates_to_install, constraint)
     end
-
     sort_by_versions(candidates_to_install)
 
-    -- for all packages wanted to install
+    -- last occured error
+    local err = nil
+
+    -- whether pkg is already in installed table
+    local pkg_is_installed = nil
+
+
+    -- for all package candidates
     for k, pkg in pairs(candidates_to_install) do
+
+        -- clear errors and installed state of previous candidate
+        err = nil
+        pkg_is_installed = false
+
+        -- set required version if constraint specified
+        if constraint ~= "" then
+            pkg.version_wanted = constraint
+        end
 
         -- remove this package from table
         candidates_to_install[k] = {}
 
-        -- whether pkg is already in installed table
-        local pkg_is_installed = false
 
         -- for all packages in table 'installed'
         for _, installed_pkg in pairs(installed) do
@@ -110,31 +126,34 @@ local function get_packages_to_install(package, installed, constraint)
                     pkg_is_installed = true
                     break
                 else
-                    return nil, "Package '" .. pkg.name .. pkg.version_wanted .. "' needed as dependency, but installed at version '" .. installed_pkg.version .. "'."
+                    err = "Package '" .. pkg.name .. pkg.version_wanted .. "' needed as dependency, but installed at version '" .. installed_pkg.version .. "'."
+                    break
                 end
             end
 
             -- check for conflicts of package to install with installed package
-            if pkg.conflicts then
+            if not err and pkg.conflicts then
                 for _, conflict in pairs (pkg.conflicts) do
                     if conflict == installed_pkg.name then
-                        return nil, "Package '" .. pkg.name .. "-" .. pkg.version .. "' conflicts with installed package '" .. installed_pkg.name .. "-" .. installed_pkg.version .. "'."
+                        err = "Package '" .. pkg.name .. "-" .. pkg.version .. "' conflicts with installed package '" .. installed_pkg.name .. "-" .. installed_pkg.version .. "'."
+                        break
                     end
                 end
             end
 
             -- check for conflicts of installed package with package to install
-            if installed_pkg.conflicts then
+            if not err and installed_pkg.conflicts then
                 for _, conflict in pairs (installed_pkg.conflicts) do
                     if conflict == pkg.name then
-                        return nil, "Installed package '" .. installed_pkg.name .. "-" .. installed_pkg.version .. "' conflicts with package'" .. pkg.name .. "-" .. pkg.version .. "'."
+                        err = "Installed package '" .. installed_pkg.name .. "-" .. installed_pkg.version .. "' conflicts with package'" .. pkg.name .. "-" .. pkg.version .. "'."
+                        break
                     end
                 end
             end
         end
 
-        -- if pkg's not in installed and passed all of the above tests
-        if not pkg_is_installed then
+        -- if pkg passed all of the above tests and isn't already installed
+        if not err and not pkg_is_installed then
 
             -- check if pkg's dependencies are satisfied
             if pkg.depends then
@@ -143,49 +162,60 @@ local function get_packages_to_install(package, installed, constraint)
                 for _, depend in pairs(pkg.depends) do
                     local dep_name, dep_constraint = split_name_constraint(depend)
 
-                    -- if satisfying version of this dependency is installed, skip to the next one
-                    for _, installed_pkg in pairs(installed) do
-                        if installed_pkg.name == dep_name and satisfies_constraint(installed_pkg.version, dep_constraint) then
+                        -- recursively call this function on the candidates of this pkg's dependency
+                        local depends_to_install, dep_err = get_packages_to_install(dep_name, installed, dep_constraint)
+
+                        -- if any suitable dependency packages were found, insert them to the 'to_install' table
+                        if depends_to_install then
+                            for _, depend_to_install in pairs(depends_to_install) do
+                                table.insert(to_install, depend_to_install)
+                            end
+                        else
+                            err = "Error getting dependency of '" .. pkg.name .. "-" .. pkg.version .. "': " .. dep_err
                             break
                         end
+                end
+            end
+
+            -- if no error occured
+            if not err then
+                --TODO add check if pkg wasn't added by some of it's dependency (circular dependencies)
+
+                -- add pkg and it's provides to the fake table of installed packages
+                table.insert(installed, pkg)
+                if pkg.provides then
+                    for _, provided_pkg in pairs(get_provides(pkg)) do
+                        table.insert(installed, provided_pkg)
                     end
+                end
 
-                    -- find candidates to pkg's dependencies
-                    local depend_candidates = find_packages(dep_name, manifest)
+                -- add pkg to the table of packages to install
+                table.insert(to_install, pkg)
 
-                    -- filter candidates according to the constraint and sort them by versions
-                    depend_candidates = filter_packages(depend_candidates, dep_constraint)
-                    sort_by_versions(depend_candidates)
+            -- if any error occured
+            else
 
-                    -- collect suitable candidates for this pkg's dependency
-                    if depend_candidates and #depend_candidates > 0 then
-                        for _, depend_candidate in pairs(depend_candidates) do
+                -- clear tables of installed packages and packages to install to the original state
+                to_install = {}
+                installed = get_installed(deploy_dir)
 
-                            -- remember the required version for checking the installed versions of this dependency
-                            depend_candidate.version_wanted = dep_constraint
-                            -- add them to the table of packages wanted to install
-                            table.insert(candidates_to_install, depend_candidate)
-                        end
-                    else
-                        return nil, "No suitable candidate for dependency '" .. dep_name .. dep_constraint .. "' of package '" .. pkg.name .. "-" .. pkg.version .. "' found."
+                -- add provided packages to installed ones
+                for _, installed_pkg in pairs(installed) do
+                    for _, pkg in pairs(get_provides(installed_pkg)) do
+                        table.insert(installed, pkg)
                     end
                 end
             end
 
-            -- add pkg and it's provides to the fake table of installed packages
-            table.insert(installed, pkg)
-            if pkg.provides then
-                for _, provided_pkg in pairs(get_provides(pkg)) do
-                    table.insert(installed, provided_pkg)
-                end
-            end
-
-            -- add pkg to the table of packages to install
-            table.insert(to_install, pkg)
         end
     end
 
-    return to_install
+    -- if package is not installed and no suitable candidates to be installed were found, return the last error
+    if #to_install == 0 and not pkg_is_installed then
+        return nil, err
+    else
+        return to_install
+    end
 end
 
 -- Resolve dependencies and return all packages needed in order to install 'packages' into 'deploy_dir'
@@ -210,6 +240,7 @@ function get_dependencies(packages, deploy_dir)
 
     local to_install = {}
 
+    -- get packages needed to to satisfy dependencies
     for _, pkg in pairs(packages) do
         local needed_to_install, err = get_packages_to_install(pkg, installed)
 
