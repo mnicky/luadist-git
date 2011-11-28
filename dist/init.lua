@@ -4,6 +4,7 @@ module ("dist", package.seeall)
 
 local cfg = require "dist.config"
 local dep = require "dist.depends"
+local git = require "dist.git"
 
 -- Install package_names to deploy_dir
 function install(package_names, deploy_dir)
@@ -16,6 +17,17 @@ function install(package_names, deploy_dir)
     assert(type(deploy_dir) == "string", "dist.install: Argument 'deploy_dir' is not a string.")
 
     -- resolve dependencies
-    local dependencies = dep.get_dependencies(package_names, deploy_dir)
+    local dependencies, err = dep.get_dependencies(package_names, deploy_dir)
+    if err then
+        return nil, err
+    end
+
+    for _, pkg in pairs(dependencies) do
+
+        print(git.get_git_repo_url(pkg.path))
+
+    end
+
+
 
 end
