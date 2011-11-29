@@ -36,6 +36,7 @@ function install(package_names, deploy_dir)
 end
 
 -- Fetch package (table 'pkg') to download_dir
+-- Return if the operation was successful and a path to the directory on success or an error message on error.
 function fetch_pkg(pkg, download_dir)
     download_dir = download_dir or sys.current_dir()
 
@@ -43,9 +44,9 @@ function fetch_pkg(pkg, download_dir)
     assert(type(download_dir) == "string", "dist.fetch_pkg: Argument 'download_dir' is not a string.")
 
     local repo_url = git.get_repo_url(pkg.path)
-    local clone_dir = download_dir .. "/" .. pkg.name .. "-" .. pkg.version
+    local clone_dir = download_dir .. "/" .. pkg.name .. "-" .. pkg.version .. "-" .. pkg.arch .. "-" .. pkg.type
 
-    local ok = nil
+    local ok, err
 
     -- clone pkg's repository if it doesn't exist in download_dir
     if not sys.exists(clone_dir) then
@@ -60,14 +61,20 @@ function fetch_pkg(pkg, download_dir)
         ok = git.clone(repo_url, clone_dir, 1)
     end
 
-    -- checkout particular tag (= version of pkg)
+    -- checkout git tag according to the version of pkg
     if ok and pkg.version ~= "scm" then
-        return git.checkout_tag(pkg.version, clone_dir)
-    else
-        return nil, "Error fetching package '" .. pkg.name .. "-" .. pkg.version "' from '" .. pkg.path .. "' to '" .. download_dir .. "'."
+        ok = git.checkout_tag(pkg.version, clone_dir)
     end
-end
 
+    if not ok then
+        return nil, "Error fetching package '" .. pkg.name .. "-" .. pkg.version .. "' from '" .. pkg.path .. "' to '" .. download_dir .. "'."
+    end
+
+    -- delete '.git' directory
+    sys.delete(clone_dir .. "/" .. ".git")
+
+    return ok, clone_dir
+end
 
 
 
