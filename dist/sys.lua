@@ -38,15 +38,27 @@ function exists(path)
     return lfs.attributes(path)
 end
 
--- Move file or directory to the destination directory
-function move(file_or_dir, dest_dir)
-    assert(type(file_or_dir) == "string", "sys.move: Argument 'file_or_dir' is not a string.")
-    assert(type(dest_dir) == "string", "sys.move: Argument 'dest_dir' is not a string.")
+-- Return if file is a file
+function is_file(file)
+    assert(type(file) == "string", "sys.is_file: Argument 'file' is not a string.")
+    return lfs.attributes(file, "mode") == "file"
+end
 
-    -- Extract file/dir name from its path
-    local file_or_dir_name = extract_name(file_or_dir)
+-- Return if dir is a directory
+function is_dir(dir)
+    assert(type(dir) == "string", "sys.is_dir: Argument 'dir' is not a string.")
+    return lfs.attributes(dir, "mode") == "directory"
+end
 
-    return os.rename(file_or_dir, dest_dir .. "/" .. file_or_dir_name)
+-- Return iterator over directory dir.
+-- If dir does not exist or is not a directory, return nil and error message.
+function get_directory(dir)
+    assert(type(dir) == "string", "sys.get_directory: Argument 'dir' is not a string.")
+    if is_dir(dir) then
+        return lfs.dir(dir)
+    else
+        return nil, "Error: '".. dir .. "' is not a directory."
+    end
 end
 
 -- Extract file or directory name from its path
@@ -84,6 +96,45 @@ function make_dir(dir_name)
     end
 end
 
+-- Move file or directory to the destination directory
+function move(file_or_dir, dest_dir)
+    assert(type(file_or_dir) == "string", "sys.move: Argument 'file_or_dir' is not a string.")
+    assert(type(dest_dir) == "string", "sys.move: Argument 'dest_dir' is not a string.")
+
+    assert(is_dir(dest_dir), "sys.move: destination '" .. dest_dir .."' is not a directory.")
+
+    -- Extract file/dir name from its path
+    local file_or_dir_name = extract_name(file_or_dir)
+
+    return os.rename(file_or_dir, dest_dir .. "/" .. file_or_dir_name)
+end
+
+-- Copy 'source' to the destination directory 'dest_dir'.
+-- If 'source' is a directory, then recursive copying is used.
+-- For non-recursive copying of directories use the make_dir() function.
+function copy(source, dest_dir)
+
+    assert(type(source) == "string", "sys.copy: Argument 'file_or_dir' is not a string.")
+    assert(type(dest_dir) == "string", "sys.copy: Argument 'dest_dir' is not a string.")
+
+    assert(is_dir(dest_dir), "sys.move: destination '" .. dest_dir .."' is not a directory.")
+
+    if (cfg.arch == "Windows") then
+        if is_dir(source) then
+            mkdir(dest_dir .. "/" .. extract_name(source))
+            return exec("xcopy /E /I /Y /Q " .. quote(source) .. " " .. quote(dest_dir .. "\\" .. extract_name(source)))
+        else
+            return exec("copy /Y " .. quote(source) .. " " .. quote(dest_dir))
+        end
+    else
+        if is_dir(source) then
+            return exec("cp -frH " .. quote(source) .. " " .. quote(dest_dir))
+        else
+            return exec("cp -fH " .. quote(source) .. " " .. quote(dest_dir))
+        end
+    end
+end
+
 -- Delete the specified file or directory
 function delete(path)
     assert(type(path) == "string", "sys.delete: Argument 'path' is not a string.")
@@ -95,28 +146,6 @@ function delete(path)
     end
 end
 
--- Return if file is a file
-function is_file(file)
-    assert(type(file) == "string", "sys.is_file: Argument 'file' is not a string.")
-    return lfs.attributes(file, "mode") == "file"
-end
-
--- Return if dir is a directory
-function is_dir(dir)
-    assert(type(dir) == "string", "sys.is_dir: Argument 'dir' is not a string.")
-    return lfs.attributes(dir, "mode") == "directory"
-end
-
--- Return iterator over directory dir.
--- If dir does not exist or is not a directory, return nil and error message.
-function get_directory(dir)
-    assert(type(dir) == "string", "sys.get_directory: Argument 'dir' is not a string.")
-    if is_dir(dir) then
-        return lfs.dir(dir)
-    else
-        return nil, "Error: '".. dir .. "' is not a directory."
-    end
-end
 
 
 
