@@ -20,3 +20,6 @@ manifest_file = cache_dir .. "/dist.manifest"
 
 -- URLs
 repository_url = "https://github.com/LuaDist/Repository.git"
+
+-- Settings
+debug = false
