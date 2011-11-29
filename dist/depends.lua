@@ -219,7 +219,7 @@ local function get_packages_to_install(package, installed, constraint)
 end
 
 -- Resolve dependencies and return all packages needed in order to install 'packages' into 'deploy_dir'
-function get_dependencies(packages, deploy_dir)
+function get_depends(packages, deploy_dir)
     if not packages then return {} end
 
     deploy_dir = deploy_dir or cfg.root_dir
