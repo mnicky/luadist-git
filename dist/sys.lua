@@ -5,6 +5,8 @@ module ("dist.sys", package.seeall)
 local cfg = require "dist.config"
 local lfs = require "lfs"
 
+-- TODO test functionality of this module on Windows
+
 -- Returns quoted string argument.
 function quote(argument)
     assert(type(argument) == "string", "sys.quote: Argument 'argument' is not a string.")
