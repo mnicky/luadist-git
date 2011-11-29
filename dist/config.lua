@@ -6,7 +6,7 @@ module ("dist.config", package.seeall)
 local lfs = require "lfs"
 
 -- System information
-arch = "unix"
+arch = "Unix"
 type = "x86"
 
 -- Paths
