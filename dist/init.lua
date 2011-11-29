@@ -1,4 +1,4 @@
--- Luadist API
+-- main API of LuaDist
 
 module ("dist", package.seeall)
 
