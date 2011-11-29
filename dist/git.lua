@@ -3,6 +3,7 @@
 module ("dist.git", package.seeall)
 
 local sys = require "dist.sys"
+local cfg = require "dist.config"
 
 
 -- Clone the repository from url to dest_dir
@@ -38,11 +39,13 @@ function clone(repository_url, dest_dir, depth, branch)
         sys.change_dir(dest_dir)
 
         -- execute git clone
+        if not cfg.debug then command = command .. " -q" end
         ok = sys.exec(command)
 
         -- change the current working directory back
         sys.change_dir(prev_current_dir)
     else
+        if not cfg.debug then command = command .. " -q" end
         ok = sys.exec(command)
     end
 
@@ -71,6 +74,7 @@ function checkout_tag(tag, git_repo_dir)
     assert(type(git_repo_dir) == "string", "git.checkout_tag: Argument 'git_repo_dir' is not a string.")
 
     local command = "git checkout " .. tag
+    if not cfg.debug then command = command .. " -q" end
 
     if git_repo_dir ~= sys.current_dir() then
         local prev_current_dir = sys.current_dir()
