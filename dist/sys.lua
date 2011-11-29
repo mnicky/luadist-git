@@ -75,8 +75,11 @@ end
 -- Make a new directory
 function make_dir(dir_name)
     assert(type(dir_name) == "string", "sys.make_dir: Argument 'dir_name' is not a string.")
-
-    return lfs.mkdir(dir_name)
+    if exists(dir_name) then
+        return true
+    else
+        return lfs.mkdir(dir_name)
+    end
 end
 
 -- Delete the specified file or directory
