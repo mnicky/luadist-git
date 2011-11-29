@@ -35,7 +35,7 @@ function install(package_names, deploy_dir)
 
 end
 
--- Fetch package (table 'pkg') from git to download_dir
+-- Fetch package (table 'pkg') to download_dir
 function fetch_pkg(pkg, download_dir)
     download_dir = download_dir or sys.current_dir()
 
