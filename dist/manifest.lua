@@ -89,6 +89,45 @@ function load_distinfo(distinfo_file)
     end
 end
 
+-- Save distinfo table to the 'file'
+function save_distinfo(distinfo_table, file)
 
+    assert(type(distinfo_table) == "table", "manifest.save_distinfo: Argument 'distinfo_table' is not a table.")
+    assert(type(file) == "string", "manifest.save_distinfo: Argument 'file' is not a string.")
+
+    local function print_table(file, tbl, in_nested_table)
+        for k, v in pairs(tbl) do
+            -- print key
+            if type(k) ~= "number" then
+                file:write(k .. " = ")
+            end
+            -- print value
+            if type(v) == "table" then
+                file:write("{\n")
+                print_table(file, v, true)
+                file:write("}\n")
+            elseif type(v) == "string" then
+                if in_nested_table then
+                    file:write('[[' .. v .. ']]')
+                else
+                    file:write('"' .. v .. '"')
+                end
+            else
+                file:write(v)
+            end
+            if in_nested_table then
+                file:write(",")
+            end
+            file:write("\n")
+        end
+    end
+
+    local distinfo_file = io.open(file, "w")
+    if not distinfo_file then return false, "Error saving table: cannot open the file '" .. file .. "'." end
+
+    print_table(distinfo_file, distinfo_table)
+
+    distinfo_file:close()
+end
 
 
