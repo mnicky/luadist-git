@@ -89,11 +89,15 @@ function get_file_list(dir)
 
     local function collect(path, all_paths)
         for item in get_directory(path) do
+
             local item_path = path .. "/" .. item
+            local _, last = item_path:find(dir .. "/", 1, true)
+            local path_to_insert = item_path:sub(last + 1)
+
             if is_file(item_path) then
-                table.insert(all_paths, "[[" .. item_path:gsub(dir .. "/", "", 1) .. "]]")
+                table.insert(all_paths, path_to_insert)
             elseif is_dir(item_path) and item ~= "." and item ~= ".." then
-                table.insert(all_paths, "[[" .. item_path:gsub(dir .. "/", "", 1) .. "]]")
+                table.insert(all_paths, path_to_insert)
                 collect(item_path, all_paths)
             end
         end
