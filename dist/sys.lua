@@ -53,6 +53,9 @@ end
 -- Return iterator over directory dir.
 -- If dir does not exist or is not a directory, return nil and error message.
 function get_directory(dir)
+
+    dir = dir or current_dir()
+
     assert(type(dir) == "string", "sys.get_directory: Argument 'dir' is not a string.")
     if is_dir(dir) then
         return lfs.dir(dir)
