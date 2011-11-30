@@ -78,6 +78,33 @@ function extract_name(path)
     return path:gsub("^.*/", "")
 end
 
+-- Return table of all paths in 'dir'
+function get_file_list(dir)
+
+    dir = dir or current_dir()
+
+    assert(type(dir) == "string", "sys.get_directory: Argument 'dir' is not a string.")
+
+    if not exists(dir) then return nil, "Error getting file list of '" .. dir .. "': directory doesn't exist." end
+
+    local function collect(path, all_paths)
+        for item in get_directory(path) do
+            local item_path = path .. "/" .. item
+            if is_file(item_path) then
+                table.insert(all_paths, "[[" .. item_path:gsub(dir .. "/", "", 1) .. "]]")
+            elseif is_dir(item_path) and item ~= "." and item ~= ".." then
+                table.insert(all_paths, "[[" .. item_path:gsub(dir .. "/", "", 1) .. "]]")
+                collect(item_path, all_paths)
+            end
+        end
+    end
+
+    local all_paths = {}
+    collect(dir, all_paths)
+
+    return all_paths
+end
+
 -- Return the current working directory
 function current_dir()
     return lfs.currentdir()
