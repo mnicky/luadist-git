@@ -114,6 +114,7 @@ function current_dir()
     return lfs.currentdir()
 end
 
+-- TODO return also previous current_dir as the second return value?
 -- Changes the current working directory
 function change_dir(dir_name)
     assert(type(dir_name) == "string", "sys.change_dir: Argument 'dir_name' is not a string.")
