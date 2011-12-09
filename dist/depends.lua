@@ -65,6 +65,8 @@ end
 -- Optional version constraint can be added.
 --
 -- All returned packages (and their provides) are also inserted into the table 'installed'
+
+-- TODO change mutation of table 'installed' to returning it as a second return value
 local function get_packages_to_install(package, installed, constraint)
 
     constraint = constraint or ""
