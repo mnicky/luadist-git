@@ -22,21 +22,20 @@ function install(package_names, deploy_dir)
     local dependencies, err = dep.get_depends(package_names, deploy_dir)
     if err then return nil, err end
 
-    -- TODO install packages after fetching all of them
+    -- TODO get tmp dir from configuration?
 
-    for _, pkg in pairs(dependencies) do
+    -- fetch the packages from repository
+    local dirs_or_err = {}
+    local ok, dirs_or_err = fetch_pkgs(dependencies, deploy_dir .. "/tmp")
+    if not ok then return nil, dirs_or_err end
 
-        -- TODO get tmp dir from configuration?
-        -- fetch the package from git repository
-        local ok, dir_or_err = fetch_pkg(pkg, deploy_dir .. "/tmp")
-
-        if not ok then
-            return nil, dir_or_err
-        else
-            ok, err = install_pkg(dir_or_err)
-            if not ok then return nil, err end
-        end
+    -- install fetched packages
+    for _, dir in pairs(dirs_or_err) do
+        ok, err = install_pkg(dir)
+        if not ok then return nil, err end
     end
+
+    return ok
 end
 
 
@@ -161,4 +160,25 @@ function fetch_pkg(pkg, download_dir)
 end
 
 
+-- Fetch packages (table 'packages') to 'download_dir'
+-- Return if the operation was successful and a table of paths to the directories on success or an error message on error.
+function fetch_pkgs(packages, download_dir)
+    download_dir = download_dir or sys.current_dir()
 
+    assert(type(packages) == "table", "dist.fetch_pkgs: Argument 'pkg' is not a table.")
+    assert(type(download_dir) == "string", "dist.fetch_pkgs: Argument 'download_dir' is not a string.")
+
+    local fetched_dirs = {}
+    local ok, dir_or_err
+
+    for _, pkg in pairs(packages) do
+        ok, dir_or_err = fetch_pkg(pkg, download_dir)
+        if not ok then
+            return nil, dir_or_err
+        else
+            table.insert(fetched_dirs, dir_or_err)
+        end
+    end
+
+    return ok, fetched_dirs
+end
