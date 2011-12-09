@@ -149,6 +149,8 @@ function fetch_pkg(pkg, download_dir)
     end
 
     if not ok then
+        -- clean up
+        sys.delete(clone_dir)
         return nil, "Error fetching package '" .. pkg.name .. "-" .. pkg.version .. "' from '" .. pkg.path .. "' to '" .. download_dir .. "'."
     end
 
