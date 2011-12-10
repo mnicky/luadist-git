@@ -5,6 +5,7 @@ module ("dist.sys", package.seeall)
 local cfg = require "dist.config"
 local lfs = require "lfs"
 
+
 -- TODO test functionality of this module on Windows
 
 -- Returns quoted string argument.
@@ -49,6 +50,17 @@ function is_dir(dir)
     assert(type(dir) == "string", "sys.is_dir: Argument 'dir' is not a string.")
     return lfs.attributes(dir, "mode") == "directory"
 end
+
+-- Return the current working directory
+function current_dir()
+    return lfs.currentdir()
+end
+
+-- Workaround to Lua Lanes
+local current_dir = current_dir
+local exec = exec
+local exists = exists
+local quote = quote
 
 -- Return iterator over directory dir.
 -- If dir does not exist or is not a directory, return nil and error message.
@@ -107,11 +119,6 @@ function get_file_list(dir)
     collect(dir, all_paths)
 
     return all_paths
-end
-
--- Return the current working directory
-function current_dir()
-    return lfs.currentdir()
 end
 
 -- TODO return also previous current_dir as the second return value?
@@ -180,7 +187,3 @@ function delete(path)
         return exec("rm -rf " .. quote(path))
     end
 end
-
-
-
-

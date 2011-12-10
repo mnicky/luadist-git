@@ -2,11 +2,12 @@
 
 module ("dist", package.seeall)
 
+
 local cfg = require "dist.config"
 local dep = require "dist.depends"
 local git = require "dist.git"
 local sys = require "dist.sys"
-local mf = require "dist.manifest"
+local mf  = require "dist.manifest"
 
 -- Install package_names to deploy_dir
 function install(package_names, deploy_dir)
@@ -181,4 +182,92 @@ function fetch_pkgs(packages, download_dir)
     end
 
     return ok, fetched_dirs
+end
+
+local fetch_pkg = fetch_pkg
+
+-- Fetch packages (table 'packages') to 'download_dir' using 'max_parallel_downloads'
+-- This function fetches packages in parallel using the lua 'lanes' module, so it must be available.
+-- Return if the operation was successful and a table of paths to the directories on success or an error message on error.
+function parallel_fetch_pkgs(packages, download_dir, max_parallel_downloads)
+    download_dir = download_dir or sys.current_dir()
+    max_parallel_downloads = max_parallel_downloads or 3
+
+    assert(type(packages) == "table", "dist.parallel_fetch_pkgs: Argument 'pkg' is not a table.")
+    assert(type(download_dir) == "string", "dist.parallel_fetch_pkgs: Argument 'download_dir' is not a string.")
+
+    assert(pcall(require, "lanes"), "dist.parallel_fetch_pkgs: Module 'lanes' not found.")
+
+    --local function fetch_pkg2 = fetch_pkg
+    ------------------------------------------------------
+    local function fetch_pkg2(pkg, download_dir)
+        download_dir = download_dir or sys.current_dir()
+
+        assert(type(pkg) == "table", "dist.fetch_pkg: Argument 'pkg' is not a table.")
+        assert(type(download_dir) == "string", "dist.fetch_pkg: Argument 'download_dir' is not a string.")
+
+        local repo_url = git.get_repo_url(pkg.path)
+        local clone_dir = download_dir .. "/" .. pkg.name .. "-" .. pkg.version .. "-" .. pkg.arch .. "-" .. pkg.type
+
+        local ok, err
+
+        local quote = sys.quote
+
+        -- clone pkg's repository if it doesn't exist in download_dir
+        if not sys.exists(clone_dir) then
+            print("Getting " .. pkg.name .. "-" .. pkg.version .. "...")
+            sys.make_dir(clone_dir)
+            ok = git.clone(repo_url, clone_dir, 1)
+        -- if clone_dir exists but doesn't contain dist.info, delete it and then clone the pkg
+        elseif not sys.exists(clone_dir .. "/dist.info") then
+            print("Getting " .. pkg.name .. "-" .. pkg.version .. "...")
+            sys.delete(clone_dir)
+            sys.make_dir(clone_dir)
+            ok = git.clone(repo_url, clone_dir, 1)
+        end
+
+        -- checkout git tag according to the version of pkg
+        if ok and pkg.version ~= "scm" then
+            ok = git.checkout_tag(pkg.version, clone_dir)
+        end
+
+        if not ok then
+            -- clean up
+            sys.delete(clone_dir)
+            return nil, "Error fetching package '" .. pkg.name .. "-" .. pkg.version .. "' from '" .. pkg.path .. "' to '" .. download_dir .. "'."
+        end
+
+        -- delete '.git' directory
+        sys.delete(clone_dir .. "/" .. ".git")
+
+        return ok, clone_dir
+    end
+    ------------------------------------------------------
+
+    local fetched_dirs = {}
+
+    local fetching_thread = lanes.gen("os", "string", fetch_pkg2)
+    local pkg_to_fetch = 1
+
+    while pkg_to_fetch <= #packages do
+
+        -- run threads to do parallel downloads
+        local threads = {}
+        while pkg_to_fetch <= #packages and #threads < max_parallel_downloads do
+            table.insert(threads, fetching_thread(packages[pkg_to_fetch], download_dir))
+            pkg_to_fetch = pkg_to_fetch + 1
+        end
+
+        -- join threads and get return values
+        for t = 1, #threads do
+            if not threads[t][1] then
+                return nil, threads[t][2]
+            else
+                table.insert(fetched_dirs, threads[t][2])
+            end
+        end
+
+    end
+
+    return true, fetched_dirs
 end
