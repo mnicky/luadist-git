@@ -199,6 +199,7 @@ function parallel_fetch_pkgs(packages, download_dir, max_parallel_downloads)
     assert(pcall(require, "lanes"), "dist.parallel_fetch_pkgs: Module 'lanes' not found.")
 
     --local function fetch_pkg2 = fetch_pkg
+    -- TODO remove this function:
     ------------------------------------------------------
     local function fetch_pkg2(pkg, download_dir)
         download_dir = download_dir or sys.current_dir()
