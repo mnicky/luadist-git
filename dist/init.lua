@@ -198,10 +198,9 @@ function parallel_fetch_pkgs(packages, download_dir, max_parallel_downloads)
 
     assert(pcall(require, "lanes"), "dist.parallel_fetch_pkgs: Module 'lanes' not found.")
 
-    --local function fetch_pkg2 = fetch_pkg
-    -- TODO remove this function:
+    -- TODO use global version of this function (a bug in Lanes ?):
     ------------------------------------------------------
-    local function fetch_pkg2(pkg, download_dir)
+    local function fetch_pkg(pkg, download_dir)
         download_dir = download_dir or sys.current_dir()
 
         assert(type(pkg) == "table", "dist.fetch_pkg: Argument 'pkg' is not a table.")
@@ -247,7 +246,7 @@ function parallel_fetch_pkgs(packages, download_dir, max_parallel_downloads)
 
     local fetched_dirs = {}
 
-    local fetching_thread = lanes.gen("os", "string", fetch_pkg2)
+    local fetching_thread = lanes.gen("os", "string", fetch_pkg)
     local pkg_to_fetch = 1
 
     while pkg_to_fetch <= #packages do
