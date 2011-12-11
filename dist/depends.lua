@@ -162,6 +162,21 @@ local function get_packages_to_install(package, installed, constraint)
 
                 -- for all dependencies of pkg
                 for _, depend in pairs(pkg.depends) do
+
+                    -- TODO add parsing of OS specific dependencies
+                    -- something like:
+                    --
+                    -- ['depends'] = {
+                    --               ['Linux'] = {
+                    --                           [[unixodbc > 2.2]],
+                    --                           }
+                    --               }
+                    --
+                    -- (I didn't know about these until recently when I accidentally found one)
+                    --
+                    -- if type(depend) == "table" then
+                    -- end
+
                     local dep_name, dep_constraint = split_name_constraint(depend)
 
                         -- recursively call this function on the candidates of this pkg's dependency
