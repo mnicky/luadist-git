@@ -181,6 +181,18 @@ function delete(path)
     end
 end
 
+-- Return absolute path from 'path'
+function get_absolute_path(path)
+    assert(type(path) == "string", "sys.get_abs_path: Argument 'path' is not a string.")
 
+    -- check if the path is already absolute
+    local cur_dir = current_dir()
+    local pos1 = string.find(cur_dir, path, 1, true)
+    local pos2 = string.find(path, cur_dir, 1, true)
 
-
+    if pos1 == 1 or pos2 == 1 then
+        return path
+    else
+        return cur_dir .. "/" .. path
+    end
+end
