@@ -18,8 +18,6 @@ function find_packages(package_names, manifest)
 
     local packages_found = {}
 
-    -- TODO reporting when no candidate for some package is found ??
-
     -- find matching packages in manifest
     for _, pkg_to_find in pairs(package_names) do
         for _, repo_pkg in pairs(manifest) do
