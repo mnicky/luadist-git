@@ -43,11 +43,9 @@ function install(package_names, deploy_dir)
     local dependencies, err = dep.get_depends(package_names, deploy_dir)
     if err then return nil, err end
 
-    -- TODO get tmp dir from configuration?
-
     -- fetch the packages from repository
     local dirs_or_err = {}
-    local ok, dirs_or_err = fetch_pkgs(dependencies, deploy_dir .. "/tmp")
+    local ok, dirs_or_err = fetch_pkgs(dependencies, deploy_dir .. "/" .. cfg.temp_dir)
     if not ok then return nil, dirs_or_err end
 
     -- install fetched packages
@@ -117,7 +115,7 @@ function install_pkg(pkg_dir, deploy_dir, variables)
         cmake_variables.CMAKE_PROGRAM_PATH = table.concat({cmake_variables.CMAKE_PROGRAM_PATH or "", deploy_dir .. "/bin"}, ";")
 
         -- build the package
-        local build_dir, err = build_pkg(pkg_dir, deploy_dir .. "/tmp", cmake_variables)
+        local build_dir, err = build_pkg(pkg_dir, deploy_dir .. "/" .. cfg.temp_dir, cmake_variables)
         if not build_dir then return nil, err end
 
         -- and deploy it
