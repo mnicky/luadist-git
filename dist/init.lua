@@ -8,6 +8,27 @@ local git = require "dist.git"
 local sys = require "dist.sys"
 local mf = require "dist.manifest"
 
+-- Return packages deployed in 'deploy_dir' also with their provides
+function get_deployed(deploy_dir)
+    deploy_dir = deploy_dir or cfg.root_dir
+    assert(type(deploy_dir) == "string", "dist.install: Argument 'deploy_dir' is not a string.")
+
+    local deployed = depends.get_installed(deploy_dir)
+    local provided = {}
+
+    for _, pkg in pairs(deployed) do
+        for _, provided_pkg in pairs(depends.get_provides(pkg)) do
+            table.insert(provided, provided_pkg)
+        end
+    end
+
+    for _, provided_pkg in pairs(provided) do
+        table.insert(deployed, provided_pkg)
+    end
+
+    return deployed
+end
+
 -- Install package_names to deploy_dir
 function install(package_names, deploy_dir)
     if not package_names then return true end
