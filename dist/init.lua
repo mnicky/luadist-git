@@ -31,7 +31,7 @@ function install(package_names, deploy_dir)
 
     -- install fetched packages
     for _, dir in pairs(dirs_or_err) do
-        ok, err = install_pkg(dir)
+        ok, err = install_pkg(dir, deploy_dir)
         if not ok then return nil, err end
     end
 
@@ -39,17 +39,19 @@ function install(package_names, deploy_dir)
 end
 
 
--- Install package from 'pkg_dir' to 'deploy_dir'
-function install_pkg(pkg_dir, deploy_dir)
+-- Install package from 'pkg_dir' to 'deploy_dir', using optional CMake 'variables'.
+function install_pkg(pkg_dir, deploy_dir, variables)
 
     deploy_dir = deploy_dir or cfg.root_dir
+    variables = variables or {}
 
     assert(type(pkg_dir) == "string", "dist.make_pkg: Argument 'pkg_dir' is not a string.")
     assert(type(deploy_dir) == "string", "dist.make_pkg: Argument 'deploy_dir' is not a string.")
+    assert(type(variables) == "table", "dist.make_pkg: Argument 'variables' is not a table.")
 
     -- check for dist.info
     local info, err = mf.load_distinfo(pkg_dir .. "/dist.info")
-    if not info then return nil, "Error installing '" .. pkg.name .. "-" .. pkg.version .. "': package in '" .. pkg_dir .. "' doesn't contain valid 'dist.info' file." end
+    if not info then return nil, "Error installing '" .. info.name .. "-" .. info.version .. "': package in '" .. pkg_dir .. "' doesn't contain valid 'dist.info' file." end
 
     -- check if the package is source
     if sys.exists(pkg_dir .. "/CMakeLists.txt") then
@@ -72,17 +74,101 @@ function install_pkg(pkg_dir, deploy_dir)
     -- if package is of source type, just deploy it
     if info.type ~= "source" then
         ok, err = deploy_pkg(pkg_dir, deploy_dir)
-    -- else build the package
+    -- else build and then deploy
     else
-        -- TODO implement build_pkg():
-        -- ok, err = build_pkg(pkg_dir, deploy_dir)
-        ok = true
+
+        -- set cmake variables
+        local cmake_variables = {}
+
+        -- set variables from config file
+        for k, v in pairs(cfg.variables) do
+            cmake_variables[k] = v
+        end
+
+        -- set variables specified as argument
+        for k, v in pairs(variables) do
+            cmake_variables[k] = v
+        end
+
+        -- TODO wouldn't it be better to move this into config.lua ?
+        cmake_variables.CMAKE_INCLUDE_PATH = table.concat({cmake_variables.CMAKE_INCLUDE_PATH or "", deploy_dir .. "/include"}, ";")
+        cmake_variables.CMAKE_LIBRARY_PATH = table.concat({cmake_variables.CMAKE_LIBRARY_PATH or "", deploy_dir .. "/lib", deploy_dir .. "/bin"}, ";")
+        cmake_variables.CMAKE_PROGRAM_PATH = table.concat({cmake_variables.CMAKE_PROGRAM_PATH or "", deploy_dir .. "/bin"}, ";")
+
+        -- build the package
+        local build_dir, err = build_pkg(pkg_dir, deploy_dir .. "/tmp", cmake_variables)
+        if not build_dir then return nil, err end
+
+        -- and deploy it
+        ok, err = deploy_pkg(build_dir, deploy_dir)
+        if not cfg.debug then sys.delete(build_dir) end
     end
 
     -- delete directory of fetched package
     if not cfg.debug then sys.delete(pkg_dir) end
 
     return ok, err
+end
+
+-- Build package from 'src_dir' to 'build_dir' using 'variables'.
+-- Return directory to which the package was built or nil on error.
+-- 'variables' is table of optional CMake variables.
+function build_pkg(src_dir, build_dir, variables)
+
+    build_dir = build_dir or sys.current_dir()
+    variables = variables or {}
+
+    assert(type(src_dir) == "string", "dist.build_pkg: Argument 'src_dir' is not a string.")
+    assert(type(build_dir) == "string", "dist.build_pkg: Argument 'build_dir' is not a string.")
+    assert(type(variables) == "table", "dist.build_pkg: Argument 'variables' is not a table.")
+
+    -- check for dist.info
+    local info, err = mf.load_distinfo(src_dir .. "/dist.info")
+    if not info then return nil, "Error building package from '" .. src_dir .. "': it doesn't contain valid 'dist.info' file." end
+
+    -- set machine information
+    info.arch = cfg.arch
+	info.type = cfg.type
+
+    -- create build dirs
+    local pkg_build_dir = build_dir .. "/" .. info.name .. "-" .. info.version .. "-" .. cfg.arch .. "-" .. cfg.type
+    local cmake_build_dir = build_dir .. "/" .. info.name .. "-" .. info.version .. "-CMake-build"
+    sys.make_dir(pkg_build_dir)
+    sys.make_dir(cmake_build_dir)
+
+    -- create cmake cache
+    variables["CMAKE_INSTALL_PREFIX"] = pkg_build_dir
+    local cache_file = io.open(cmake_build_dir .. "/cache.cmake", "w")
+    if not cache_file then return nil, "Error creating CMake cache file in '" .. cmake_build_dir .. "'" end
+    for k,v in pairs(variables) do
+        cache_file:write("SET(" .. k .. " \"" .. v .. "\"" .. " CACHE STRING \"\" FORCE)\n")
+    end
+    cache_file:close()
+
+    -- change the directory
+    --local prev_cur_dir = sys.current_dir()
+    --sys.change_dir(cmake_build_dir)
+
+    src_dir = sys.get_absolute_path(src_dir)
+
+    -- set the cmake cache
+    local ok = sys.exec("cd " .. sys.quote(cmake_build_dir) .. " && " .. cfg.cmake .. " -C cache.cmake " .. sys.quote(src_dir))
+    if not ok then return nil, "Error preloading the CMake cache script '" .. cmake_build_dir .. "/cmake.cache" .. "'" end
+
+    -- build with cmake
+    ok = sys.exec("cd " .. sys.quote(cmake_build_dir) .. " && " .. cfg.build_command)
+    if not ok then return nil, "Error building with CMake in directory '" .. cmake_build_dir .. "'" end
+
+    -- add dist.info
+    ok, err = mf.save_distinfo(info, pkg_build_dir .. "/dist.info")
+    if not ok then return nil, err end
+
+    -- clean up
+    if not cfg.debug then
+        sys.delete(cmake_build_dir)
+    end
+
+    return pkg_build_dir
 end
 
 -- Deploy package from 'pkg_dir' to 'deploy_dir' by copying
