@@ -11,7 +11,7 @@ local mf = require "dist.manifest"
 -- Return packages deployed in 'deploy_dir' also with their provides
 function get_deployed(deploy_dir)
     deploy_dir = deploy_dir or cfg.root_dir
-    assert(type(deploy_dir) == "string", "dist.install: Argument 'deploy_dir' is not a string.")
+    assert(type(deploy_dir) == "string", "dist.get_deployed: Argument 'deploy_dir' is not a string.")
 
     local deployed = depends.get_installed(deploy_dir)
     local provided = {}
