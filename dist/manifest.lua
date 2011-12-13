@@ -15,8 +15,10 @@ function get_manifest()
 
     --if manifest not in cache, download it
     if not manifest then
-        download_manifest()
-        manifest = load_manifest()
+        local ok, err = download_manifest()
+        if not ok then return nil, err end
+        manifest, err = load_manifest()
+        if not manifest then return nil, err end
     end
 
     return manifest
