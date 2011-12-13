@@ -33,7 +33,7 @@ function download_manifest(repository_url, dest_dir)
     assert(type(repository_url) == "string", "manifest.download_manifest: Argument 'repository_url' is not a string.")
     assert(type(dest_dir) == "string", "manifest.download_manifest: Argument 'dest_dir' is not a string.")
 
-    local clone_dir = cfg.temp_dir .. "/repository"
+    local clone_dir = cfg.root_dir .. "/" .. cfg.temp_dir .. "/repository"
 
     -- clone the manifest repository and move the manifest to the cache
     if git.clone(repository_url, clone_dir, 1) then

@@ -13,7 +13,7 @@ type	= "i686"	-- Host type
 
 -- Paths
 root_dir      = lfs.currentdir()
-temp_dir      = root_dir .. "/tmp"
+temp_dir      = "tmp"
 cache_dir     = temp_dir .. "/cache"
 distinfos_dir = "share/luadist/dists"
 
