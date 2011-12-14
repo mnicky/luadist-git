@@ -82,6 +82,59 @@ function install(package_names, deploy_dir)
     return ok
 end
 
+-- Remove 'package_names' from 'deploy_dir'
+function remove(package_names, deploy_dir)
+    deploy_dir = deploy_dir or cfg.root_dir
+    if type(package_names) == "string" then package_names = {package_names} end
+
+    assert(type(package_names) == "table", "dist.remove: Argument 'package_names' is not a string or table.")
+    assert(type(deploy_dir) == "string", "dist.remove: Argument 'deploy_dir' is not a string.")
+
+    -- find packages to remove
+    local pkgs_to_remove = depends.find_packages(package_names, depends.get_installed(deploy_dir))
+
+    -- remove them
+    for _, pkg in pairs(pkgs_to_remove) do
+        local pkg_distinfo_dir = cfg.distinfos_dir .. "/" .. pkg.name .. "-" .. pkg.version
+        local ok, err = remove_pkg(pkg_distinfo_dir, deploy_dir)
+        if not ok then return nil, err end
+    end
+
+    return true
+end
+
+-- Remove package from 'pkg_dir' of 'deploy_dir'.
+function remove_pkg(pkg_dir, deploy_dir)
+    deploy_dir = deploy_dir or cfg.root_dir
+
+    assert(type(pkg_dir) == "string", "dist.remove_pkg: Argument 'pkg_dir' is not a string.")
+    assert(type(deploy_dir) == "string", "dist.remove_pkg: Argument 'deploy_dir' is not a string.")
+
+    -- check for dist.info
+    local info, err = mf.load_distinfo(deploy_dir .. "/" .. pkg_dir .. "/dist.info")
+    if not info then return nil, "Error removing package from '" .. pkg_dir .. "' - it doesn't contain valid 'dist.info' file." end
+    if not info.files then return nil, "File '" .. pkg_dir .. "/dist.info" .."' doesn't contain list of installed files." end
+
+    -- remove installed files
+    for i = #info.files, 1, -1 do
+        local f = deploy_dir .. "/" .. info.files[i]
+        if sys.is_file(f) then
+            sys.delete(f)
+        elseif sys.is_dir(f) then
+            local dir_files = sys.get_file_list(f)
+
+            if #dir_files == 0 then
+                sys.delete(f)
+            end
+        end
+    end
+
+    -- delete package info from deploy_dir
+    local ok = sys.delete(deploy_dir .. "/" .. pkg_dir)
+    if not ok then return nil, "Error removing package in '" .. deploy_dir .. "/" .. pkg_dir .. "'." end
+
+    return ok
+end
 
 -- Install package from 'pkg_dir' to 'deploy_dir', using optional CMake 'variables'.
 function install_pkg(pkg_dir, deploy_dir, variables)
