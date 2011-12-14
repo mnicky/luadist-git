@@ -1,0 +1,19 @@
+--- This file is part of LuaDist project
+
+name = "luadist-git"
+version = "0.1"
+
+desc = "Git based deployment of LuaDist modules."
+author = "Marek Srank"
+license = "MIT/X11"
+url = "http://www.luadist.org"
+maintainer = "Marek Srank"
+
+depends = {
+  "lua ~> 5.1",
+  "luafilesystem >= 1.4.1",
+}
+
+conflicts = {
+  "luadist",
+}

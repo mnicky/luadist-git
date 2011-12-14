@@ -1,0 +1,78 @@
+-- Luadist configuration
+
+module ("dist.config", package.seeall)
+
+-- TODO: get rid of lfs dependency in this module (replace with dist.sys)
+local lfs = require "lfs"
+
+-- Look for _PROGDIR by default
+local path = _PROGDIR
+if path then path = path:gsub("\\", "/") .. "/.." end
+
+-- System information
+version 	= "@DIST_VERSION@"   -- Current LuaDist version
+arch			= "@DIST_ARCH@"			 -- Host architecture
+type			= "@DIST_TYPE@"			 -- Host type
+
+-- Paths
+root_dir      = path or getenv("DIST_ROOT") or lfs.currentdir()
+temp_dir      = "tmp"
+cache_dir     = temp_dir .. "/cache"
+distinfos_dir = "share/luadist/dists"
+
+-- Files
+manifest_file = cache_dir .. "/dist.manifest"
+
+-- URLs
+repository_url = "https://github.com/LuaDist/Repository.git"
+
+-- Settings
+debug = false
+
+-- CMake variables
+variables	= {
+    --- Install defaults
+    INSTALL_BIN                       = "@INSTALL_BIN@",
+    INSTALL_LIB                       = "@INSTALL_LIB@",
+    INSTALL_INC                       = "@INSTALL_INC@",
+    INSTALL_ETC                       = "@INSTALL_ETC@",
+    INSTALL_LMOD                      = "@INSTALL_LMOD@",
+    INSTALL_CMOD                      = "@INSTALL_CMOD@",
+  
+	--- LuaDist specific variables
+	DIST_VERSION                       = version,
+	DIST_ARCH                          = arch,
+	DIST_TYPE                          = type,
+	
+	-- CMake specific setup
+	CMAKE_GENERATOR                    = "@CMAKE_GENERATOR@",
+	CMAKE_BUILD_TYPE                   = "@CMAKE_BUILD_TYPE@",
+
+    -- RPath functionality
+    CMAKE_SKIP_BUILD_RPATH             = "@CMAKE_SKIP_BUILD_RPATH@",
+    CMAKE_BUILD_WITH_INSTALL_RPATH     = "@CMAKE_BUILD_WITH_INSTALL_RPATH@",
+    CMAKE_INSTALL_RPATH                = "@CMAKE_INSTALL_RPATH@",
+    CMAKE_INSTALL_RPATH_USE_LINK_PATH  = "@CMAKE_INSTALL_RPATH_USE_LINK_PATH@",
+    CMAKE_INSTALL_NAME_DIR             = "@CMAKE_INSTALL_NAME_DIR@",
+
+	-- OSX specific
+	CMAKE_OSX_ARCHITECTURES            = "@CMAKE_OSX_ARCHITECTURES@",
+   
+    -- Fixes and overrides
+    LUA_LIBRARY = root_dir .. "/@INSTALL_LIB@/@CMAKE_SHARED_LIBRARY_PREFIX@lua@CMAKE_SHARED_LIBRARY_SUFFIX@",
+
+}
+
+-- Building
+cmake         = "cmake"
+ctest         = "ctest"
+build_command = cmake .. " --build . --target install --clean-first"
+
+if debug then
+    cmake = cmake .. " -DCMAKE_VERBOSE_MAKEFILE=true -DCMAKE_BUILD_TYPE=Debug"
+end
+
+-- Add -j option to make in case of unix makefiles to speed up builds
+if (variables.CMAKE_GENERATOR == "Unix Makefiles") then
+        build_command = build_command .. " -- -j6"
+end
