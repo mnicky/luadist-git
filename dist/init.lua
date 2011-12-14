@@ -29,6 +29,31 @@ function get_deployed(deploy_dir)
     return deployed
 end
 
+-- Download new 'manifest_file' from repository and returns it.
+-- Return nil and error message on error.
+function update_manifest(deploy_dir)
+    deploy_dir = deploy_dir or cfg.root_dir
+    assert(type(deploy_dir) == "string", "dist.update_manifest: Argument 'deploy_dir' is not a string.")
+
+    -- make backup and delete the old manifest file
+    sys.copy(deploy_dir .. "/" .. cfg.manifest_file, deploy_dir .. "/" .. cfg.temp_dir)
+    sys.delete(deploy_dir .. "/" .. cfg.manifest_file)
+
+    -- retrieve the new manifest
+    local manifest, err = mf.get_manifest()
+
+    -- if couldn't download new manifest then restore the backup and return error message
+    if not manifest then
+        sys.copy(deploy_dir .. "/" .. cfg.temp_dir .. "/" .. sys.extract_name(cfg.manifest_file), deploy_dir .. "/" .. cfg.cache_dir)
+        sys.delete(deploy_dir .. "/" .. cfg.temp_dir .. "/" .. sys.extract_name(cfg.manifest_file))
+        return nil, err
+    -- else delete the backup and return the new manifest
+    else
+        sys.delete(deploy_dir .. "/" .. cfg.temp_dir .. "/" .. sys.extract_name(cfg.manifest_file))
+        return manifest
+    end
+end
+
 -- Install package_names to deploy_dir
 function install(package_names, deploy_dir)
     if not package_names then return true end
