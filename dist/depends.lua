@@ -44,7 +44,7 @@ function get_installed(deploy_dir)
 
     -- from all directories of packages installed in deploy_dir
     for dir in sys.get_directory(distinfos_path) do
-        if sys.is_dir(distinfos_path .. "/" .. dir) then
+        if dir ~= "." and dir ~= ".." and sys.is_dir(distinfos_path .. "/" .. dir) then
             -- load the dist.info file
             for file in sys.get_directory(distinfos_path .. "/" .. dir) do
                 if sys.is_file(distinfos_path .. "/" .. dir .. "/" .. file) then
