@@ -36,3 +36,5 @@ install_lua_module ( dist.git dist/git.lua )
 install_lua_module ( dist.init dist/init.lua )
 install_lua_module ( dist.manifest dist/manifest.lua )
 install_lua_module ( dist.sys dist/sys.lua )
+
+install_data ( COPYRIGHT )
