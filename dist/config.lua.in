@@ -18,7 +18,7 @@ type			= "@DIST_TYPE@"			 -- Host type
 root_dir      = path or getenv("DIST_ROOT") or lfs.currentdir()
 temp_dir      = "tmp"
 cache_dir     = temp_dir .. "/cache"
-distinfos_dir = "share/luadist/dists"
+distinfos_dir = "share/luadist-git/dists"
 
 -- Files
 manifest_file = cache_dir .. "/dist.manifest"
@@ -38,12 +38,12 @@ variables	= {
     INSTALL_ETC                       = "@INSTALL_ETC@",
     INSTALL_LMOD                      = "@INSTALL_LMOD@",
     INSTALL_CMOD                      = "@INSTALL_CMOD@",
-  
+
 	--- LuaDist specific variables
 	DIST_VERSION                       = version,
 	DIST_ARCH                          = arch,
 	DIST_TYPE                          = type,
-	
+
 	-- CMake specific setup
 	CMAKE_GENERATOR                    = "@CMAKE_GENERATOR@",
 	CMAKE_BUILD_TYPE                   = "@CMAKE_BUILD_TYPE@",
@@ -57,7 +57,7 @@ variables	= {
 
 	-- OSX specific
 	CMAKE_OSX_ARCHITECTURES            = "@CMAKE_OSX_ARCHITECTURES@",
-   
+
     -- Fixes and overrides
     LUA_LIBRARY = root_dir .. "/@INSTALL_LIB@/@CMAKE_SHARED_LIBRARY_PREFIX@lua@CMAKE_SHARED_LIBRARY_SUFFIX@",
 

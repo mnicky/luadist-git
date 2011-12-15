@@ -39,6 +39,7 @@ function download_manifest(repository_url, dest_dir)
 
     -- clone the manifest repository and move the manifest to the cache
     if git.clone(repository_url, clone_dir, 1) then
+        sys.make_dir(dest_dir)
         sys.move(clone_dir .. "/dist.manifest", dest_dir)
         sys.delete(clone_dir)
         return true

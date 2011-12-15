@@ -40,6 +40,8 @@ function get_installed(deploy_dir)
     local distinfos_path = deploy_dir .. "/" .. cfg.distinfos_dir
     local manifest = {}
 
+    if not sys.is_dir(distinfos_path) then return {} end
+
     -- from all directories of packages installed in deploy_dir
     for dir in sys.get_directory(distinfos_path) do
         if sys.is_dir(distinfos_path .. "/" .. dir) then

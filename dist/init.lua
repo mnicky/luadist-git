@@ -290,6 +290,7 @@ function deploy_pkg(pkg_dir, deploy_dir)
     -- save modified 'dist.info' file
     info.files = sys.get_file_list(pkg_dir)
     local pkg_distinfo_dir = deploy_dir .. "/" .. cfg.distinfos_dir .. "/" .. info.name .. "-" .. info.version
+    sys.make_dir(deploy_dir .. "/" .. cfg.distinfos_dir)
     sys.make_dir(pkg_distinfo_dir)
 
     ok, err = mf.save_distinfo(info, pkg_distinfo_dir .. "/dist.info")
