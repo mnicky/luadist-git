@@ -61,22 +61,21 @@ end
 -- TODO add arch & type checks
 
 -- Return all packages needed in order to install 'package'
--- and with specified 'installed' packages in the system.
--- Optional version constraint can be added.
+-- and with specified 'installed' packages in the system using 'manifest'.
+-- Optional version 'constraint' can be added.
 --
 -- All returned packages (and their provides) are also inserted into the table 'installed'
 
 -- TODO change mutation of table 'installed' to returning it as a second return value
-local function get_packages_to_install(package, installed, constraint)
+local function get_packages_to_install(package, installed, manifest, constraint)
 
+    manifest = manifest or mf.get_manifest()
     constraint = constraint or ""
 
     assert(type(package) == "string", "depends.get_packages_to_install: Argument 'package' is not a string.")
     assert(type(installed) == "table", "depends.get_packages_to_install: Argument 'installed' is not a table.")
+    assert(type(manifest) == "table", "depends.get_packages_to_install: Argument 'manifest' is not a table.")
     assert(type(constraint) == "string", "depends.get_packages_to_install: Argument 'constraint' is not a string.")
-
-    -- get manifest
-    local manifest = mf.get_manifest()
 
     -- table of packages needed to be installed (will be returned)
     local to_install = {}
@@ -180,7 +179,7 @@ local function get_packages_to_install(package, installed, constraint)
                     local dep_name, dep_constraint = split_name_constraint(depend)
 
                         -- recursively call this function on the candidates of this pkg's dependency
-                        local depends_to_install, dep_err = get_packages_to_install(dep_name, installed, dep_constraint)
+                        local depends_to_install, dep_err = get_packages_to_install(dep_name, installed, manifest, dep_constraint)
 
                         -- if any suitable dependency packages were found, insert them to the 'to_install' table
                         if depends_to_install then
@@ -235,18 +234,19 @@ local function get_packages_to_install(package, installed, constraint)
     end
 end
 
--- Resolve dependencies and return all packages needed in order to install 'packages' into 'deploy_dir'
-function get_depends(packages, deploy_dir)
+-- Resolve dependencies and return all packages needed in order to install
+-- 'packages' into 'installed' ones, using 'manifest'.
+function get_depends(packages, installed, manifest)
     if not packages then return {} end
 
-    deploy_dir = deploy_dir or cfg.root_dir
+    manifest = manifest or mf.get_manifest()
+
     if type(packages) == "string" then packages = {packages} end
+    if type(installed) == "string" then installed = {installed} end
 
     assert(type(packages) == "table", "depends.get_dependencies: Argument 'packages' is not a table or string.")
-    assert(type(deploy_dir) == "string", "depends.get_dependencies: Argument 'deploy_dir' is not a string.")
-
-    -- find installed packages
-    local installed = get_installed(deploy_dir)
+    assert(type(installed) == "table", "depends.get_dependencies: Argument 'installed' is not a table or string.")
+    assert(type(manifest) == "table", "depends.get_dependencies: Argument 'manifest' is not a table.")
 
     -- add provided packages to installed ones
     for _, installed_pkg in pairs(installed) do
@@ -259,7 +259,7 @@ function get_depends(packages, deploy_dir)
 
     -- get packages needed to to satisfy dependencies
     for _, pkg in pairs(packages) do
-        local needed_to_install, err = get_packages_to_install(pkg, installed)
+        local needed_to_install, err = get_packages_to_install(pkg, installed, manifest)
 
         if needed_to_install then
             for _, needed_pkg in pairs(needed_to_install) do

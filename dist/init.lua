@@ -64,8 +64,14 @@ function install(package_names, deploy_dir)
     assert(type(package_names) == "table", "dist.install: Argument 'package_names' is not a table or string.")
     assert(type(deploy_dir) == "string", "dist.install: Argument 'deploy_dir' is not a string.")
 
+    -- find installed packages
+    local installed = depends.get_installed(deploy_dir)
+
+    -- get manifest
+    local manifest = mf.get_manifest()
+
     -- resolve dependencies
-    local dependencies, err = dep.get_depends(package_names, deploy_dir)
+    local dependencies, err = dep.get_depends(package_names, installed, manifest)
     if err then return nil, err end
 
     -- fetch the packages from repository
