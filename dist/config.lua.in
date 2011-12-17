@@ -15,7 +15,7 @@ arch			= "@DIST_ARCH@"			 -- Host architecture
 type			= "@DIST_TYPE@"			 -- Host type
 
 -- Paths
-root_dir      = path or getenv("DIST_ROOT") or lfs.currentdir()
+root_dir      = path or os.getenv("DIST_ROOT") or lfs.currentdir()
 temp_dir      = "tmp"
 cache_dir     = temp_dir .. "/cache"
 distinfos_dir = "share/luadist-git/dists"
