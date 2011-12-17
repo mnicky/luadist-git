@@ -99,7 +99,6 @@ local function get_packages_to_install(package, installed, manifest, constraint)
     -- whether pkg is already in installed table
     local pkg_is_installed = nil
 
-
     -- for all package candidates
     for k, pkg in pairs(candidates_to_install) do
 
@@ -115,12 +114,27 @@ local function get_packages_to_install(package, installed, manifest, constraint)
         -- remove this package from table
         candidates_to_install[k] = {}
 
-
         -- for all packages in table 'installed'
         for _, installed_pkg in pairs(installed) do
 
+            -- check if pkg doesn't provide an already installed_pkg
+            if pkg.provides then
+                local was_err = false
+
+                -- for all of pkg's provides
+                for _, provided_pkg in pairs(get_provides(pkg)) do
+                    if provided_pkg.name == installed_pkg.name then
+                        err = "Package '" .. pkg.name .. "-" .. pkg.version .. "' provides '" .. provided_pkg.name .. (provided_pkg.version and "-" .. provided_pkg.version or "") .. "' but package '" .. installed_pkg.name .. (installed_pkg.version and "-" .. installed_pkg.version or "") .. "' is already installed."
+                        was_err = true
+                        break
+                    end
+                end
+                if was_err then break end
+            end
+
+
             -- check if pkg is in installed
-            if pkg.name == installed_pkg.name then
+            if not err and pkg.name == installed_pkg.name then
 
                 -- if pkg was added due to some dependency, check if it's installed in satisfying version
                 if not pkg.version_wanted or satisfies_constraint(installed_pkg.version, pkg.version_wanted) then
@@ -146,7 +160,7 @@ local function get_packages_to_install(package, installed, manifest, constraint)
             if not err and installed_pkg.conflicts then
                 for _, conflict in pairs (installed_pkg.conflicts) do
                     if conflict == pkg.name then
-                        err = "Installed package '" .. installed_pkg.name .. "-" .. installed_pkg.version .. "' conflicts with package'" .. pkg.name .. "-" .. pkg.version .. "'."
+                        err = "Installed package '" .. installed_pkg.name .. "-" .. installed_pkg.version .. "' conflicts with package '" .. pkg.name .. "-" .. pkg.version .. "'."
                         break
                     end
                 end
