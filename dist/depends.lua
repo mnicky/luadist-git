@@ -240,7 +240,6 @@ local function get_packages_to_install(package, installed, manifest, constraint,
 
             -- if no error occured
             if not err then
-                --TODO add check if pkg wasn't added by some of it's dependency (circular dependencies)
 
                 -- add pkg and it's provides to the fake table of installed packages
                 table.insert(installed, pkg)
