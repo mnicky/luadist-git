@@ -124,9 +124,7 @@ local function get_packages_to_install(package, installed, manifest, constraint,
         for _, installed_pkg in pairs(installed) do
 
             -- check if pkg doesn't provide an already installed_pkg
-            if pkg.provides then
-                local was_err = false
-
+            if not err and pkg.provides then
                 -- for all of pkg's provides
                 for _, provided_pkg in pairs(get_provides(pkg)) do
                     if provided_pkg.name == installed_pkg.name then
@@ -135,9 +133,8 @@ local function get_packages_to_install(package, installed, manifest, constraint,
                         break
                     end
                 end
-                if was_err then break end
+                if err then break end
             end
-
 
             -- check if pkg is in installed
             if not err and pkg.name == installed_pkg.name then
@@ -156,21 +153,42 @@ local function get_packages_to_install(package, installed, manifest, constraint,
             if not err and pkg.conflicts then
                 for _, conflict in pairs (pkg.conflicts) do
                     if conflict == installed_pkg.name then
-                        err = "Package '" .. pkg.name .. "-" .. pkg.version .. "' conflicts with installed package '" .. installed_pkg.name .. "-" .. installed_pkg.version .. "'."
+                        err = "Package '" .. pkg.name .. (pkg.version and "-" .. pkg.version or "") .. "' conflicts with installed package '" .. installed_pkg.name .. (installed_pkg.version and "-" .. installed_pkg.version or "") .. "'."
                         break
                     end
                 end
+                if err then break end
             end
 
             -- check for conflicts of installed package with package to install
             if not err and installed_pkg.conflicts then
+
+                -- direct conflicts with 'pkg'
                 for _, conflict in pairs (installed_pkg.conflicts) do
                     if conflict == pkg.name then
                         err = "Installed package '" .. installed_pkg.name .. "-" .. installed_pkg.version .. "' conflicts with package '" .. pkg.name .. "-" .. pkg.version .. "'."
                         break
                     end
                 end
+                if err then break end
+
+                -- conflicts with 'provides' of 'pkg' (packages provided by package to install)
+                if not err and pkg.provides then
+                    for _, conflict in pairs (installed_pkg.conflicts) do
+                        -- for all of pkg's provides
+                        for _, provided_pkg in pairs(get_provides(pkg)) do
+                            if conflict == provided_pkg.name then
+                                err = "Installed package '" .. installed_pkg.name .. "-" .. installed_pkg.version .. "' conflicts with package '" .. provided_pkg.name .. (provided_pkg.version and "-" .. provided_pkg.version or "") .. "' provided by '" .. pkg.name .. "-" .. pkg.version .. "'."
+                                break
+                            end
+                        end
+                        if err then break end
+                    end
+                    if err then break end
+                end
             end
+
+            if err then break end
         end
 
         -- if pkg passed all of the above tests and isn't already installed
