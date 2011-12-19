@@ -58,8 +58,8 @@ function get_installed(deploy_dir)
     return manifest
 end
 
--- TODO add arch & type checks
-
+-- FIXME: add arch & type checks
+--
 -- Return all packages needed in order to install 'package'
 -- and with specified 'installed' packages in the system using 'manifest'.
 -- Optional version 'constraint' can be added.
@@ -69,8 +69,10 @@ end
 -- 'dependency_parents' is table of all packages encountered so far when resolving dependencies
 -- and is used to detect and deal with circular dependencies. Let it be 'nil'
 -- and it will do its job just fine :-).
-
--- TODO change mutation of table 'installed' to returning it as a second return value
+--
+-- TODO: change mutation of table 'installed' to returning it as a second return value
+-- TODO: create sth. like: pkg_full_name(name, version) which will be used when printing error messages
+--       to deal with the situation when the package's 'name' or 'version' attributes are nil or ""
 local function get_packages_to_install(package, installed, manifest, constraint, dependency_parents)
 
     manifest = manifest or mf.get_manifest()
@@ -260,6 +262,7 @@ local function get_packages_to_install(package, installed, manifest, constraint,
             if not err then
 
                 -- add pkg and it's provides to the fake table of installed packages
+                -- TODO add property indicating that the package is only 'fake_installed'
                 table.insert(installed, pkg)
                 if pkg.provides then
                     for _, provided_pkg in pairs(get_provides(pkg)) do
@@ -275,6 +278,7 @@ local function get_packages_to_install(package, installed, manifest, constraint,
 
                 -- clear tables of installed packages and packages to install to the original state
                 to_install = {}
+                -- FIXME don't get original state of installed from 'deploy_dir' (it's not in arguments of this fn!)
                 installed = get_installed(deploy_dir)
 
                 -- add provided packages to installed ones
@@ -298,6 +302,8 @@ end
 
 -- Resolve dependencies and return all packages needed in order to install
 -- 'packages' into 'installed' ones, using 'manifest'.
+--
+-- FIXME this fn mutates the 'installed' table (remove mutation from get_packages_to_install() !)
 function get_depends(packages, installed, manifest)
     if not packages then return {} end
 
