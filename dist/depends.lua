@@ -91,14 +91,15 @@ local function get_packages_to_install(package, installed, manifest, constraint,
     -- find candidates of packages wanted to install
     local candidates_to_install = find_packages(package, manifest)
 
-    if #candidates_to_install == 0 then
-        return nil, "No suitable candidate for package '" .. package .. (constraint or "") .. "' found."
-    end
-
     -- filter candidates according to the constraint if provided
     if constraint ~= "" then
         candidates_to_install = filter_packages(candidates_to_install, constraint)
     end
+
+    if #candidates_to_install == 0 then
+        return nil, "No suitable candidate for package '" .. package .. (constraint or "") .. "' found."
+    end
+
     sort_by_versions(candidates_to_install)
 
     -- last occured error
