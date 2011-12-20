@@ -291,6 +291,11 @@ end
 
 --- direct provides with package to install
 
+-- TODO: When dealing with this situation, luadist-git finds that a can be installed
+--       so it adds 'a' to the packages to install an then when checking the 'b' package,
+--       it treats 'a' as being installed, so it simply skips the 'b' package.
+--       Implement this in such a way that the user will be warned that he was
+--       trying to install two incompatible packages?
 -- a provides b, install a + b
 --[[
 tests.provides_direct_with_to_install_1 = function()
@@ -382,6 +387,9 @@ tests.provides_direct_and_depends_with_to_install_1 = function()
     assert(describe_packages(pkgs) == "a-scm b-scm", pkgs_fail_msg(pkgs))
 end
 
+-- TODO: To make luadist-git find the solution in this situation, it would have
+--       to try all possible permutations of packages to install (e.g. reversed)
+--       or use some logic engine. Implement it?
 -- a depends c, b provides c, install a + b
 --[[
 tests.provides_direct_and_depends_with_to_install_2 = function()
@@ -454,7 +462,6 @@ end
 --- direct provides with conflicts and package to install
 
 -- a provides b, b conflicts c, install a + c
---[[
 tests.provides_direct_and_conflicts_with_to_install_1 = function()
     local manifest, installed = {}, {}
     manifest.a = {name="a", version="scm", provides={"b"}}
@@ -464,10 +471,8 @@ tests.provides_direct_and_conflicts_with_to_install_1 = function()
     local pkgs, err = depends.get_depends({'a', 'c'}, installed, manifest);
     assert(describe_packages(pkgs) == "a-scm c-scm", pkgs_fail_msg(pkgs))
 end
---]]
 
 -- a provides b, b conflicts c, install c + a
---[[
 tests.provides_direct_and_conflicts_with_to_install_2 = function()
     local manifest, installed = {}, {}
     manifest.a = {name="a", version="scm", provides={"b"}}
@@ -477,7 +482,6 @@ tests.provides_direct_and_conflicts_with_to_install_2 = function()
     local pkgs, err = depends.get_depends({'c', 'a'}, installed, manifest);
     assert(describe_packages(pkgs) == "c-scm a-scm", pkgs_fail_msg(pkgs))
 end
---]]
 
 -- a provides b, c conflicts b, install a + c
 tests.provides_direct_and_conflicts_with_to_install_3 = function()
@@ -505,7 +509,6 @@ end
 --- direct provides with conflicts and installed package
 
 -- a installed, a provides b, b conflicts c, install c
---[[
 tests.provides_direct_and_conflicts_with_installed_1 = function()
     local manifest, installed = {}, {}
     manifest.a = {name="a", version="scm", provides={"b"}}
@@ -516,10 +519,9 @@ tests.provides_direct_and_conflicts_with_installed_1 = function()
     local pkgs, err = depends.get_depends({'c'}, installed, manifest);
     assert(describe_packages(pkgs) == "c-scm", pkgs_fail_msg(pkgs))
 end
---]]
 
 -- a installed, a provides b, c conflicts b, install c
-tests.provides_direct_and_conflicts_with_installed_1 = function()
+tests.provides_direct_and_conflicts_with_installed_2 = function()
     local manifest, installed = {}, {}
     manifest.a = {name="a", version="scm", provides={"b"}}
     manifest.b = {name="b", version="scm",}
@@ -529,10 +531,6 @@ tests.provides_direct_and_conflicts_with_installed_1 = function()
     local pkgs, err = depends.get_depends({'c'}, installed, manifest);
     assert(describe_packages(pkgs) == nil, pkgs_fail_msg(pkgs))
 end
-
---- the same provides with conflicts and package to install
-
---- the same provides with conflicts and installed package
 
 
 --- === PROVIDES + DEPENDS + CONFLICTS ===
@@ -591,6 +589,19 @@ tests.provides_direct_depends_and_conflicts_with_installed_4 = function()
     assert(describe_packages(pkgs) == "b-scm", pkgs_fail_msg(pkgs))
 end
 
+-- a installed, a provides b, b depends c, d conflicts c, install c
+tests.provides_direct_depends_and_conflicts_with_installed_5 = function()
+    local manifest, installed = {}, {}
+    manifest.a = {name="a", version="scm", provides={"b"}}
+    manifest.b = {name="b", version="scm", depends={"c"}}
+    manifest.c = {name="c", version="scm",}
+    manifest.d = {name="d", version="scm", conflicts={"c"}}
+    installed.a = manifest.a
+
+    local pkgs, err = depends.get_depends({'c'}, installed, manifest);
+    assert(describe_packages(pkgs) == "c-scm", pkgs_fail_msg(pkgs))
+end
+
 --- direct provides with dependencies + conflicts and package to install
 
 -- a provides c, b depends c, c depends d, d conflicts a, install a + b
@@ -617,6 +628,8 @@ tests.provides_direct_depends_and_conflicts_with_to_install_2 = function()
     assert(describe_packages(pkgs) == "a-scm b-scm", pkgs_fail_msg(pkgs))
 end
 
+
+-- TODO: Non-standard situation so luadist-git cannot find the solution. Implement it?
 -- b provides c, a depends c, c depends d, d conflicts a, install a + b
 --[[
 tests.provides_direct_depends_and_conflicts_with_to_install_3 = function()
@@ -631,6 +644,7 @@ tests.provides_direct_depends_and_conflicts_with_to_install_3 = function()
 end
 --]]
 
+-- TODO: Non-standard situation so luadist-git cannot find the solution. Implement it?
 -- b provides c, a depends c, c depends d, a conflicts d, install a + b
 --[[
 tests.provides_direct_depends_and_conflicts_with_to_install_4 = function()
@@ -658,7 +672,6 @@ tests.provides_direct_depends_and_conflicts_with_to_install_5 = function()
 end
 
 -- a depends b, b provides c, d depends e, e provides f, f conflicts c, install a + d
---[[
 tests.provides_direct_depends_and_conflicts_with_to_install_6 = function()
     local manifest, installed = {}, {}
     manifest.a = {name="a", version="scm", depends={"b"}}
@@ -669,12 +682,10 @@ tests.provides_direct_depends_and_conflicts_with_to_install_6 = function()
     manifest.f = {name="f", version="scm", conflicts={"c"}}
 
     local pkgs, err = depends.get_depends({'a', 'd'}, installed, manifest);
-    assert(describe_packages(pkgs) == nil, pkgs_fail_msg(pkgs))
+    assert(describe_packages(pkgs) == "b-scm a-scm e-scm d-scm", pkgs_fail_msg(pkgs))
 end
---]]
 
 -- a depends b, b provides c, c conflicts f, d depends e, e provides f, install a + d
---[[
 tests.provides_direct_depends_and_conflicts_with_to_install_7 = function()
     local manifest, installed = {}, {}
     manifest.a = {name="a", version="scm", depends={"b"}}
@@ -685,13 +696,8 @@ tests.provides_direct_depends_and_conflicts_with_to_install_7 = function()
     manifest.f = {name="f", version="scm",}
 
     local pkgs, err = depends.get_depends({'a', 'd'}, installed, manifest);
-    assert(describe_packages(pkgs) == nil, pkgs_fail_msg(pkgs))
+    assert(describe_packages(pkgs) == "b-scm a-scm e-scm d-scm", pkgs_fail_msg(pkgs))
 end
---]]
-
---- the same provides with dependencies + conflicts and installed package
---- the same provides with dependencies + conflicts and package to install
-
 
 --- === REPLACES ===
 
