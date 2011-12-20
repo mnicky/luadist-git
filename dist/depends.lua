@@ -125,19 +125,6 @@ local function get_packages_to_install(package, installed, manifest, constraint,
         -- for all packages in table 'installed'
         for _, installed_pkg in pairs(installed) do
 
-            -- check if pkg doesn't provide an already installed_pkg
-            if not err and pkg.provides then
-                -- for all of pkg's provides
-                for _, provided_pkg in pairs(get_provides(pkg)) do
-                    if provided_pkg.name == installed_pkg.name then
-                        err = "Package '" .. pkg.name .. "-" .. pkg.version .. "' provides '" .. provided_pkg.name .. (provided_pkg.version and "-" .. provided_pkg.version or "") .. "' but package '" .. installed_pkg.name .. (installed_pkg.version and "-" .. installed_pkg.version or "") .. "' is already installed."
-                        was_err = true
-                        break
-                    end
-                end
-                if err then break end
-            end
-
             -- check if pkg is in installed
             if not err and pkg.name == installed_pkg.name then
 
@@ -149,6 +136,18 @@ local function get_packages_to_install(package, installed, manifest, constraint,
                     err = "Package '" .. pkg.name .. pkg.version_wanted .. "' needed as dependency, but installed at version '" .. installed_pkg.version .. "'."
                     break
                 end
+            end
+
+            -- check if pkg doesn't provide an already installed_pkg
+            if not err and pkg.provides then
+                -- for all of pkg's provides
+                for _, provided_pkg in pairs(get_provides(pkg)) do
+                    if provided_pkg.name == installed_pkg.name then
+                        err = "Package '" .. pkg.name .. "-" .. pkg.version .. "' provides '" .. provided_pkg.name .. (provided_pkg.version and "-" .. provided_pkg.version or "") .. "' but package '" .. installed_pkg.name .. (installed_pkg.version and "-" .. installed_pkg.version or "") .. "' is already installed."
+                        break
+                    end
+                end
+                if err then break end
             end
 
             -- check for conflicts of package to install with installed package
@@ -289,6 +288,9 @@ local function get_packages_to_install(package, installed, manifest, constraint,
                 end
             end
 
+        -- if pkg is already installed, skip checking its other candidates
+        elseif pkg_is_installed then
+            break
         end
     end
 
