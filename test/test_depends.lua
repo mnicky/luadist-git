@@ -24,12 +24,31 @@ local function describe_packages(pkgs)
     return str
 end
 
+-- Return test fail message.
 local function pkgs_fail_msg(pkgs)
     if not pkgs then
         return "TEST FAILED!!! - Returned packages were: 'nil'."
     else
         return "TEST FAILED!!! - Returned packages were: '" .. describe_packages(pkgs) .. "'."
     end
+end
+
+-- Run all the 'tests' and display results.
+local function run_tests(tests)
+    local passed = 0
+    local failed = 0
+
+    for _, test in pairs(tests) do
+        local ok, err = pcall(test)
+        if ok then
+            passed = passed + 1
+        else
+            failed = failed + 1
+            print(err)
+        end
+    end
+
+    print("Passed " .. passed .. "/" .. passed + failed .. " tests (" .. failed .. " failed).")
 end
 
 
@@ -40,7 +59,7 @@ local tests = {}
 -- TODO add tests with the order of packages to install reversed
 
 
---- ========== DEPENDENCY RESOLVING ==========
+--- ========== DEPENDENCY RESOLVING TESTS ==========
 
 --- === DEPENDS ===
 
@@ -704,9 +723,226 @@ end
 -- 'replaces' relationship hasn't been implemented in luadist-git yet
 
 
---- ========== VERSION RESOLVING =============
+--- ========== VERSION RESOLVING TESTS  ============================================
 
--- TODO add version tests
+--- check if the newest package version is chosen to install
 
--- Run all the tests.
-for _, test in pairs(tests) do test() end
+-- a.1 & a.2 avalable, install a, check if the newest 'a' version is chosen
+tests.version_install_newest_1 = function()
+    local manifest, installed = {}, {}
+    manifest.a1 = {name="a", version="1"}
+    manifest.a2 = {name="a", version="2"}
+
+    local pkgs, err = depends.get_depends({'a'}, installed, manifest);
+    assert(describe_packages(pkgs) == "a-2", pkgs_fail_msg(pkgs))
+end
+
+-- a depends b, b.1 & b.2 avalable, install a, check if the newest 'b' version is chosen
+tests.version_install_newest_2 = function()
+    local manifest, installed = {}, {}
+    manifest.a = {name="a", version="scm", depends={"b"}}
+    manifest.b1 = {name="b", version="1"}
+    manifest.b2 = {name="b", version="2"}
+
+    local pkgs, err = depends.get_depends({'a'}, installed, manifest);
+    assert(describe_packages(pkgs) == "b-2 a-scm", pkgs_fail_msg(pkgs))
+end
+
+-- provide more version types and check if the newest one is chosen to install
+tests.version_install_newest_3 = function()
+    local manifest, installed = {}, {}
+    manifest.a1 = {name="a", version="scm", depends={"b"}}
+    manifest.a2 = {name="a", version="1", depends={"b"}}
+
+    manifest.b1 = {name="b", version="1.99", depends={"c"}}
+    manifest.b2 = {name="b", version="2.0", depends={"c"}}
+
+    manifest.c1 = {name="c", version="2alpha", depends={"d"}}
+    manifest.c2 = {name="c", version="2beta", depends={"d"}}
+
+    manifest.d1 = {name="d", version="1rc2", depends={"e"}}
+    manifest.d2 = {name="d", version="1rc3", depends={"e"}}
+
+    manifest.e1 = {name="e", version="3.1beta", depends={"f"}}
+    manifest.e2 = {name="e", version="3.1pre", depends={"f"}}
+
+    manifest.f1 = {name="f", version="3.1pre", depends={"g"}}
+    manifest.f2 = {name="f", version="3.1rc", depends={"g"}}
+
+    manifest.g1 = {name="g", version="1rc", depends={"h"}}
+    manifest.g2 = {name="g", version="1scm", depends={"h"}}
+
+    manifest.h1 = {name="h", version="1alpha2",}
+    manifest.h2 = {name="h", version="1work2",}
+
+    local pkgs, err = depends.get_depends({'a'}, installed, manifest);
+    assert(describe_packages(pkgs) == "h-1alpha2 g-1scm f-3.1rc e-3.1pre d-1rc3 c-2beta b-2.0 a-1", pkgs_fail_msg(pkgs))
+end
+
+-- provide more version types and check if the newest one is chosen to install
+tests.version_install_newest_4 = function()
+    local manifest, installed = {}, {}
+    manifest.a1 = {name="a", version="1.1", depends={"b"}}
+    manifest.a2 = {name="a", version="2alpha", depends={"b"}}
+
+    manifest.b1 = {name="b", version="1.2", depends={"c"}}
+    manifest.b2 = {name="b", version="1.2beta", depends={"c"}}
+
+    manifest.c1 = {name="c", version="1rc3", depends={"d"}}
+    manifest.c2 = {name="c", version="1.1rc2", depends={"d"}}
+
+    manifest.d1 = {name="d", version="2.1beta3",}
+    manifest.d2 = {name="d", version="2.2alpha2",}
+
+    local pkgs, err = depends.get_depends({'a'}, installed, manifest);
+    assert(describe_packages(pkgs) == "d-2.2alpha2 c-1.1rc2 b-1.2 a-2alpha", pkgs_fail_msg(pkgs))
+end
+
+
+--- check if version in depends is correctly used
+
+tests.version_of_depends_1 = function()
+    local manifest, installed = {}, {}
+    manifest.a = {name="a", version="1.0", depends={"b<=1"}}
+
+    manifest.b1 = {name="b", version="1.0", depends={"c>=2"}}
+    manifest.b2 = {name="b", version="2.0", depends={"c>=2"}}
+
+    manifest.c1 = {name="c", version="1.9", depends={"d~>3.3"}}
+    manifest.c2 = {name="c", version="2.0", depends={"d~>3.3"}}
+    manifest.c3 = {name="c", version="2.1", depends={"d~>3.3"}}
+
+    manifest.d1 = {name="d", version="3.2",}
+    manifest.d2 = {name="d", version="3.3",}
+    manifest.d3 = {name="d", version="3.3.1",}
+    manifest.d4 = {name="d", version="3.3.2",}
+    manifest.d5 = {name="d", version="3.4",}
+
+    local pkgs, err = depends.get_depends({'a'}, installed, manifest);
+    assert(describe_packages(pkgs) == "d-3.3.2 c-2.1 b-1.0 a-1.0", pkgs_fail_msg(pkgs))
+end
+
+tests.version_of_depends_2 = function()
+    local manifest, installed = {}, {}
+    manifest.a = {name="a", version="1.0", depends={"b~=1.0"}}
+
+    manifest.b1 = {name="b", version="1.0", depends={"c<2.1"}}
+    manifest.b2 = {name="b", version="0.9", depends={"c<2.1"}}
+
+    manifest.c1 = {name="c", version="2.0.9", depends={"d==4.4alpha"}}
+    manifest.c2 = {name="c", version="2.1.0", depends={"d==4.4alpha"}}
+    manifest.c3 = {name="c", version="2.1.1", depends={"d==4.4alpha"}}
+
+    manifest.d1 = {name="d", version="4.0",}
+    manifest.d2 = {name="d", version="4.5",}
+    manifest.d3 = {name="d", version="4.4beta",}
+    manifest.d4 = {name="d", version="4.4alpha",}
+    manifest.d5 = {name="d", version="4.4",}
+
+    local pkgs, err = depends.get_depends({'a'}, installed, manifest);
+    assert(describe_packages(pkgs) == "d-4.4alpha c-2.0.9 b-0.9 a-1.0", pkgs_fail_msg(pkgs))
+end
+
+tests.version_of_depends_3 = function()
+    local manifest, installed = {}, {}
+    manifest.a = {name="a", version="1.0", depends={"b>1.2"}}
+
+    manifest.b1 = {name="b", version="1.2", depends={"c~=2.1.1"}}
+    manifest.b2 = {name="b", version="1.2alpha", depends={"c~=2.1.1"}}
+    manifest.b3 = {name="b", version="1.2beta", depends={"c~=2.1.1"}}
+    manifest.b5 = {name="b", version="1.3rc", depends={"c~=2.1.1"}}
+    manifest.b4 = {name="b", version="1.3", depends={"c~=2.1.1"}}
+
+    manifest.c1 = {name="c", version="2.0.9"}
+    manifest.c3 = {name="c", version="2.1.1"}
+    manifest.c2 = {name="c", version="2.1.0"}
+
+    local pkgs, err = depends.get_depends({'a'}, installed, manifest);
+    assert(describe_packages(pkgs) == "c-2.1.0 b-1.3 a-1.0", pkgs_fail_msg(pkgs))
+end
+--]]
+
+--- check if the installed package is in needed version
+
+-- a-1.2 installed, b depends a>=1.2, install b
+tests.version_of_installed_1 = function()
+    local manifest, installed = {}, {}
+    manifest.a = {name="a", version="1.2",}
+    manifest.b = {name="b", version="1.0", depends={"a>=1.2"}}
+    installed.a = manifest.a
+
+    local pkgs, err = depends.get_depends({'b'}, installed, manifest);
+    assert(describe_packages(pkgs) == "b-1.0", pkgs_fail_msg(pkgs))
+end
+
+-- a-1.2 installed, b depends a>=1.4, install b
+tests.version_of_installed_2 = function()
+    local manifest, installed = {}, {}
+    manifest.a = {name="a", version="1.2",}
+    manifest.b = {name="b", version="1.0", depends={"a>=1.4"}}
+    installed.a = manifest.a
+
+    local pkgs, err = depends.get_depends({'b'}, installed, manifest);
+    assert(describe_packages(pkgs) == nil, pkgs_fail_msg(pkgs))
+end
+
+-- a-1.2 installed, a-1.3 also available, b depends a>=1.3, install b
+tests.version_of_installed_3 = function()
+    local manifest, installed = {}, {}
+    manifest.a12 = {name="a", version="1.2",}
+    manifest.a13 = {name="a", version="1.3",}
+    manifest.b = {name="b", version="1.0", depends={"a>=1.3"}}
+    installed.a12 = manifest.a12
+
+    local pkgs, err = depends.get_depends({'b'}, installed, manifest);
+    assert(describe_packages(pkgs) == nil, pkgs_fail_msg(pkgs))
+end
+
+
+--- ========== OTHER EXCEPTIONAL STATES  =====================================
+
+--- states when no packages to install are found
+
+-- when no such package exists
+tests.no_packages_to_install_1 = function()
+    local manifest, installed = {}, {}
+    manifest.a = {name="a", version="1.0",}
+
+    local pkgs, err = depends.get_depends({'x'}, installed, manifest);
+    assert(describe_packages(pkgs) == nil, pkgs_fail_msg(pkgs))
+end
+
+-- when no such dependency exists
+tests.no_packages_to_install_2 = function()
+    local manifest, installed = {}, {}
+    manifest.a = {name="a", version="1.0", depends={"x"}}
+
+    local pkgs, err = depends.get_depends({'a'}, installed, manifest);
+    assert(describe_packages(pkgs) == nil, pkgs_fail_msg(pkgs))
+end
+
+-- when no such dependency version exists
+tests.no_packages_to_install_3 = function()
+    local manifest, installed = {}, {}
+    manifest.a = {name="a", version="1.0", depends={"b>1.0"}}
+    manifest.b = {name="b", version="0.9",}
+
+    local pkgs, err = depends.get_depends({'a'}, installed, manifest);
+    assert(describe_packages(pkgs) == nil, pkgs_fail_msg(pkgs))
+end
+
+-- when all required packages are installed
+tests.no_packages_to_install_4 = function()
+    local manifest, installed = {}, {}
+    manifest.a = {name="a", version="1.0",}
+    manifest.b = {name="b", version="0.9",}
+    installed.a = manifest.a
+    installed.b = manifest.b
+
+    local pkgs, err = depends.get_depends({'a', 'b'}, installed, manifest);
+    assert(describe_packages(pkgs) == "", pkgs_fail_msg(pkgs))
+end
+
+
+run_tests(tests)
+
