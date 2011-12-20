@@ -122,6 +122,9 @@ local function get_packages_to_install(package, installed, manifest, constraint,
         -- remove this package from table
         candidates_to_install[k] = {}
 
+        -- TODO: remove unnecessary 'not err' checks or keep them
+        --       as the protection against future buggy code changes?
+
         -- for all packages in table 'installed'
         for _, installed_pkg in pairs(installed) do
 
@@ -188,8 +191,6 @@ local function get_packages_to_install(package, installed, manifest, constraint,
                     if err then break end
                 end
             end
-
-            if err then break end
         end
 
         -- if pkg passed all of the above tests and isn't already installed
