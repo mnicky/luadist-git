@@ -38,3 +38,6 @@ install_lua_module ( dist.manifest dist/manifest.lua )
 install_lua_module ( dist.sys dist/sys.lua )
 
 install_data ( COPYRIGHT )
+
+install_test ( test/ )
+add_lua_test ( test/test_depends.lua )
