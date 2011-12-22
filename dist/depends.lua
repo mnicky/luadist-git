@@ -69,8 +69,6 @@ end
 -- and it will do its job just fine :-).
 --
 -- TODO: change mutation of table 'installed' to returning it as a second return value
--- TODO: create sth. like: pkg_full_name(name, version) which will be used when printing error messages
---       to deal with the situation when the package's 'name' or 'version' attributes are nil or ""
 local function get_packages_to_install(package, installed, manifest, constraint, dependency_parents)
 
     manifest = manifest or mf.get_manifest()
@@ -138,7 +136,7 @@ local function get_packages_to_install(package, installed, manifest, constraint,
                     pkg_is_installed = true
                     break
                 else
-                    err = "Package '" .. pkg.name .. pkg.version_wanted .. "' needed as dependency, but installed at version '" .. installed_pkg.version .. "'."
+                    err = "Package '" .. pkg_full_name(pkg.name, pkg.version_wanted) .. "' needed as dependency, but installed at version '" .. installed_pkg.version .. "'."
                     break
                 end
             end
@@ -148,7 +146,7 @@ local function get_packages_to_install(package, installed, manifest, constraint,
                 -- for all of pkg's provides
                 for _, provided_pkg in pairs(get_provides(pkg)) do
                     if provided_pkg.name == installed_pkg.name then
-                        err = "Package '" .. pkg.name .. "-" .. pkg.version .. "' provides '" .. provided_pkg.name .. (provided_pkg.version and "-" .. provided_pkg.version or "") .. "' but package '" .. installed_pkg.name .. (installed_pkg.version and "-" .. installed_pkg.version or "") .. "' is already installed."
+                        err = "Package '" .. pkg_full_name(pkg.name, pkg.version) .. "' provides '" .. pkg_full_name(provided_pkg.name, provided_pkg.version) .. "' but package '" .. pkg_full_name(installed_pkg.name, installed_pkg.version) .. "' is already installed."
                         break
                     end
                 end
@@ -159,7 +157,7 @@ local function get_packages_to_install(package, installed, manifest, constraint,
             if not err and pkg.conflicts then
                 for _, conflict in pairs (pkg.conflicts) do
                     if conflict == installed_pkg.name then
-                        err = "Package '" .. pkg.name .. (pkg.version and "-" .. pkg.version or "") .. "' conflicts with installed package '" .. installed_pkg.name .. (installed_pkg.version and "-" .. installed_pkg.version or "") .. "'."
+                        err = "Package '" .. pkg_full_name(pkg.name, pkg.version) .. "' conflicts with installed package '" .. pkg_full_name(installed_pkg.name, installed_pkg.version) .. "'."
                         break
                     end
                 end
@@ -172,7 +170,7 @@ local function get_packages_to_install(package, installed, manifest, constraint,
                 -- direct conflicts with 'pkg'
                 for _, conflict in pairs (installed_pkg.conflicts) do
                     if conflict == pkg.name then
-                        err = "Installed package '" .. installed_pkg.name .. "-" .. installed_pkg.version .. "' conflicts with package '" .. pkg.name .. "-" .. pkg.version .. "'."
+                        err = "Installed package '" .. pkg_full_name(installed_pkg.name, installed_pkg.version) .. "' conflicts with package '" .. pkg_full_name(pkg.name, pkg.version) .. "'."
                         break
                     end
                 end
@@ -184,7 +182,7 @@ local function get_packages_to_install(package, installed, manifest, constraint,
                         -- for all of pkg's provides
                         for _, provided_pkg in pairs(get_provides(pkg)) do
                             if conflict == provided_pkg.name then
-                                err = "Installed package '" .. installed_pkg.name .. "-" .. installed_pkg.version .. "' conflicts with package '" .. provided_pkg.name .. (provided_pkg.version and "-" .. provided_pkg.version or "") .. "' provided by '" .. pkg.name .. "-" .. pkg.version .. "'."
+                                err = "Installed package '" .. pkg_full_name(installed_pkg.name, installed_pkg.version) .. "' conflicts with package '" .. pkg_full_name(provided_pkg.name, provided_pkg.version) .. "' provided by '" .. pkg_full_name(pkg.name, pkg.version) .. "'."
                                 break
                             end
                         end
@@ -244,13 +242,13 @@ local function get_packages_to_install(package, installed, manifest, constraint,
                                 table.insert(to_install, depend_to_install)
                             end
                         else
-                            err = "Error getting dependency of '" .. pkg.name .. "-" .. pkg.version .. "': " .. dep_err
+                            err = "Error getting dependency of '" .. pkg_full_name(pkg.name, pkg.version) .. "': " .. dep_err
                             break
                         end
 
                     -- if circular dependencies detected
                     else
-                        err = "Error getting dependency of '" .. pkg.name .. "-" .. pkg.version .. "': '" .. dep_name .. "' is a circular dependency."
+                        err = "Error getting dependency of '" .. pkg_full_name(pkg.name, pkg.version) .. "': '" .. dep_name .. "' is a circular dependency."
                         break
                     end
                 end
@@ -421,6 +419,25 @@ function filter_packages_by_arch_and_type(packages, req_arch, req_type)
     end
 
     return passed_pkgs
+end
+
+-- Return full package name and version string. When version is nil then return
+-- only name and when name is nil then return '<unknown>'.
+function pkg_full_name(name, version)
+
+    name = name or ""
+    version = version or ""
+
+    if type(version) == "number" then version = tostring(version) end
+
+    assert(type(name) == "string", "depends.pkg_full_name: Argument 'name' is not a string.")
+    assert(type(version) == "string", "depends.pkg_full_name: Argument 'version' is not a string.")
+
+    if name == "" then
+        return "<unknown>"
+    else
+        return name .. ((version ~= "") and "-" .. version or "")
+    end
 end
 
 -- Sort table of packages descendingly by versions (newer ones are moved to the top).
