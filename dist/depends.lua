@@ -84,6 +84,8 @@ local function get_packages_to_install(package, installed, manifest, constraint,
     -- table of packages needed to be installed (will be returned)
     local to_install = {}
 
+    -- FIXME: when package is 'installed' but not in 'manifest', it's considered not found
+
     -- find candidates of packages wanted to install
     local candidates_to_install = find_packages(package, manifest)
 
