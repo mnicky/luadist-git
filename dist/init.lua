@@ -2,6 +2,8 @@
 
 module ("dist", package.seeall)
 
+-- TODO refactor functions in this module (create module package?)
+
 local cfg = require "dist.config"
 local dep = require "dist.depends"
 local git = require "dist.git"
