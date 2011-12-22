@@ -202,54 +202,60 @@ local function get_packages_to_install(package, installed, manifest, constraint,
                 -- insert this pkg into the stack of circular dependencies detection
                 table.insert(dependency_parents, pkg.name)
 
+                -- collect all OS specific dependencies of pkg
+                for k, depend in pairs(pkg.depends) do
+
+                    -- if 'depend' is a table of OS specific dependencies
+                    -- for this arch, add them to the normal dependencies of pkg
+                    if type(depend) == "table" then
+
+                        if k == cfg.arch then
+                            for _, os_specific_depend in pairs(depend) do
+                                table.insert(pkg.depends, os_specific_depend)
+                            end
+                        end
+                    end
+                end
+
                 -- for all dependencies of pkg
                 for _, depend in pairs(pkg.depends) do
 
-                    -- TODO add parsing of OS specific dependencies
-                    -- something like:
-                    --
-                    -- ['depends'] = {
-                    --               ['Linux'] = {
-                    --                           [[unixodbc > 2.2]],
-                    --                           }
-                    --               }
-                    --
-                    -- (I didn't know about these until recently when I accidentally found one)
-                    --
-                    -- if type(depend) == "table" then
-                    -- end
+                    -- skip tables of OS specific dependencies
+                    if type(depend) ~= "table" then
 
-                    local dep_name, dep_constraint = split_name_constraint(depend)
+                        local dep_name, dep_constraint = split_name_constraint(depend)
 
-                    -- detect circular dependencies using 'dependency_parents'
-                    local is_circular_dependency = false
-                    for _, parent in pairs(dependency_parents) do
-                        if dep_name == parent then
-                            is_circular_dependency = true
-                            break
-                        end
-                    end
-
-                    -- if circular dependencies not detected
-                    if not is_circular_dependency then
-
-                        -- recursively call this function on the candidates of this pkg's dependency
-                        local depends_to_install, dep_err = get_packages_to_install(dep_name, installed, manifest, dep_constraint, dependency_parents)
-
-                        -- if any suitable dependency packages were found, insert them to the 'to_install' table
-                        if depends_to_install then
-                            for _, depend_to_install in pairs(depends_to_install) do
-                                table.insert(to_install, depend_to_install)
+                        -- detect circular dependencies using 'dependency_parents'
+                        local is_circular_dependency = false
+                        for _, parent in pairs(dependency_parents) do
+                            if dep_name == parent then
+                                is_circular_dependency = true
+                                break
                             end
+                        end
+
+                        -- if circular dependencies not detected
+                        if not is_circular_dependency then
+
+                            -- recursively call this function on the candidates of this pkg's dependency
+                            local depends_to_install, dep_err = get_packages_to_install(dep_name, installed, manifest, dep_constraint, dependency_parents)
+
+                            -- if any suitable dependency packages were found, insert them to the 'to_install' table
+                            if depends_to_install then
+                                for _, depend_to_install in pairs(depends_to_install) do
+                                    table.insert(to_install, depend_to_install)
+                                end
+                            else
+                                err = "Error getting dependency of '" .. pkg_full_name(pkg.name, pkg.version) .. "': " .. dep_err
+                                break
+                            end
+
+                        -- if circular dependencies detected
                         else
-                            err = "Error getting dependency of '" .. pkg_full_name(pkg.name, pkg.version) .. "': " .. dep_err
+                            err = "Error getting dependency of '" .. pkg_full_name(pkg.name, pkg.version) .. "': '" .. dep_name .. "' is a circular dependency."
                             break
                         end
 
-                    -- if circular dependencies detected
-                    else
-                        err = "Error getting dependency of '" .. pkg_full_name(pkg.name, pkg.version) .. "': '" .. dep_name .. "' is a circular dependency."
-                        break
                     end
                 end
 

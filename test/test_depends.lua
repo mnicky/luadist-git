@@ -1,5 +1,6 @@
 -- Tests of LuaDist's dependency resolving
 
+local cfg = require "dist.config"
 local depends = require "dist.depends"
 
 -- Return string describing packages and versions in 'pkgs' table, separated by space.
@@ -991,14 +992,14 @@ tests.arch_type_checks_4 = function()
 end
 
 -- only some packages have required arch & type
-tests.arch_type_checks_4 = function()
+tests.arch_type_checks_5 = function()
     local manifest, installed = {}, {}
     manifest.a1 = {name="a", arch="notUniversal", type="all", version="1.1",}
     manifest.a2 = {name="a", arch="Universal", type="not_all", version="1.0",}
     manifest.a3 = {name="a", arch="notUniversal", type="not_all", version="0.9",}
     manifest.a4 = {name="a", arch="Universal", type="all", version="0.8",}
 
-    manifest.b1 = {name="b", arch="notUniversal", type="nall", version="1.9",}
+    manifest.b1 = {name="b", arch="notUniversal", type="all", version="1.9",}
     manifest.b2 = {name="b", arch="Universal", type="not_all", version="1.8",}
     manifest.b3 = {name="b", arch="notUniversal", type="not_all", version="1.7",}
     manifest.b4 = {name="b", arch="Universal", type="source", version="1.5",}
@@ -1007,5 +1008,39 @@ tests.arch_type_checks_4 = function()
     assert(describe_packages(pkgs) == "a-0.8 b-1.5", pkgs_fail_msg(pkgs))
 end
 
-run_tests(tests)
+--- ========== OS specific dependencies  =====================================
 
+-- only OS specific dependencies
+tests.os_specific_depends_1 = function()
+    local manifest, installed = {}, {}
+    manifest.a = {name="a", arch="Universal", type="all", version="1.0", depends={[cfg.arch] = {"b", "c"}}}
+    manifest.b = {name="b", arch="Universal", type="all", version="0.9",}
+    manifest.c = {name="c", arch="Universal", type="all", version="0.9",}
+
+    local pkgs, err = depends.get_depends({'a'}, installed, manifest);
+    assert(describe_packages(pkgs) == "b-0.9 c-0.9 a-1.0", pkgs_fail_msg(pkgs))
+end
+
+-- OS specific dependency of other arch
+tests.os_specific_depends_2 = function()
+    local manifest, installed = {}, {}
+    manifest.a = {name="a", arch="Universal", type="all", version="1.0", depends={['other'] = {"b"}}}
+    manifest.b = {name="b", arch="Universal", type="all", version="0.9",}
+
+    local pkgs, err = depends.get_depends({'a'}, installed, manifest);
+    assert(describe_packages(pkgs) == "a-1.0", pkgs_fail_msg(pkgs))
+end
+
+-- normal and OS specific dependencies
+tests.os_specific_depends_3 = function()
+    local manifest, installed = {}, {}
+    manifest.a = {name="a", arch="Universal", type="all", version="1.0", depends={"c", [cfg.arch] = {"b"}, "d"}}
+    manifest.b = {name="b", arch="Universal", type="all", version="0.9",}
+    manifest.c = {name="c", arch="Universal", type="all", version="0.9",}
+    manifest.d = {name="d", arch="Universal", type="all", version="0.9",}
+
+    local pkgs, err = depends.get_depends({'a'}, installed, manifest);
+    assert(describe_packages(pkgs) == "c-0.9 d-0.9 b-0.9 a-1.0", pkgs_fail_msg(pkgs))
+end
+
+run_tests(tests)
