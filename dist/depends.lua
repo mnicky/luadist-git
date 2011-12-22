@@ -421,8 +421,9 @@ function filter_packages_by_arch_and_type(packages, req_arch, req_type)
     return passed_pkgs
 end
 
--- Return full package name and version string. When version is nil then return
--- only name and when name is nil then return '<unknown>'.
+-- Return full package name and version string (e.g. 'luajit-2.0'). When version
+-- is nil or '' then return only name (e.g. 'luajit') and when name is nil or ''
+-- then return '<unknown>'.
 function pkg_full_name(name, version)
 
     name = name or ""
