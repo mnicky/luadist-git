@@ -58,8 +58,6 @@ function get_installed(deploy_dir)
     return manifest
 end
 
--- FIXME: add arch & type checks
---
 -- Return all packages needed in order to install 'package'
 -- and with specified 'installed' packages in the system using 'manifest'.
 -- Optional version 'constraint' can be added.
@@ -91,9 +89,12 @@ local function get_packages_to_install(package, installed, manifest, constraint,
     -- find candidates of packages wanted to install
     local candidates_to_install = find_packages(package, manifest)
 
+    -- filter candidates according to the architecture and type
+    candidates_to_install = filter_packages_by_arch_and_type(candidates_to_install, cfg.arch, cfg.type)
+
     -- filter candidates according to the constraint if provided
     if constraint ~= "" then
-        candidates_to_install = filter_packages(candidates_to_install, constraint)
+        candidates_to_install = filter_packages_by_version(candidates_to_install, constraint)
     end
 
     if #candidates_to_install == 0 then
@@ -381,18 +382,40 @@ function split_name_constraint(version_constraint)
     end
 end
 
--- Return only packages that satisfy specified constraint
-function filter_packages(packages, constraint)
+-- Return only packages that satisfy specified version constraint
+function filter_packages_by_version(packages, constraint)
 
     if type(packages) == "string" then packages = {packages} end
 
-    assert(type(packages) == "table", "depends.filter_packages: Argument 'packages' is not a string or table.")
-    assert(type(constraint) == "string", "depends.filter_packages: Argument 'constraint' is not a string.")
+    assert(type(packages) == "table", "depends.filter_packages_by_version: Argument 'packages' is not a string or table.")
+    assert(type(constraint) == "string", "depends.filter_packages_by_version: Argument 'constraint' is not a string.")
 
     local passed_pkgs = {}
 
     for _, pkg in pairs(packages) do
         if satisfies_constraint(pkg.version, constraint) then
+            table.insert(passed_pkgs, pkg)
+        end
+    end
+
+    return passed_pkgs
+end
+
+-- Return only packages that can be installed on the specified architecture and type
+function filter_packages_by_arch_and_type(packages, req_arch, req_type)
+
+    if type(packages) == "string" then packages = {packages} end
+
+    assert(type(packages) == "table", "depends.filter_packages_by_arch_and_type: Argument 'packages' is not a string or table.")
+    assert(type(req_arch) == "string", "depends.filter_packages_by_arch_and_type: Argument 'req_arch' is not a string.")
+    assert(type(req_type) == "string", "depends.filter_packages_by_arch_and_type: Argument 'pkg_type' is not a string.")
+
+    local passed_pkgs = {}
+
+    for _, pkg in pairs(packages) do
+
+        -- check package's architecture
+        if (pkg.arch == "Universal" or pkg.arch == req_arch) and (pkg.type == "all" or pkg.type == "source" or pkg.type == req_type) then
             table.insert(passed_pkgs, pkg)
         end
     end
