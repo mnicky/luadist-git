@@ -876,8 +876,20 @@ tests.version_of_installed_1 = function()
     assert(describe_packages(pkgs) == "b-1.0", pkgs_fail_msg(pkgs, err))
 end
 
--- a-1.2 installed, b depends a>=1.4, install b
+-- a-1.2 installed, a-1.3 also available, b depends a>=1.2, install b
 tests.version_of_installed_2 = function()
+    local manifest, installed = {}, {}
+    manifest.a12 = {name="a", arch="Universal", type="all", version="1.2",}
+    manifest.a13 = {name="a", arch="Universal", type="all", version="1.3",}
+    manifest.b = {name="b", arch="Universal", type="all", version="1.0", depends={"a>=1.2"}}
+    installed.a12 = manifest.a12
+
+    local pkgs, err = depends.get_depends({'b'}, installed, manifest);
+    assert(describe_packages(pkgs) == "b-1.0", pkgs_fail_msg(pkgs, err))
+end
+
+-- a-1.2 installed, b depends a>=1.4, install b
+tests.version_of_installed_3 = function()
     local manifest, installed = {}, {}
     manifest.a = {name="a", arch="Universal", type="all", version="1.2",}
     manifest.b = {name="b", arch="Universal", type="all", version="1.0", depends={"a>=1.4"}}
@@ -888,7 +900,7 @@ tests.version_of_installed_2 = function()
 end
 
 -- a-1.2 installed, a-1.3 also available, b depends a>=1.3, install b
-tests.version_of_installed_3 = function()
+tests.version_of_installed_4 = function()
     local manifest, installed = {}, {}
     manifest.a12 = {name="a", arch="Universal", type="all", version="1.2",}
     manifest.a13 = {name="a", arch="Universal", type="all", version="1.3",}
@@ -899,6 +911,54 @@ tests.version_of_installed_3 = function()
     assert(describe_packages(pkgs) == nil, pkgs_fail_msg(pkgs, err))
 end
 
+
+--- check if the package provided by another installed package is in needed version
+
+-- a-1.2 provided, b depends a>=1.2, install b
+tests.version_of_provided_1 = function()
+    local manifest, installed = {}, {}
+    manifest.x = {name="x", arch="Universal", type="all", version="scm", provides={"a-1.2"}}
+    manifest.b = {name="b", arch="Universal", type="all", version="1.0", depends={"a>=1.2"}}
+    installed.x = manifest.x
+
+    local pkgs, err = depends.get_depends({'b'}, installed, manifest);
+    assert(describe_packages(pkgs) == "b-1.0", pkgs_fail_msg(pkgs, err))
+end
+
+-- a-1.2 provided, a-1.3 also available, b depends a>=1.2, install b
+tests.version_of_provided_2 = function()
+    local manifest, installed = {}, {}
+    manifest.x = {name="x", arch="Universal", type="all", version="scm", provides={"a-1.2"}}
+    manifest.a = {name="a", arch="Universal", type="all", version="1.3",}
+    manifest.b = {name="b", arch="Universal", type="all", version="1.0", depends={"a>=1.2"}}
+    installed.x = manifest.x
+
+    local pkgs, err = depends.get_depends({'b'}, installed, manifest);
+    assert(describe_packages(pkgs) == "b-1.0", pkgs_fail_msg(pkgs, err))
+end
+
+-- a-1.2 provided, b depends a>=1.4, install b
+tests.version_of_provided_3 = function()
+    local manifest, installed = {}, {}
+    manifest.x = {name="x", arch="Universal", type="all", version="scm", provides={"a-1.2"}}
+    manifest.b = {name="b", arch="Universal", type="all", version="1.0", depends={"a>=1.4"}}
+    installed.x = manifest.x
+
+    local pkgs, err = depends.get_depends({'b'}, installed, manifest);
+    assert(describe_packages(pkgs) == nil, pkgs_fail_msg(pkgs, err))
+end
+
+-- a-1.2 provided, a-1.3 also available, b depends a>=1.3, install b
+tests.version_of_provided_4 = function()
+    local manifest, installed = {}, {}
+    manifest.x = {name="x", arch="Universal", type="all", version="scm", provides={"a-1.2"}}
+    manifest.a = {name="a", arch="Universal", type="all", version="1.3",}
+    manifest.b = {name="b", arch="Universal", type="all", version="1.0", depends={"a>=1.3"}}
+    installed.x = manifest.x
+
+    local pkgs, err = depends.get_depends({'b'}, installed, manifest);
+    assert(describe_packages(pkgs) == nil, pkgs_fail_msg(pkgs, err))
+end
 
 --- ========== OTHER EXCEPTIONAL STATES  =====================================
 
@@ -944,7 +1004,7 @@ tests.no_packages_to_install_4 = function()
     assert(describe_packages(pkgs) == "", pkgs_fail_msg(pkgs, err))
 end
 
---- when installed pkg is not in manifest
+--- states when installed pkg is not in manifest
 
 -- normal installed package
 tests.installed_not_in_manifest_1 = function()
