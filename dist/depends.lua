@@ -6,6 +6,7 @@ local cfg = require "dist.config"
 local mf = require "dist.manifest"
 local sys = require "dist.sys"
 local const = require "dist.constraints"
+local utils = require "dist.utils"
 
 -- Return all packages with specified names from manifest
 function find_packages(package_names, manifest)
@@ -101,22 +102,29 @@ end
 -- and is used to detect and deal with circular dependencies. Leave it 'nil'
 -- and it will do its job just fine :-).
 --
--- TODO: change mutation of table 'installed' to returning it as a second return value
+-- 'tmp_installed' is internal table used in recursion and should be left 'nil' when
+-- calling this function from other context. It is used for passing the changes
+-- in installed packages between the recursive calls of this function.
+--
 -- TODO refactor this spaghetti code!
-local function get_packages_to_install(package, installed, manifest, constraint, dependency_parents)
+local function get_packages_to_install(package, installed, manifest, constraint, dependency_parents, tmp_installed)
 
     manifest = manifest or mf.get_manifest()
     constraint = constraint or ""
     dependency_parents = dependency_parents or {}
+
+    -- set helper table 'tmp_installed'
+    tmp_installed = tmp_installed or utils.deepcopy(installed)
 
     assert(type(package) == "string", "depends.get_packages_to_install: Argument 'package' is not a string.")
     assert(type(installed) == "table", "depends.get_packages_to_install: Argument 'installed' is not a table.")
     assert(type(manifest) == "table", "depends.get_packages_to_install: Argument 'manifest' is not a table.")
     assert(type(constraint) == "string", "depends.get_packages_to_install: Argument 'constraint' is not a string.")
     assert(type(dependency_parents) == "table", "depends.get_packages_to_install: Argument 'dependency_parents' is not a table.")
+    assert(type(tmp_installed) == "table", "depends.get_packages_to_install: Argument 'tmp_installed' is not a table.")
 
     -- check if package is already installed
-    local pkg_is_installed, err = is_installed(package, installed, constraint)
+    local pkg_is_installed, err = is_installed(package, tmp_installed, constraint)
     if pkg_is_installed then return {} end
     if err then return nil, err end
 
@@ -154,8 +162,8 @@ local function get_packages_to_install(package, installed, manifest, constraint,
         -- remove this package from table
         candidates_to_install[k] = {}
 
-        -- check whether this package has already been added to 'installed' by another of its candidates
-        pkg_is_installed, err = is_installed(pkg.name, installed, pkg.version_wanted)
+        -- check whether this package has already been added to 'tmp_installed' by another of its candidates
+        pkg_is_installed, err = is_installed(pkg.name, tmp_installed, pkg.version_wanted)
         if pkg_is_installed then break end
 
         -- TODO: remove unnecessary 'not err' checks or keep them
@@ -164,8 +172,8 @@ local function get_packages_to_install(package, installed, manifest, constraint,
         -- do other checks
         if not err then
 
-            -- for all packages in table 'installed'
-            for _, installed_pkg in pairs(installed) do
+            -- for all packages in table 'tmp_installed'
+            for _, installed_pkg in pairs(tmp_installed) do
 
                 -- check if pkg doesn't provide an already installed_pkg
                 if not err and pkg.provides then
@@ -265,7 +273,7 @@ local function get_packages_to_install(package, installed, manifest, constraint,
                         if not is_circular_dependency then
 
                             -- recursively call this function on the candidates of this pkg's dependency
-                            local depends_to_install, dep_err = get_packages_to_install(dep_name, installed, manifest, dep_constraint, dependency_parents)
+                            local depends_to_install, dep_err = get_packages_to_install(dep_name, installed, manifest, dep_constraint, dependency_parents, tmp_installed)
 
                             -- if any suitable dependency packages were found, insert them to the 'to_install' table
                             if depends_to_install then
@@ -296,10 +304,10 @@ local function get_packages_to_install(package, installed, manifest, constraint,
 
                 -- add pkg and it's provides to the fake table of installed packages
                 -- TODO add property indicating that the package is only 'fake_installed'
-                table.insert(installed, pkg)
+                table.insert(tmp_installed, pkg)
                 if pkg.provides then
                     for _, provided_pkg in pairs(get_provides(pkg)) do
-                        table.insert(installed, provided_pkg)
+                        table.insert(tmp_installed, provided_pkg)
                     end
                 end
 
@@ -309,15 +317,14 @@ local function get_packages_to_install(package, installed, manifest, constraint,
             -- if any error occured
             else
 
-                -- clear tables of installed packages and packages to install to the original state
+                -- set tables of 'installed packages' and 'packages to install' to their original state
                 to_install = {}
-                -- FIXME don't get original state of installed from 'deploy_dir' (it's not in arguments of this fn!)
-                installed = get_installed(deploy_dir)
+                tmp_installed = utils.deepcopy(installed)
 
                 -- add provided packages to installed ones
-                for _, installed_pkg in pairs(installed) do
+                for _, installed_pkg in pairs(tmp_installed) do
                     for _, pkg in pairs(get_provides(installed_pkg)) do
-                        table.insert(installed, pkg)
+                        table.insert(tmp_installed, pkg)
                     end
                 end
             end
@@ -338,8 +345,6 @@ end
 
 -- Resolve dependencies and return all packages needed in order to install
 -- 'packages' into 'installed' ones, using 'manifest'.
---
--- FIXME this fn mutates the 'installed' table (remove mutation from get_packages_to_install() !)
 function get_depends(packages, installed, manifest)
     if not packages then return {} end
 
@@ -352,10 +357,12 @@ function get_depends(packages, installed, manifest)
     assert(type(installed) == "table", "depends.get_dependencies: Argument 'installed' is not a table or string.")
     assert(type(manifest) == "table", "depends.get_dependencies: Argument 'manifest' is not a table.")
 
+    local tmp_installed = utils.deepcopy(installed)
+
     -- add provided packages to installed ones
-    for _, installed_pkg in pairs(installed) do
+    for _, installed_pkg in pairs(tmp_installed) do
         for _, pkg in pairs(get_provides(installed_pkg)) do
-            table.insert(installed, pkg)
+            table.insert(tmp_installed, pkg)
         end
     end
 
@@ -363,11 +370,16 @@ function get_depends(packages, installed, manifest)
 
     -- get packages needed to to satisfy dependencies
     for _, pkg in pairs(packages) do
-        local needed_to_install, err = get_packages_to_install(pkg, installed, manifest)
+        local needed_to_install, err = get_packages_to_install(pkg, tmp_installed, manifest)
 
         if needed_to_install then
             for _, needed_pkg in pairs(needed_to_install) do
                 table.insert(to_install, needed_pkg)
+                table.insert(tmp_installed, needed_pkg)
+                -- add provides of needed_pkg to installed ones
+                for _, provided_pkg in pairs(get_provides(needed_pkg)) do
+                    table.insert(tmp_installed, provided_pkg)
+                end
             end
         else
             return nil, "Cannot install package '" .. pkg .. "': ".. err
