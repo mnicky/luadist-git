@@ -58,6 +58,39 @@ function get_installed(deploy_dir)
     return manifest
 end
 
+-- Return whether the 'package_name' is installed according to the the manifest 'installed_pkgs'
+-- If optional 'version_wanted' constraint is specified, then installed packages must
+-- also satisfy specified version constraint.
+-- If package is installed but doesn't satisfy version constraint, error message
+-- is returned as the second value.
+function is_installed(package_name, installed_pkgs, version_wanted)
+
+    assert(type(package_name) == "string", "depends.is_installed: Argument 'package_name' is not a string.")
+    assert(type(installed_pkgs) == "table", "depends.is_installed: Argument 'installed_pkgs' is not a table.")
+    assert(type(version_wanted) == "string" or type(version_wanted) == "nil", "depends.is_installed: Argument 'version_wanted' is not a string or nil.")
+
+    local pkg_is_installed, err = false, nil
+
+    for _, installed_pkg in pairs(installed_pkgs) do
+
+        -- check if package_name is in installed
+        if package_name == installed_pkg.name then
+
+            -- check if package is installed in satisfying version
+            if not version_wanted or satisfies_constraint(installed_pkg.version, version_wanted) then
+                pkg_is_installed = true
+                break
+            else
+                err = "Package '" .. pkg_full_name(package_name, version_wanted) .. "' needed, but installed at version '" .. installed_pkg.version .. "'."
+                break
+            end
+        end
+
+    end
+
+    return pkg_is_installed, err
+end
+
 -- Return all packages needed in order to install 'package'
 -- and with specified 'installed' packages in the system using 'manifest'.
 -- Optional version 'constraint' can be added.
