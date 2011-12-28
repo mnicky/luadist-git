@@ -81,7 +81,7 @@ function is_installed(package_name, installed_pkgs, version_wanted)
                 pkg_is_installed = true
                 break
             else
-                err = "Package '" .. pkg_full_name(package_name, version_wanted) .. "' needed, but installed at version '" .. installed_pkg.version .. "'."
+                err = "Package '" .. package_name .. (version_wanted or "") .. "' needed, but installed at version '" .. installed_pkg.version .. "'."
                 break
             end
         end
