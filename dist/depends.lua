@@ -115,7 +115,10 @@ local function get_packages_to_install(package, installed, manifest, constraint,
     assert(type(constraint) == "string", "depends.get_packages_to_install: Argument 'constraint' is not a string.")
     assert(type(dependency_parents) == "table", "depends.get_packages_to_install: Argument 'dependency_parents' is not a table.")
 
-    if is_installed(package, installed, constraint) then return {} end
+    -- check if package is already installed
+    local pkg_is_installed, err = is_installed(package, installed, constraint)
+    if pkg_is_installed then return {} end
+    if err then return nil, err end
 
     -- table of packages needed to be installed (will be returned)
     local to_install = {}
@@ -136,12 +139,6 @@ local function get_packages_to_install(package, installed, manifest, constraint,
     end
 
     sort_by_versions(candidates_to_install)
-
-    -- last occured error
-    local err = nil
-
-    -- whether pkg is already in installed table
-    local pkg_is_installed = nil
 
     -- for all package candidates
     for k, pkg in pairs(candidates_to_install) do
