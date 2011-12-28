@@ -946,10 +946,21 @@ end
 
 --- when installed pkg is not in manifest
 
+-- normal installed package
 tests.installed_not_in_manifest_1 = function()
     local manifest, installed = {}, {}
     manifest.b = {name="b", arch="Universal", type="all", version="0.9", depends={"a"}}
     installed.a = {name="a", arch="Universal", type="all", version="1.0",}
+
+    local pkgs, err = depends.get_depends({'b'}, installed, manifest);
+    assert(describe_packages(pkgs) == "b-0.9", pkgs_fail_msg(pkgs, err))
+end
+
+-- provided package
+tests.installed_not_in_manifest_2 = function()
+    local manifest, installed = {}, {}
+    manifest.b = {name="b", arch="Universal", type="all", version="0.9", depends={"a"}}
+    installed.x = {name="x", arch="Universal", type="all", version="1.0", provides={"a-1.0"}}
 
     local pkgs, err = depends.get_depends({'b'}, installed, manifest);
     assert(describe_packages(pkgs) == "b-0.9", pkgs_fail_msg(pkgs, err))
