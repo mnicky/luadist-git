@@ -65,10 +65,11 @@ end
 -- All returned packages (and their provides) are also inserted into the table 'installed'
 --
 -- 'dependency_parents' is table of all packages encountered so far when resolving dependencies
--- and is used to detect and deal with circular dependencies. Let it be 'nil'
+-- and is used to detect and deal with circular dependencies. Leave it 'nil'
 -- and it will do its job just fine :-).
 --
 -- TODO: change mutation of table 'installed' to returning it as a second return value
+-- TODO refactor this spaghetti code!
 local function get_packages_to_install(package, installed, manifest, constraint, dependency_parents)
 
     manifest = manifest or mf.get_manifest()
