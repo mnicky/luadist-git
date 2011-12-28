@@ -289,7 +289,7 @@ end
 -- a installed, a provides b, install b
 tests.provides_direct_with_installed_1 = function()
     local manifest, installed = {}, {}
-    manifest.a = {name="a", arch="Universal", type="all", version="scm", provides={"b"}}
+    manifest.a = {name="a", arch="Universal", type="all", version="scm", provides={"b-scm"}}
     manifest.b = {name="b", arch="Universal", type="all", version="scm",}
     installed.a = manifest.a
 
@@ -301,7 +301,7 @@ end
 tests.provides_direct_with_installed_2 = function()
     local manifest, installed = {}, {}
     manifest.a = {name="a", arch="Universal", type="all", version="scm",}
-    manifest.b = {name="b", arch="Universal", type="all", version="scm", provides={"a"}}
+    manifest.b = {name="b", arch="Universal", type="all", version="scm", provides={"a-scm"}}
     installed.a = manifest.a
 
     local pkgs, err = depends.get_depends({'b'}, installed, manifest);
@@ -320,7 +320,7 @@ end
 --[[
 tests.provides_direct_with_to_install_1 = function()
     local manifest, installed = {}, {}
-    manifest.a = {name="a", arch="Universal", type="all", version="scm", provides={"b"}}
+    manifest.a = {name="a", arch="Universal", type="all", version="scm", provides={"b-scm"}}
     manifest.b = {name="b", arch="Universal", type="all", version="scm",}
 
     local pkgs, err = depends.get_depends({'a', 'b'}, installed, manifest);
@@ -332,7 +332,7 @@ end
 tests.provides_direct_with_to_install_2 = function()
     local manifest, installed = {}, {}
     manifest.a = {name="a", arch="Universal", type="all", version="scm",}
-    manifest.b = {name="b", arch="Universal", type="all", version="scm", provides={"a"}}
+    manifest.b = {name="b", arch="Universal", type="all", version="scm", provides={"a-scm"}}
 
     local pkgs, err = depends.get_depends({'a', 'b'}, installed, manifest);
     assert(describe_packages(pkgs) == nil, pkgs_fail_msg(pkgs, err))
@@ -344,8 +344,8 @@ end
 -- a installed, a provides c, b provides c, install b
 tests.provides_same_with_installed_1 = function()
     local manifest, installed = {}, {}
-    manifest.a = {name="a", arch="Universal", type="all", version="scm", provides={"c"}}
-    manifest.b = {name="b", arch="Universal", type="all", version="scm", provides={"c"}}
+    manifest.a = {name="a", arch="Universal", type="all", version="scm", provides={"c-scm"}}
+    manifest.b = {name="b", arch="Universal", type="all", version="scm", provides={"c-scm"}}
     installed.a = manifest.a
 
     local pkgs, err = depends.get_depends({'b'}, installed, manifest);
@@ -357,8 +357,8 @@ end
 -- a provides c, b provides c, install a + b
 tests.provides_same_with_to_install_1 = function()
     local manifest, installed = {}, {}
-    manifest.a = {name="a", arch="Universal", type="all", version="scm", provides={"c"}}
-    manifest.b = {name="b", arch="Universal", type="all", version="scm", provides={"c"}}
+    manifest.a = {name="a", arch="Universal", type="all", version="scm", provides={"c-scm"}}
+    manifest.b = {name="b", arch="Universal", type="all", version="scm", provides={"c-scm"}}
 
     local pkgs, err = depends.get_depends({'a', 'b'}, installed, manifest);
     assert(describe_packages(pkgs) == nil, pkgs_fail_msg(pkgs, err))
@@ -372,7 +372,7 @@ end
 -- a installed, a provides c, b depends c, install b
 tests.provides_direct_and_depends_with_installed_1 = function()
     local manifest, installed = {}, {}
-    manifest.a = {name="a", arch="Universal", type="all", version="scm", provides={"c"}}
+    manifest.a = {name="a", arch="Universal", type="all", version="scm", provides={"c-scm"}}
     manifest.b = {name="b", arch="Universal", type="all", version="scm", depends={"c"}}
     manifest.c = {name="c", arch="Universal", type="all", version="scm",}
     installed.a = manifest.a
@@ -386,7 +386,7 @@ tests.provides_direct_and_depends_with_installed_2 = function()
     local manifest, installed = {}, {}
     manifest.a = {name="a", arch="Universal", type="all", version="scm",}
     manifest.b = {name="b", arch="Universal", type="all", version="scm", depends={"c"}}
-    manifest.c = {name="c", arch="Universal", type="all", version="scm", provides={"a"}}
+    manifest.c = {name="c", arch="Universal", type="all", version="scm", provides={"a-scm"}}
     installed.a = manifest.a
 
     local pkgs, err = depends.get_depends({'b'}, installed, manifest);
@@ -399,7 +399,7 @@ end
 -- a provides c, b depends c, install a + b
 tests.provides_direct_and_depends_with_to_install_1 = function()
     local manifest, installed = {}, {}
-    manifest.a = {name="a", arch="Universal", type="all", version="scm", provides={"c"}}
+    manifest.a = {name="a", arch="Universal", type="all", version="scm", provides={"c-scm"}}
     manifest.b = {name="b", arch="Universal", type="all", version="scm", depends={"c"}}
     manifest.c = {name="c", arch="Universal", type="all", version="scm",}
 
@@ -415,7 +415,7 @@ end
 tests.provides_direct_and_depends_with_to_install_2 = function()
     local manifest, installed = {}, {}
     manifest.a = {name="a", arch="Universal", type="all", version="scm", depends={"c"}}
-    manifest.b = {name="b", arch="Universal", type="all", version="scm", provides={"c"}}
+    manifest.b = {name="b", arch="Universal", type="all", version="scm", provides={"c-scm"}}
     manifest.c = {name="c", arch="Universal", type="all", version="scm",}
 
     local pkgs, err = depends.get_depends({'a', 'b'}, installed, manifest);
@@ -430,9 +430,9 @@ end
 -- a installed, a provides d, b depends c, c provides d, install b
 tests.provides_same_and_depends_with_installed_1 = function()
     local manifest, installed = {}, {}
-    manifest.a = {name="a", arch="Universal", type="all", version="scm", provides={"d"}}
+    manifest.a = {name="a", arch="Universal", type="all", version="scm", provides={"d-scm"}}
     manifest.b = {name="b", arch="Universal", type="all", version="scm", depends={"c"}}
-    manifest.c = {name="c", arch="Universal", type="all", version="scm", provides={"d"}}
+    manifest.c = {name="c", arch="Universal", type="all", version="scm", provides={"d-scm"}}
     installed.a = manifest.a
 
     local pkgs, err = depends.get_depends({'b'}, installed, manifest);
@@ -446,8 +446,8 @@ end
 tests.provides_same_and_depends_with_to_install_1 = function()
     local manifest, installed = {}, {}
     manifest.a = {name="a", arch="Universal", type="all", version="scm", depends={"b"}}
-    manifest.b = {name="b", arch="Universal", type="all", version="scm", provides={"d"}}
-    manifest.c = {name="c", arch="Universal", type="all", version="scm", provides={"d"}}
+    manifest.b = {name="b", arch="Universal", type="all", version="scm", provides={"d-scm"}}
+    manifest.c = {name="c", arch="Universal", type="all", version="scm", provides={"d-scm"}}
 
     local pkgs, err = depends.get_depends({'a', 'c'}, installed, manifest);
     assert(describe_packages(pkgs) == nil, pkgs_fail_msg(pkgs, err))
@@ -456,9 +456,9 @@ end
 -- a provides d, b depends c, c provides d, install a + b
 tests.provides_same_and_depends_with_to_install_2 = function()
     local manifest, installed = {}, {}
-    manifest.a = {name="a", arch="Universal", type="all", version="scm", provides={"d"}}
+    manifest.a = {name="a", arch="Universal", type="all", version="scm", provides={"d-scm"}}
     manifest.b = {name="b", arch="Universal", type="all", version="scm", depends={"c"}}
-    manifest.c = {name="c", arch="Universal", type="all", version="scm", provides={"d"}}
+    manifest.c = {name="c", arch="Universal", type="all", version="scm", provides={"d-scm"}}
 
     local pkgs, err = depends.get_depends({'a', 'b'}, installed, manifest);
     assert(describe_packages(pkgs) == nil, pkgs_fail_msg(pkgs, err))
@@ -468,9 +468,9 @@ end
 tests.provides_same_and_depends_with_to_install_3 = function()
     local manifest, installed = {}, {}
     manifest.a = {name="a", arch="Universal", type="all", version="scm", depends={"b"}}
-    manifest.b = {name="b", arch="Universal", type="all", version="scm", provides={"e"}}
+    manifest.b = {name="b", arch="Universal", type="all", version="scm", provides={"e-scm"}}
     manifest.c = {name="c", arch="Universal", type="all", version="scm", depends={"d"}}
-    manifest.d = {name="d", arch="Universal", type="all", version="scm", provides={"e"}}
+    manifest.d = {name="d", arch="Universal", type="all", version="scm", provides={"e-scm"}}
 
     local pkgs, err = depends.get_depends({'a', 'c'}, installed, manifest);
     assert(describe_packages(pkgs) == nil, pkgs_fail_msg(pkgs, err))
@@ -484,7 +484,7 @@ end
 -- a provides b, b conflicts c, install a + c
 tests.provides_direct_and_conflicts_with_to_install_1 = function()
     local manifest, installed = {}, {}
-    manifest.a = {name="a", arch="Universal", type="all", version="scm", provides={"b"}}
+    manifest.a = {name="a", arch="Universal", type="all", version="scm", provides={"b-scm"}}
     manifest.b = {name="b", arch="Universal", type="all", version="scm", conflicts={"c"}}
     manifest.c = {name="c", arch="Universal", type="all", version="scm",}
 
@@ -495,7 +495,7 @@ end
 -- a provides b, b conflicts c, install c + a
 tests.provides_direct_and_conflicts_with_to_install_2 = function()
     local manifest, installed = {}, {}
-    manifest.a = {name="a", arch="Universal", type="all", version="scm", provides={"b"}}
+    manifest.a = {name="a", arch="Universal", type="all", version="scm", provides={"b-scm"}}
     manifest.b = {name="b", arch="Universal", type="all", version="scm", conflicts={"c"}}
     manifest.c = {name="c", arch="Universal", type="all", version="scm",}
 
@@ -506,7 +506,7 @@ end
 -- a provides b, c conflicts b, install a + c
 tests.provides_direct_and_conflicts_with_to_install_3 = function()
     local manifest, installed = {}, {}
-    manifest.a = {name="a", arch="Universal", type="all", version="scm", provides={"b"}}
+    manifest.a = {name="a", arch="Universal", type="all", version="scm", provides={"b-scm"}}
     manifest.b = {name="b", arch="Universal", type="all", version="scm",}
     manifest.c = {name="c", arch="Universal", type="all", version="scm", conflicts={"b"}}
 
@@ -517,7 +517,7 @@ end
 -- a provides b, c conflicts b, install c + a
 tests.provides_direct_and_conflicts_with_to_install_4 = function()
     local manifest, installed = {}, {}
-    manifest.a = {name="a", arch="Universal", type="all", version="scm", provides={"b"}}
+    manifest.a = {name="a", arch="Universal", type="all", version="scm", provides={"b-scm"}}
     manifest.b = {name="b", arch="Universal", type="all", version="scm",}
     manifest.c = {name="c", arch="Universal", type="all", version="scm", conflicts={"b"}}
 
@@ -531,7 +531,7 @@ end
 -- a installed, a provides b, b conflicts c, install c
 tests.provides_direct_and_conflicts_with_installed_1 = function()
     local manifest, installed = {}, {}
-    manifest.a = {name="a", arch="Universal", type="all", version="scm", provides={"b"}}
+    manifest.a = {name="a", arch="Universal", type="all", version="scm", provides={"b-scm"}}
     manifest.b = {name="b", arch="Universal", type="all", version="scm", conflicts={"c"}}
     manifest.c = {name="c", arch="Universal", type="all", version="scm",}
     installed.a = manifest.a
@@ -543,7 +543,7 @@ end
 -- a installed, a provides b, c conflicts b, install c
 tests.provides_direct_and_conflicts_with_installed_2 = function()
     local manifest, installed = {}, {}
-    manifest.a = {name="a", arch="Universal", type="all", version="scm", provides={"b"}}
+    manifest.a = {name="a", arch="Universal", type="all", version="scm", provides={"b-scm"}}
     manifest.b = {name="b", arch="Universal", type="all", version="scm",}
     manifest.c = {name="c", arch="Universal", type="all", version="scm", conflicts={"b"}}
     installed.a = manifest.a
@@ -560,7 +560,7 @@ end
 -- a installed, a provides d, b depends c, c conflicts d, install b
 tests.provides_direct_depends_and_conflicts_with_installed_1 = function()
     local manifest, installed = {}, {}
-    manifest.a = {name="a", arch="Universal", type="all", version="scm", provides={"d"}}
+    manifest.a = {name="a", arch="Universal", type="all", version="scm", provides={"d-scm"}}
     manifest.b = {name="b", arch="Universal", type="all", version="scm", depends={"c"}}
     manifest.c = {name="c", arch="Universal", type="all", version="scm", conflicts={"d"}}
     manifest.d = {name="d", arch="Universal", type="all", version="scm",}
@@ -575,7 +575,7 @@ tests.provides_direct_depends_and_conflicts_with_installed_2 = function()
     local manifest, installed = {}, {}
     manifest.a = {name="a", arch="Universal", type="all", version="scm", conflicts={"d"}}
     manifest.b = {name="b", arch="Universal", type="all", version="scm", depends={"c"}}
-    manifest.c = {name="c", arch="Universal", type="all", version="scm", provides={"d"}}
+    manifest.c = {name="c", arch="Universal", type="all", version="scm", provides={"d-scm"}}
     manifest.d = {name="d", arch="Universal", type="all", version="scm",}
     installed.a = manifest.a
 
@@ -586,7 +586,7 @@ end
 -- a installed, a provides c, b depends c, c depends d, d conflicts a, install b
 tests.provides_direct_depends_and_conflicts_with_installed_3 = function()
     local manifest, installed = {}, {}
-    manifest.a = {name="a", arch="Universal", type="all", version="scm", provides={"c"}}
+    manifest.a = {name="a", arch="Universal", type="all", version="scm", provides={"c-scm"}}
     manifest.b = {name="b", arch="Universal", type="all", version="scm", depends={"c"}}
     manifest.c = {name="c", arch="Universal", type="all", version="scm", depends={"d"}}
     manifest.d = {name="d", arch="Universal", type="all", version="scm", conflicts={"a"}}
@@ -599,7 +599,7 @@ end
 -- a installed, a provides c, a conflicts d, b depends c, c depends d, install b
 tests.provides_direct_depends_and_conflicts_with_installed_4 = function()
     local manifest, installed = {}, {}
-    manifest.a = {name="a", arch="Universal", type="all", version="scm", provides={"c"}, conflicts={"d"}}
+    manifest.a = {name="a", arch="Universal", type="all", version="scm", provides={"c-scm"}, conflicts={"d"}}
     manifest.b = {name="b", arch="Universal", type="all", version="scm", depends={"c"}}
     manifest.c = {name="c", arch="Universal", type="all", version="scm", depends={"d"}}
     manifest.d = {name="d", arch="Universal", type="all", version="scm",}
@@ -612,7 +612,7 @@ end
 -- a installed, a provides b, b depends c, d conflicts c, install c
 tests.provides_direct_depends_and_conflicts_with_installed_5 = function()
     local manifest, installed = {}, {}
-    manifest.a = {name="a", arch="Universal", type="all", version="scm", provides={"b"}}
+    manifest.a = {name="a", arch="Universal", type="all", version="scm", provides={"b-scm"}}
     manifest.b = {name="b", arch="Universal", type="all", version="scm", depends={"c"}}
     manifest.c = {name="c", arch="Universal", type="all", version="scm",}
     manifest.d = {name="d", arch="Universal", type="all", version="scm", conflicts={"c"}}
@@ -627,7 +627,7 @@ end
 -- a provides c, b depends c, c depends d, d conflicts a, install a + b
 tests.provides_direct_depends_and_conflicts_with_to_install_1 = function()
     local manifest, installed = {}, {}
-    manifest.a = {name="a", arch="Universal", type="all", version="scm", provides={"c"}}
+    manifest.a = {name="a", arch="Universal", type="all", version="scm", provides={"c-scm"}}
     manifest.b = {name="b", arch="Universal", type="all", version="scm", depends={"c"}}
     manifest.c = {name="c", arch="Universal", type="all", version="scm", depends={"d"}}
     manifest.d = {name="d", arch="Universal", type="all", version="scm", conflicts={"a"}}
@@ -639,7 +639,7 @@ end
 -- a provides c, a conflicts d, b depends c, c depends d, install a + b
 tests.provides_direct_depends_and_conflicts_with_to_install_2 = function()
     local manifest, installed = {}, {}
-    manifest.a = {name="a", arch="Universal", type="all", version="scm", provides={"c"}, conflicts={"d"}}
+    manifest.a = {name="a", arch="Universal", type="all", version="scm", provides={"c-scm"}, conflicts={"d"}}
     manifest.b = {name="b", arch="Universal", type="all", version="scm", depends={"c"}}
     manifest.c = {name="c", arch="Universal", type="all", version="scm", depends={"d"}}
     manifest.d = {name="d", arch="Universal", type="all", version="scm",}
@@ -655,7 +655,7 @@ end
 tests.provides_direct_depends_and_conflicts_with_to_install_3 = function()
     local manifest, installed = {}, {}
     manifest.a = {name="a", arch="Universal", type="all", version="scm", depends={"c"}}
-    manifest.b = {name="b", arch="Universal", type="all", version="scm", provides={"c"}}
+    manifest.b = {name="b", arch="Universal", type="all", version="scm", provides={"c-scm"}}
     manifest.c = {name="c", arch="Universal", type="all", version="scm", depends={"d"}}
     manifest.d = {name="d", arch="Universal", type="all", version="scm", conflicts={"a"}}
 
@@ -670,7 +670,7 @@ end
 tests.provides_direct_depends_and_conflicts_with_to_install_4 = function()
     local manifest, installed = {}, {}
     manifest.a = {name="a", arch="Universal", type="all", version="scm", depends={"c"}, conflicts={"a"}}
-    manifest.b = {name="b", arch="Universal", type="all", version="scm", provides={"c"}}
+    manifest.b = {name="b", arch="Universal", type="all", version="scm", provides={"c-scm"}}
     manifest.c = {name="c", arch="Universal", type="all", version="scm", depends={"d"}}
     manifest.d = {name="d", arch="Universal", type="all", version="scm"}
 
@@ -683,7 +683,7 @@ end
 tests.provides_direct_depends_and_conflicts_with_to_install_5 = function()
     local manifest, installed = {}, {}
     manifest.a = {name="a", arch="Universal", type="all", version="scm", depends={"b"}}
-    manifest.b = {name="b", arch="Universal", type="all", version="scm", provides={"e"}}
+    manifest.b = {name="b", arch="Universal", type="all", version="scm", provides={"e-scm"}}
     manifest.c = {name="c", arch="Universal", type="all", version="scm", depends={"d"}}
     manifest.d = {name="d", arch="Universal", type="all", version="scm", conflicts={"e"}}
 
@@ -695,10 +695,10 @@ end
 tests.provides_direct_depends_and_conflicts_with_to_install_6 = function()
     local manifest, installed = {}, {}
     manifest.a = {name="a", arch="Universal", type="all", version="scm", depends={"b"}}
-    manifest.b = {name="b", arch="Universal", type="all", version="scm", provides={"c"}}
+    manifest.b = {name="b", arch="Universal", type="all", version="scm", provides={"c-scm"}}
     manifest.c = {name="c", arch="Universal", type="all", version="scm",}
     manifest.d = {name="d", arch="Universal", type="all", version="scm", depends={"e"}}
-    manifest.e = {name="e", arch="Universal", type="all", version="scm", provides={"f"}}
+    manifest.e = {name="e", arch="Universal", type="all", version="scm", provides={"f-scm"}}
     manifest.f = {name="f", arch="Universal", type="all", version="scm", conflicts={"c"}}
 
     local pkgs, err = depends.get_depends({'a', 'd'}, installed, manifest);
@@ -709,10 +709,10 @@ end
 tests.provides_direct_depends_and_conflicts_with_to_install_7 = function()
     local manifest, installed = {}, {}
     manifest.a = {name="a", arch="Universal", type="all", version="scm", depends={"b"}}
-    manifest.b = {name="b", arch="Universal", type="all", version="scm", provides={"c"}}
+    manifest.b = {name="b", arch="Universal", type="all", version="scm", provides={"c-scm"}}
     manifest.c = {name="c", arch="Universal", type="all", version="scm", conflicts={"f"}}
     manifest.d = {name="d", arch="Universal", type="all", version="scm", depends={"e"}}
-    manifest.e = {name="e", arch="Universal", type="all", version="scm", provides={"f"}}
+    manifest.e = {name="e", arch="Universal", type="all", version="scm", provides={"f-scm"}}
     manifest.f = {name="f", arch="Universal", type="all", version="scm",}
 
     local pkgs, err = depends.get_depends({'a', 'd'}, installed, manifest);
