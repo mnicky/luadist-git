@@ -154,7 +154,7 @@ local function get_packages_to_install(package, installed, manifest, constraint,
         -- remove this package from table
         candidates_to_install[k] = {}
 
-        -- check whether this candidate has already been installed
+        -- check whether this package has already been added to 'installed' by another of its candidates
         pkg_is_installed, err = is_installed(pkg.name, installed, pkg.version_wanted)
         if pkg_is_installed then break end
 
