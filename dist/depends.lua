@@ -64,7 +64,7 @@ end
 -- also satisfy specified version constraint.
 -- If package is installed but doesn't satisfy version constraint, error message
 -- is returned as the second value.
-function is_installed(package_name, installed_pkgs, version_wanted)
+local function is_installed(package_name, installed_pkgs, version_wanted)
 
     assert(type(package_name) == "string", "depends.is_installed: Argument 'package_name' is not a string.")
     assert(type(installed_pkgs) == "table", "depends.is_installed: Argument 'installed_pkgs' is not a table.")
@@ -90,6 +90,56 @@ function is_installed(package_name, installed_pkgs, version_wanted)
     end
 
     return pkg_is_installed, err
+end
+
+-- Check whether the package 'pkg' conflicts with 'installed_pkg' and return
+-- false or error message.
+local function packages_conflicts(pkg, installed_pkg)
+
+    -- check if pkg doesn't provide an already installed_pkg
+    if pkg.provides then
+        -- for all of pkg's provides
+        for _, provided_pkg in pairs(get_provides(pkg)) do
+            if provided_pkg.name == installed_pkg.name then
+                return "Package '" .. pkg_full_name(pkg.name, pkg.version) .. "' provides '" .. pkg_full_name(provided_pkg.name, provided_pkg.version) .. "' but package '" .. pkg_full_name(installed_pkg.name, installed_pkg.version) .. "' is already installed."
+            end
+        end
+    end
+
+    -- check for conflicts of package to install with installed package
+    if pkg.conflicts then
+        for _, conflict in pairs (pkg.conflicts) do
+            if conflict == installed_pkg.name then
+                return "Package '" .. pkg_full_name(pkg.name, pkg.version) .. "' conflicts with installed package '" .. pkg_full_name(installed_pkg.name, installed_pkg.version) .. "'."
+            end
+        end
+    end
+
+    -- check for conflicts of installed package with package to install
+    if installed_pkg.conflicts then
+
+        -- direct conflicts with 'pkg'
+        for _, conflict in pairs (installed_pkg.conflicts) do
+            if conflict == pkg.name then
+                return "Installed package '" .. pkg_full_name(installed_pkg.name, installed_pkg.version) .. "' conflicts with package '" .. pkg_full_name(pkg.name, pkg.version) .. "'."
+            end
+        end
+
+        -- conflicts with 'provides' of 'pkg' (packages provided by package to install)
+        if pkg.provides then
+            for _, conflict in pairs (installed_pkg.conflicts) do
+                -- for all of pkg's provides
+                for _, provided_pkg in pairs(get_provides(pkg)) do
+                    if conflict == provided_pkg.name then
+                        return "Installed package '" .. pkg_full_name(installed_pkg.name, installed_pkg.version) .. "' conflicts with package '" .. pkg_full_name(provided_pkg.name, provided_pkg.version) .. "' provided by '" .. pkg_full_name(pkg.name, pkg.version) .. "'."
+                    end
+                end
+            end
+        end
+    end
+
+    -- no conflicts found
+    return false
 end
 
 -- Return all packages needed in order to install 'package'
@@ -166,65 +216,11 @@ local function get_packages_to_install(package, installed, manifest, constraint,
         pkg_is_installed, err = is_installed(pkg.name, tmp_installed, pkg.version_wanted)
         if pkg_is_installed then break end
 
-        -- TODO: remove unnecessary 'not err' checks or keep them
-        --       as a protection against future buggy code changes?
-
-        -- do other checks
+        -- checks for conflicts with other installed or previously selected packages
         if not err then
-
-            -- for all packages in table 'tmp_installed'
             for _, installed_pkg in pairs(tmp_installed) do
-
-                -- check if pkg doesn't provide an already installed_pkg
-                if not err and pkg.provides then
-                    -- for all of pkg's provides
-                    for _, provided_pkg in pairs(get_provides(pkg)) do
-                        if provided_pkg.name == installed_pkg.name then
-                            err = "Package '" .. pkg_full_name(pkg.name, pkg.version) .. "' provides '" .. pkg_full_name(provided_pkg.name, provided_pkg.version) .. "' but package '" .. pkg_full_name(installed_pkg.name, installed_pkg.version) .. "' is already installed."
-                            break
-                        end
-                    end
-                    if err then break end
-                end
-
-                -- check for conflicts of package to install with installed package
-                if not err and pkg.conflicts then
-                    for _, conflict in pairs (pkg.conflicts) do
-                        if conflict == installed_pkg.name then
-                            err = "Package '" .. pkg_full_name(pkg.name, pkg.version) .. "' conflicts with installed package '" .. pkg_full_name(installed_pkg.name, installed_pkg.version) .. "'."
-                            break
-                        end
-                    end
-                    if err then break end
-                end
-
-                -- check for conflicts of installed package with package to install
-                if not err and installed_pkg.conflicts then
-
-                    -- direct conflicts with 'pkg'
-                    for _, conflict in pairs (installed_pkg.conflicts) do
-                        if conflict == pkg.name then
-                            err = "Installed package '" .. pkg_full_name(installed_pkg.name, installed_pkg.version) .. "' conflicts with package '" .. pkg_full_name(pkg.name, pkg.version) .. "'."
-                            break
-                        end
-                    end
-                    if err then break end
-
-                    -- conflicts with 'provides' of 'pkg' (packages provided by package to install)
-                    if not err and pkg.provides then
-                        for _, conflict in pairs (installed_pkg.conflicts) do
-                            -- for all of pkg's provides
-                            for _, provided_pkg in pairs(get_provides(pkg)) do
-                                if conflict == provided_pkg.name then
-                                    err = "Installed package '" .. pkg_full_name(installed_pkg.name, installed_pkg.version) .. "' conflicts with package '" .. pkg_full_name(provided_pkg.name, provided_pkg.version) .. "' provided by '" .. pkg_full_name(pkg.name, pkg.version) .. "'."
-                                    break
-                                end
-                            end
-                            if err then break end
-                        end
-                        if err then break end
-                    end
-                end
+                err = packages_conflicts(pkg, installed_pkg)
+                if err then break end
             end
         end
 
