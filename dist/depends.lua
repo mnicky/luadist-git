@@ -181,13 +181,11 @@ local function get_packages_to_install(package, installed, manifest, constraint,
     -- table of packages needed to be installed (will be returned)
     local to_install = {}
 
-    -- find candidates of packages wanted to install
+    -- find candidates
     local candidates_to_install = find_packages(package, manifest)
 
-    -- filter candidates according to the architecture and type
+    -- filter candidates
     candidates_to_install = filter_packages_by_arch_and_type(candidates_to_install, cfg.arch, cfg.type)
-
-    -- filter candidates according to the constraint if provided
     if constraint ~= "" then
         candidates_to_install = filter_packages_by_version(candidates_to_install, constraint)
     end
@@ -216,7 +214,7 @@ local function get_packages_to_install(package, installed, manifest, constraint,
         pkg_is_installed, err = is_installed(pkg.name, tmp_installed, pkg.version_wanted)
         if pkg_is_installed then break end
 
-        -- checks for conflicts with other installed or previously selected packages
+        -- checks for conflicts with other installed (or previously selected) packages
         if not err then
             for _, installed_pkg in pairs(tmp_installed) do
                 err = packages_conflicts(pkg, installed_pkg)
@@ -236,8 +234,8 @@ local function get_packages_to_install(package, installed, manifest, constraint,
                 -- collect all OS specific dependencies of pkg
                 for k, depend in pairs(pkg.depends) do
 
-                    -- if 'depend' is a table of OS specific dependencies
-                    -- for this arch, add them to the normal dependencies of pkg
+                    -- if 'depend' is a table of OS specific dependencies for
+                    -- this arch, add them to the normal dependencies of pkg
                     if type(depend) == "table" then
 
                         if k == cfg.arch then
@@ -310,10 +308,10 @@ local function get_packages_to_install(package, installed, manifest, constraint,
                 -- add pkg to the table of packages to install
                 table.insert(to_install, pkg)
 
-            -- if any error occured
+            -- if some error occured
             else
 
-                -- set tables of 'installed packages' and 'packages to install' to their original state
+                -- set tables of 'packages to install' and 'installed packages' to their original state
                 to_install = {}
                 tmp_installed = utils.deepcopy(installed)
 
@@ -331,7 +329,7 @@ local function get_packages_to_install(package, installed, manifest, constraint,
         end
     end
 
-    -- if package is not installed and no suitable candidates to be installed were found, return the last error
+    -- if package is not installed and no suitable candidates were found, return the last error
     if #to_install == 0 and not pkg_is_installed then
         return nil, err
     else
