@@ -24,6 +24,7 @@ distinfos_dir = "share/luadist-git/dists"
 manifest_file = cache_dir .. "/dist.manifest"
 
 -- URLs
+-- TODO: add ability to have more repos
 repository_url = "https://github.com/LuaDist/Repository.git"
 
 -- Settings
