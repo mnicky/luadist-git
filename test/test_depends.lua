@@ -57,7 +57,6 @@ end
 local tests = {}
 
 
--- TODO: add tests with the order of packages to install reversed
 -- TODO: add more positive tests (not expecting 'nil' return value)
 -- TODO: check if 'nil' expecting tests receives expected errors
 -- TODO: add 'err' checks to tests - check for 'nil' or presence of some string
