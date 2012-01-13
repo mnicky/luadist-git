@@ -359,10 +359,9 @@ function get_depends(packages, installed, manifest)
     manifest = manifest or mf.get_manifest()
 
     if type(packages) == "string" then packages = {packages} end
-    if type(installed) == "string" then installed = {installed} end
 
     assert(type(packages) == "table", "depends.get_dependencies: Argument 'packages' is not a table or string.")
-    assert(type(installed) == "table", "depends.get_dependencies: Argument 'installed' is not a table or string.")
+    assert(type(installed) == "table", "depends.get_dependencies: Argument 'installed' is not a table.")
     assert(type(manifest) == "table", "depends.get_dependencies: Argument 'manifest' is not a table.")
 
     local tmp_installed = utils.deepcopy(installed)
