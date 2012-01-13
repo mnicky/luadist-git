@@ -96,12 +96,23 @@ end
 -- false or error message.
 local function packages_conflicts(pkg, installed_pkg)
 
+    -- If 'pkg.selected' == true then returns 'selected' else 'installed'.
+    -- Used in error messages.
+    local function selected_or_installed(pkg)
+        assert(type(pkg) == "table", "depends.packages_conflicts.selected_or_installed: Argument 'pkg' is not a table.")
+        if pkg.selected == true then
+            return "selected"
+        else
+            return "installed"
+        end
+    end
+
     -- check if pkg doesn't provide an already installed_pkg
     if pkg.provides then
         -- for all of pkg's provides
         for _, provided_pkg in pairs(get_provides(pkg)) do
             if provided_pkg.name == installed_pkg.name then
-                return "Package '" .. pkg_full_name(pkg.name, pkg.version) .. "' provides '" .. pkg_full_name(provided_pkg.name, provided_pkg.version) .. "' but package '" .. pkg_full_name(installed_pkg.name, installed_pkg.version) .. "' is already installed."
+                return "Package '" .. pkg_full_name(pkg.name, pkg.version) .. "' provides '" .. pkg_full_name(provided_pkg.name, provided_pkg.version) .. "' but package '" .. pkg_full_name(installed_pkg.name, installed_pkg.version) .. "' is already " .. selected_or_installed(installed_pkg) .. "."
             end
         end
     end
@@ -110,7 +121,7 @@ local function packages_conflicts(pkg, installed_pkg)
     if pkg.conflicts then
         for _, conflict in pairs (pkg.conflicts) do
             if conflict == installed_pkg.name then
-                return "Package '" .. pkg_full_name(pkg.name, pkg.version) .. "' conflicts with installed package '" .. pkg_full_name(installed_pkg.name, installed_pkg.version) .. "'."
+                return "Package '" .. pkg_full_name(pkg.name, pkg.version) .. "' conflicts with already " .. selected_or_installed(installed_pkg) .. " package '" .. pkg_full_name(installed_pkg.name, installed_pkg.version) .. "'."
             end
         end
     end
@@ -121,7 +132,7 @@ local function packages_conflicts(pkg, installed_pkg)
         -- direct conflicts with 'pkg'
         for _, conflict in pairs (installed_pkg.conflicts) do
             if conflict == pkg.name then
-                return "Installed package '" .. pkg_full_name(installed_pkg.name, installed_pkg.version) .. "' conflicts with package '" .. pkg_full_name(pkg.name, pkg.version) .. "'."
+                return "Already '" .. selected_or_installed(installed_pkg) .. " package '" .. pkg_full_name(installed_pkg.name, installed_pkg.version) .. "' conflicts with package '" .. pkg_full_name(pkg.name, pkg.version) .. "'."
             end
         end
 
@@ -131,7 +142,7 @@ local function packages_conflicts(pkg, installed_pkg)
                 -- for all of pkg's provides
                 for _, provided_pkg in pairs(get_provides(pkg)) do
                     if conflict == provided_pkg.name then
-                        return "Installed package '" .. pkg_full_name(installed_pkg.name, installed_pkg.version) .. "' conflicts with package '" .. pkg_full_name(provided_pkg.name, provided_pkg.version) .. "' provided by '" .. pkg_full_name(pkg.name, pkg.version) .. "'."
+                        return "Already '" .. selected_or_installed(installed_pkg) .. " package '" .. pkg_full_name(installed_pkg.name, installed_pkg.version) .. "' conflicts with package '" .. pkg_full_name(provided_pkg.name, provided_pkg.version) .. "' provided by '" .. pkg_full_name(pkg.name, pkg.version) .. "'."
                     end
                 end
             end
@@ -296,11 +307,14 @@ local function get_packages_to_install(package, installed, manifest, constraint,
             -- if no error occured
             if not err then
 
-                -- add pkg and it's provides to the fake table of installed packages
-                -- TODO add property indicating that the package is only 'fake_installed'
+                -- add pkg and it's provides to the fake table of installed packages, with
+                -- property 'selected' set, indicating that the package isn't
+                -- really installed in the system, just selected to be installed (used e.g. in error messages)
+                pkg.selected = true
                 table.insert(tmp_installed, pkg)
                 if pkg.provides then
                     for _, provided_pkg in pairs(get_provides(pkg)) do
+                        provided_pkg.selected = true
                         table.insert(tmp_installed, provided_pkg)
                     end
                 end
@@ -372,6 +386,8 @@ function get_depends(packages, installed, manifest)
                 table.insert(tmp_installed, needed_pkg)
                 -- add provides of needed_pkg to installed ones
                 for _, provided_pkg in pairs(get_provides(needed_pkg)) do
+                    -- copy 'selected' property
+                    provided_pkg.selected = needed_pkg.selected
                     table.insert(tmp_installed, provided_pkg)
                 end
             end

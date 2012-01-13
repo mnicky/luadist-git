@@ -321,7 +321,7 @@ tests.provides_direct_with_to_install_1 = function()
     manifest.b = {name="b", arch="Universal", type="all", version="scm",}
 
     local pkgs, err = depends.get_depends({'a', 'b'}, installed, manifest);
-    assert(describe_packages(pkgs) == nil and err:find("already installed"), pkgs_fail_msg(pkgs, err))
+    assert(describe_packages(pkgs) == nil and err:find("already selected"), pkgs_fail_msg(pkgs, err))
 end
 --]]
 
@@ -332,7 +332,7 @@ tests.provides_direct_with_to_install_2 = function()
     manifest.b = {name="b", arch="Universal", type="all", version="scm", provides={"a-scm"}}
 
     local pkgs, err = depends.get_depends({'a', 'b'}, installed, manifest);
-    assert(describe_packages(pkgs) == nil and err:find("already installed"), pkgs_fail_msg(pkgs, err))
+    assert(describe_packages(pkgs) == nil and err:find("already selected"), pkgs_fail_msg(pkgs, err))
 end
 
 
@@ -358,7 +358,7 @@ tests.provides_same_with_to_install_1 = function()
     manifest.b = {name="b", arch="Universal", type="all", version="scm", provides={"c-scm"}}
 
     local pkgs, err = depends.get_depends({'a', 'b'}, installed, manifest);
-    assert(describe_packages(pkgs) == nil and err:find("already installed"), pkgs_fail_msg(pkgs, err))
+    assert(describe_packages(pkgs) == nil and err:find("already selected"), pkgs_fail_msg(pkgs, err))
 end
 
 
@@ -447,7 +447,7 @@ tests.provides_same_and_depends_with_to_install_1 = function()
     manifest.c = {name="c", arch="Universal", type="all", version="scm", provides={"d-scm"}}
 
     local pkgs, err = depends.get_depends({'a', 'c'}, installed, manifest);
-    assert(describe_packages(pkgs) == nil and err:find("already installed"), pkgs_fail_msg(pkgs, err))
+    assert(describe_packages(pkgs) == nil and err:find("already selected"), pkgs_fail_msg(pkgs, err))
 end
 
 -- a provides d, b depends c, c provides d, install a + b
@@ -458,7 +458,7 @@ tests.provides_same_and_depends_with_to_install_2 = function()
     manifest.c = {name="c", arch="Universal", type="all", version="scm", provides={"d-scm"}}
 
     local pkgs, err = depends.get_depends({'a', 'b'}, installed, manifest);
-    assert(describe_packages(pkgs) == nil and err:find("already installed"), pkgs_fail_msg(pkgs, err))
+    assert(describe_packages(pkgs) == nil and err:find("already selected"), pkgs_fail_msg(pkgs, err))
 end
 
 -- a depends b, b provides e, c depends d, d provides e, install a + c
@@ -470,7 +470,7 @@ tests.provides_same_and_depends_with_to_install_3 = function()
     manifest.d = {name="d", arch="Universal", type="all", version="scm", provides={"e-scm"}}
 
     local pkgs, err = depends.get_depends({'a', 'c'}, installed, manifest);
-    assert(describe_packages(pkgs) == nil and err:find("already installed"), pkgs_fail_msg(pkgs, err))
+    assert(describe_packages(pkgs) == nil and err:find("already selected"), pkgs_fail_msg(pkgs, err))
 end
 
 
