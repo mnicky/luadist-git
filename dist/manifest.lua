@@ -6,8 +6,7 @@ local cfg = require "dist.config"
 local git = require "dist.git"
 local sys = require "dist.sys"
 
--- Return manifest table
--- TODO: add deploy_dir argument ?
+-- Return the manifest table
 function get_manifest()
 
     -- get manifest from cache
