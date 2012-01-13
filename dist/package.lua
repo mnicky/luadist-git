@@ -91,7 +91,6 @@ function install_pkg(pkg_dir, deploy_dir, variables)
             cmake_variables[k] = v
         end
 
-        -- TODO wouldn't it be better to move this into config.lua ?
         cmake_variables.CMAKE_INCLUDE_PATH = table.concat({cmake_variables.CMAKE_INCLUDE_PATH or "", deploy_dir .. "/include"}, ";")
         cmake_variables.CMAKE_LIBRARY_PATH = table.concat({cmake_variables.CMAKE_LIBRARY_PATH or "", deploy_dir .. "/lib", deploy_dir .. "/bin"}, ";")
         cmake_variables.CMAKE_PROGRAM_PATH = table.concat({cmake_variables.CMAKE_PROGRAM_PATH or "", deploy_dir .. "/bin"}, ";")
