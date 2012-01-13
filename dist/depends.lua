@@ -202,7 +202,7 @@ local function get_packages_to_install(package, installed, manifest, constraint,
     end
 
     if #candidates_to_install == 0 then
-        return nil, "No suitable candidate for package '" .. package .. (constraint or "") .. "' found."
+        return nil, "No suitable candidate for package '" .. package .. "'" .. (constraint and " of version '" .. constraint .. "'" or "") .. " found."
     end
 
     sort_by_versions(candidates_to_install)
@@ -377,7 +377,9 @@ function get_depends(packages, installed, manifest)
 
     -- get packages needed to to satisfy dependencies
     for _, pkg in pairs(packages) do
-        local needed_to_install, err = get_packages_to_install(pkg, tmp_installed, manifest)
+
+        local pkg_name, pkg_constraint = split_name_constraint(pkg)
+        local needed_to_install, err = get_packages_to_install(pkg_name, tmp_installed, manifest, pkg_constraint)
 
         if needed_to_install then
             for _, needed_pkg in pairs(needed_to_install) do

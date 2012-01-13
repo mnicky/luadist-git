@@ -1122,4 +1122,79 @@ tests.os_specific_depends_3 = function()
     assert(describe_packages(pkgs) == "c-0.9 d-0.9 b-0.9 a-1.0", pkgs_fail_msg(pkgs, err))
 end
 
+
+--- ========== INSTALL SPECIFIC VERSION  =====================================
+
+--- install specific version
+
+-- a-1.0 available, a-2.0 available, install a-1.0
+tests.install_specific_version_1 = function()
+    local manifest, installed = {}, {}
+    manifest.a1 = {name="a", arch="Universal", type="all", version="1.0",}
+    manifest.a2 = {name="a", arch="Universal", type="all", version="2.0",}
+
+    local pkgs, err = depends.get_depends({'a-1.0'}, installed, manifest);
+    assert(describe_packages(pkgs) == "a-1.0", pkgs_fail_msg(pkgs, err))
+end
+
+-- a-1.0 available, a-2.0 available, install a<2.0
+tests.install_specific_version_2 = function()
+    local manifest, installed = {}, {}
+    manifest.a1 = {name="a", arch="Universal", type="all", version="1.0",}
+    manifest.a2 = {name="a", arch="Universal", type="all", version="2.0",}
+
+    local pkgs, err = depends.get_depends({'a<2.0'}, installed, manifest);
+    assert(describe_packages(pkgs) == "a-1.0", pkgs_fail_msg(pkgs, err))
+end
+
+-- a-1.0 available, a-2.0 available, install a<=2.0
+tests.install_specific_version_3 = function()
+    local manifest, installed = {}, {}
+    manifest.a1 = {name="a", arch="Universal", type="all", version="1.0",}
+    manifest.a2 = {name="a", arch="Universal", type="all", version="2.0",}
+
+    local pkgs, err = depends.get_depends({'a<=2.0'}, installed, manifest);
+    assert(describe_packages(pkgs) == "a-2.0", pkgs_fail_msg(pkgs, err))
+end
+
+-- a-1.0 available, a-2.0 available, install a>=3.0
+tests.install_specific_version_4 = function()
+    local manifest, installed = {}, {}
+    manifest.a1 = {name="a", arch="Universal", type="all", version="1.0",}
+    manifest.a2 = {name="a", arch="Universal", type="all", version="2.0",}
+
+    local pkgs, err = depends.get_depends({'a>=3.0'}, installed, manifest);
+    assert(describe_packages(pkgs) == nil and err:find("No suitable candidate"), pkgs_fail_msg(pkgs, err))
+end
+
+--- install specific version with conflicts
+
+-- b installed, a-1.0 available, a-2.0 available, a-2.5 available, a-2.5 conflicts b, install a>=2.0
+tests.install_specific_version_with_conflicts_1 = function()
+    local manifest, installed = {}, {}
+    manifest.a1 = {name="a", arch="Universal", type="all", version="1.0",}
+    manifest.a2 = {name="a", arch="Universal", type="all", version="2.0",}
+    manifest.a3 = {name="a", arch="Universal", type="all", version="2.5", conflicts={"b"}}
+    manifest.b = {name="b", arch="Universal", type="all", version="1.0",}
+    installed.b = manifest.b
+
+    local pkgs, err = depends.get_depends({'a>=2.0'}, installed, manifest);
+    assert(describe_packages(pkgs) == "a-2.0" , pkgs_fail_msg(pkgs, err))
+end
+
+-- b installed, a-1.0 available, a-2.0 available, a-2.5 available, a-2.5 conflicts b, install a>2.0
+tests.install_specific_version_with_conflicts_2 = function()
+    local manifest, installed = {}, {}
+    manifest.a1 = {name="a", arch="Universal", type="all", version="1.0",}
+    manifest.a2 = {name="a", arch="Universal", type="all", version="2.0",}
+    manifest.a3 = {name="a", arch="Universal", type="all", version="2.5", conflicts={"b"}}
+    manifest.b = {name="b", arch="Universal", type="all", version="1.0",}
+    installed.b = manifest.b
+
+    local pkgs, err = depends.get_depends({'a>2.0'}, installed, manifest);
+    assert(describe_packages(pkgs) == nil and err:find("conflicts"), pkgs_fail_msg(pkgs, err))
+end
+
+
+
 run_tests(tests)
