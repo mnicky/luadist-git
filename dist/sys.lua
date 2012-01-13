@@ -114,11 +114,17 @@ function current_dir()
     return lfs.currentdir()
 end
 
--- TODO return also previous current_dir as the second return value?
--- Changes the current working directory
+-- Change the current working directory and return 'true' and previous working
+-- directory on success and 'nil' and error message on error.
 function change_dir(dir_name)
     assert(type(dir_name) == "string", "sys.change_dir: Argument 'dir_name' is not a string.")
-    return lfs.chdir(dir_name)
+    local prev_dir = current_dir()
+    local ok, err = lfs.chdir(dir_name)
+    if ok then
+        return ok, prev_dir
+    else
+        return nil, err
+    end
 end
 
 -- Make a new directory
