@@ -132,7 +132,6 @@ function save_distinfo(distinfo_table, file)
 
     distinfo_file:close()
 
-    -- TODO add error message
     return true
 end
 
