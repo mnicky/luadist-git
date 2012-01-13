@@ -2,9 +2,6 @@
 
 module ("dist.config", package.seeall)
 
--- TODO: get rid of lfs dependency in this module (replace with dist.sys)
-local lfs = require "lfs"
-
 -- Look for _PROGDIR by default
 local path = _PROGDIR
 if path then path = path:gsub("\\", "/") .. "/.." end
@@ -15,7 +12,7 @@ arch			= "@DIST_ARCH@"			 -- Host architecture
 type			= "@DIST_TYPE@"			 -- Host type
 
 -- Paths
-root_dir      = path or os.getenv("DIST_ROOT") or lfs.currentdir()
+root_dir      = path or os.getenv("DIST_ROOT") or "/"
 temp_dir      = "tmp"
 cache_dir     = temp_dir .. "/cache"
 distinfos_dir = "share/luadist-git/dists"
