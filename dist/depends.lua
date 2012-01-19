@@ -10,7 +10,6 @@ local utils = require "dist.utils"
 
 -- Return all packages with specified names from manifest
 function find_packages(package_names, manifest)
-
     if type(package_names) == "string" then package_names = {package_names} end
     manifest = manifest or mf.get_manifest()
 
@@ -18,7 +17,6 @@ function find_packages(package_names, manifest)
     assert(type(manifest) == "table", "depends.find_packages: Argument 'manifest' is not a table.")
 
     local packages_found = {}
-
     -- find matching packages in manifest
     for _, pkg_to_find in pairs(package_names) do
         for _, repo_pkg in pairs(manifest) do
@@ -27,13 +25,11 @@ function find_packages(package_names, manifest)
             end
         end
     end
-
     return packages_found
 end
 
 -- Return manifest consisting of packages installed in specified deploy_dir directory
 function get_installed(deploy_dir)
-
     deploy_dir = deploy_dir or cfg.root_dir
 
     assert(type(deploy_dir) == "string", "depends.get_installed: Argument 'deploy_dir' is not a string.")
@@ -52,10 +48,8 @@ function get_installed(deploy_dir)
                     table.insert(manifest, mf.load_distinfo(distinfos_path .. "/" .. dir .. "/" .. file))
                 end
             end
-
         end
     end
-
     return manifest
 end
 
@@ -65,7 +59,6 @@ end
 -- If package is installed but doesn't satisfy version constraint, error message
 -- is returned as the second value.
 local function is_installed(package_name, installed_pkgs, version_wanted)
-
     assert(type(package_name) == "string", "depends.is_installed: Argument 'package_name' is not a string.")
     assert(type(installed_pkgs) == "table", "depends.is_installed: Argument 'installed_pkgs' is not a table.")
     assert(type(version_wanted) == "string" or type(version_wanted) == "nil", "depends.is_installed: Argument 'version_wanted' is not a string or nil.")
@@ -88,7 +81,6 @@ local function is_installed(package_name, installed_pkgs, version_wanted)
         end
 
     end
-
     return pkg_is_installed, err
 end
 
@@ -167,9 +159,8 @@ end
 -- calling this function from other context. It is used for passing the changes
 -- in installed packages between the recursive calls of this function.
 --
--- TODO refactor this spaghetti code!
+-- TODO: refactor this spaghetti code!
 local function get_packages_to_install(package, installed, manifest, constraint, dependency_parents, tmp_installed)
-
     manifest = manifest or mf.get_manifest()
     constraint = constraint or ""
     dependency_parents = dependency_parents or {}
@@ -192,10 +183,8 @@ local function get_packages_to_install(package, installed, manifest, constraint,
     -- table of packages needed to be installed (will be returned)
     local to_install = {}
 
-    -- find candidates
+    -- find candidates & filter them
     local candidates_to_install = find_packages(package, manifest)
-
-    -- filter candidates
     candidates_to_install = filter_packages_by_arch_and_type(candidates_to_install, cfg.arch, cfg.type)
     if constraint ~= "" then
         candidates_to_install = filter_packages_by_version(candidates_to_install, constraint)
@@ -207,19 +196,15 @@ local function get_packages_to_install(package, installed, manifest, constraint,
 
     sort_by_versions(candidates_to_install)
 
-    -- for all package candidates
     for k, pkg in pairs(candidates_to_install) do
 
-        -- clear errors and installed state of previous candidate
+        -- clear the state from previous candidate
         pkg_is_installed, err = false, nil
 
         -- set required version if constraint specified
         if constraint ~= "" then
             pkg.version_wanted = constraint
         end
-
-        -- remove this package from table
-        candidates_to_install[k] = {}
 
         -- check whether this package has already been added to 'tmp_installed' by another of its candidates
         pkg_is_installed, err = is_installed(pkg.name, tmp_installed, pkg.version_wanted)
@@ -239,7 +224,7 @@ local function get_packages_to_install(package, installed, manifest, constraint,
             -- check if pkg's dependencies are satisfied
             if pkg.depends then
 
-                -- insert this pkg into the stack of circular dependencies detection
+                -- insert pkg into the stack of circular dependencies detection
                 table.insert(dependency_parents, pkg.name)
 
                 -- collect all OS specific dependencies of pkg
@@ -248,7 +233,6 @@ local function get_packages_to_install(package, installed, manifest, constraint,
                     -- if 'depend' is a table of OS specific dependencies for
                     -- this arch, add them to the normal dependencies of pkg
                     if type(depend) == "table" then
-
                         if k == cfg.arch then
                             for _, os_specific_depend in pairs(depend) do
                                 table.insert(pkg.depends, os_specific_depend)
@@ -262,7 +246,6 @@ local function get_packages_to_install(package, installed, manifest, constraint,
 
                     -- skip tables of OS specific dependencies
                     if type(depend) ~= "table" then
-
                         local dep_name, dep_constraint = split_name_constraint(depend)
 
                         -- detect circular dependencies using 'dependency_parents'
@@ -301,12 +284,10 @@ local function get_packages_to_install(package, installed, manifest, constraint,
 
                 -- remove last package from the stack of circular dependencies detection
                 table.remove(dependency_parents)
-
             end
 
             -- if no error occured
             if not err then
-
                 -- add pkg and it's provides to the fake table of installed packages, with
                 -- property 'selected' set, indicating that the package isn't
                 -- really installed in the system, just selected to be installed (used e.g. in error messages)
@@ -318,13 +299,11 @@ local function get_packages_to_install(package, installed, manifest, constraint,
                         table.insert(tmp_installed, provided_pkg)
                     end
                 end
-
                 -- add pkg to the table of packages to install
                 table.insert(to_install, pkg)
 
             -- if some error occured
             else
-
                 -- set tables of 'packages to install' and 'installed packages' to their original state
                 to_install = {}
                 tmp_installed = utils.deepcopy(installed)
@@ -352,12 +331,11 @@ local function get_packages_to_install(package, installed, manifest, constraint,
 end
 
 -- Resolve dependencies and return all packages needed in order to install
--- 'packages' into 'installed' ones, using 'manifest'.
+-- 'packages' into the system with already 'installed' packages, using 'manifest'.
 function get_depends(packages, installed, manifest)
     if not packages then return {} end
 
     manifest = manifest or mf.get_manifest()
-
     if type(packages) == "string" then packages = {packages} end
 
     assert(type(packages) == "table", "depends.get_dependencies: Argument 'packages' is not a table or string.")
@@ -407,7 +385,6 @@ function get_provides(package)
     if not package.provides then return {} end
 
     local provided = {}
-
     for _, provided_name in pairs(package.provides) do
         local pkg = {}
         pkg.name, pkg.version = split_name_constraint(provided_name)
@@ -416,7 +393,6 @@ function get_provides(package)
         pkg.provided = package.name .. "-" .. package.version
         table.insert(provided, pkg)
     end
-
     return provided
 end
 
@@ -438,26 +414,22 @@ end
 
 -- Return only packages that satisfy specified version constraint
 function filter_packages_by_version(packages, constraint)
-
     if type(packages) == "string" then packages = {packages} end
 
     assert(type(packages) == "table", "depends.filter_packages_by_version: Argument 'packages' is not a string or table.")
     assert(type(constraint) == "string", "depends.filter_packages_by_version: Argument 'constraint' is not a string.")
 
     local passed_pkgs = {}
-
     for _, pkg in pairs(packages) do
         if satisfies_constraint(pkg.version, constraint) then
             table.insert(passed_pkgs, pkg)
         end
     end
-
     return passed_pkgs
 end
 
 -- Return only packages that can be installed on the specified architecture and type
 function filter_packages_by_arch_and_type(packages, req_arch, req_type)
-
     if type(packages) == "string" then packages = {packages} end
 
     assert(type(packages) == "table", "depends.filter_packages_by_arch_and_type: Argument 'packages' is not a string or table.")
@@ -465,7 +437,6 @@ function filter_packages_by_arch_and_type(packages, req_arch, req_type)
     assert(type(req_type) == "string", "depends.filter_packages_by_arch_and_type: Argument 'pkg_type' is not a string.")
 
     local passed_pkgs = {}
-
     for _, pkg in pairs(packages) do
 
         -- check package's architecture
@@ -473,7 +444,6 @@ function filter_packages_by_arch_and_type(packages, req_arch, req_type)
             table.insert(passed_pkgs, pkg)
         end
     end
-
     return passed_pkgs
 end
 
@@ -481,7 +451,6 @@ end
 -- is nil or '' then return only name (e.g. 'luajit') and when name is nil or ''
 -- then return '<unknown>'.
 function pkg_full_name(name, version)
-
     name = name or ""
     version = version or ""
 
@@ -500,7 +469,6 @@ end
 -- Sort table of packages descendingly by versions (newer ones are moved to the top).
 function sort_by_versions(packages)
     assert(type(packages) == "table", "depends.sort_by_versions: Argument 'packages' is not a string or table.")
-
     table.sort(packages, function (a,b) return compare_versions(a.version, b.version) end)
 end
 
@@ -508,7 +476,6 @@ end
 function satisfies_constraint(version, constraint)
     assert(type(version) == "string", "depends.satisfies_constraint: Argument 'version' is not a string.")
     assert(type(constraint) == "string", "depends.satisfies_constraint: Argument 'constraint' is not a string.")
-
     return const.constraint_satisfied(version, constraint)
 end
 
@@ -516,6 +483,5 @@ end
 function compare_versions(version_a, version_b)
     assert(type(version_a) == "string", "depends.compare_versions: Argument 'version_a' is not a string.")
     assert(type(version_b) == "string", "depends.compare_versions: Argument 'version_b' is not a string.")
-
     return const.compareVersions(version_a,version_b)
 end
