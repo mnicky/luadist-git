@@ -14,7 +14,7 @@ function get_manifest()
 
     --if manifest not in cache, download it
     if not manifest then
-        local ok, err = download_manifests()
+        local ok, err = download_manifest()
         if not ok then return nil, err end
         manifest, err = load_manifest()
         if not manifest then return nil, err end
@@ -23,9 +23,9 @@ function get_manifest()
     return manifest
 end
 
--- Download manifest from git 'repository_urls' to 'dest_dir' and return true on success
+-- Download manifest from the table of git 'repository_urls' to 'dest_dir' and return true on success
 -- and nil and error message on error.
-function download_manifests(repository_urls, dest_dir)
+function download_manifest(repository_urls, dest_dir)
 
     repository_urls = repository_urls or cfg.repositories
     dest_dir = dest_dir or cfg.cache_dir
