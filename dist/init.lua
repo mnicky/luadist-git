@@ -37,7 +37,9 @@ function update_manifest(deploy_dir)
     assert(type(deploy_dir) == "string", "dist.update_manifest: Argument 'deploy_dir' is not a string.")
 
     -- make backup and delete the old manifest file
-    sys.copy(deploy_dir .. "/" .. cfg.manifest_file, deploy_dir .. "/" .. cfg.temp_dir)
+    if (sys.exists(deploy_dir .. "/" .. cfg.manifest_file)) then
+        sys.copy(deploy_dir .. "/" .. cfg.manifest_file, deploy_dir .. "/" .. cfg.temp_dir)
+    end
     sys.delete(deploy_dir .. "/" .. cfg.manifest_file)
 
     -- retrieve the new manifest
