@@ -1,0 +1,124 @@
+#!/usr/bin/env lua
+
+-- Command line interface to LuaDist-git.
+
+local dist = require "dist"
+
+local commands
+commands = {
+
+    -- Print help for this command line interface.
+    ["help"] = {
+        help = [[Usage: ]] .. arg[0] .. [[ help COMMAND]],
+        run = function ()
+
+        end
+    },
+
+    -- Install modules.
+    ["install"] = {
+        help = [[Usage: ]] .. arg[0] .. [[ [DEPLOYMENT_DIR] install MODULES...]],
+
+        run = function (deploy_dir, modules)
+            deploy_dir = deploy_dir or dist.get_deploy_dir()
+            if type(modules) == "string" then modules = {modules} end
+
+            assert(type(deploy_dir) == "string", "luadist.install: Argument 'deploy_dir' is not a string.")
+            assert(type(modules) == "table", "luadist.install: Argument 'modules' is not a string or table.")
+
+            local ok, err = dist.install(modules, deploy_dir)
+            if not ok then
+                print(err)
+                return 1
+            else
+               print("Installation successful.")
+               return 0
+            end
+        end
+    },
+
+    -- Remove modules.
+    ["remove"] = {
+        help = [[Usage: ]] .. arg[0] .. [[ [DEPLOYMENT_DIR] remove MODULES...]],
+
+        run = function (deploy_dir, modules)
+            deploy_dir = deploy_dir or dist.get_deploy_dir()
+            if type(modules) == "string" then modules = {modules} end
+
+            assert(type(deploy_dir) == "string", "luadist.remove: Argument 'deploy_dir' is not a string.")
+            assert(type(modules) == "table", "luadist.remove: Argument 'modules' is not a string or table.")
+
+            local ok, err = dist.remove(modules, deploy_dir)
+            if not ok then
+                print(err)
+                return 1
+            else
+               print("Removal successful.")
+               return 0
+            end
+        end
+    },
+
+    -- Update repositories.
+    ["update"] = {
+        help = [[Usage: ]] .. arg[0] .. [[ [DEPLOYMENT_DIR] update]],
+
+        run = function (deploy_dir)
+            deploy_dir = deploy_dir or dist.get_deploy_dir()
+            assert(type(deploy_dir) == "string", "luadist.update: Argument 'deploy_dir' is not a string.")
+
+            local ok, err = dist.update_manifest(deploy_dir)
+            if not ok then
+                print(err)
+                return 1
+            else
+               print("Update successful.")
+               return 0
+            end
+        end
+    },
+
+    -- List installed modules.
+    ["list"] = {
+        help = [[Usage: ]] .. arg[0] .. [[ [DEPLOYMENT_DIR] list]],
+
+        run = function (deploy_dir)
+            deploy_dir = deploy_dir or dist.get_deploy_dir()
+            assert(type(deploy_dir) == "string", "luadist.list: Argument 'deploy_dir' is not a string.")
+
+            local deployed = dist.get_deployed(deploy_dir)
+            for _, pkg in pairs(deployed) do
+                -- TODO: print more information
+                print(pkg.name .. "-" .. pkg.version)
+            end
+            return 0
+        end
+    },
+}
+
+-- TODO: add parsing of other command line variables
+
+-- Run the 'command' in the 'deploy_dir' with other options starting
+-- at 'other_idx' index of special variable 'arg.
+local function run_command(deploy_dir, command, other_idx)
+    local modules = {}
+    if other_idx then
+        for i = other_idx, #arg do
+            table.insert(modules, arg[i])
+        end
+    end
+    return commands[command].run(deploy_dir, modules)
+end
+
+
+-- Parse command line input and run the required command.
+if not commands[arg[1]] and commands[arg[2]] then
+    -- deploy_dir specified
+    return run_command(arg[1], arg[2], 3)
+elseif commands[arg[1]] then
+    -- deploy_dir not specified
+    return run_command(dist.get_deploy_dir(), arg[1], 2)
+else
+    -- unknown command
+    return run_command(dist.get_deploy_dir(), "help")
+end

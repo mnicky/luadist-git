@@ -9,6 +9,11 @@ local sys = require "dist.sys"
 local package = require "dist.package"
 local mf = require "dist.manifest"
 
+-- Return the deployment directory.
+function get_deploy_dir()
+    return cfg.root_dir
+end
+
 -- Return packages deployed in 'deploy_dir' also with their provides
 function get_deployed(deploy_dir)
     deploy_dir = deploy_dir or cfg.root_dir
