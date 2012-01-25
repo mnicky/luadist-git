@@ -9,15 +9,44 @@ commands = {
 
     -- Print help for this command line interface.
     ["help"] = {
-        help = [[Usage: ]] .. arg[0] .. [[ help COMMAND]],
-        run = function ()
+        help = [[
+LuaDist-git is Lua package manager for the LuaDist deployment system.
+Released under the MIT License. See https://github.com/luadist/luadist-git
 
+        Usage: luadist [DEPLOYMENT_DIRECTORY] <COMMAND> [OTHER...]
+
+        Commands:
+
+            help      - print this help
+            install   - install packages
+            remove    - remove packages
+            update    - update repositories
+            list      - list installed packages
+
+        To get help on specific command, run:
+            luadist help <COMMAND>
+        ]],
+        run = function (deploy_dir, help_item)
+            help_item = help_item or {}
+            assert(type(help_item) == "table", "luadist.help: Argument 'help_item' is not a table.")
+            if not help_item or not commands[help_item[1]] then
+                help_item = "help"
+            else
+                help_item = help_item[1]
+            end
+            print(commands[help_item].help)
+            return 0
         end
     },
 
     -- Install modules.
     ["install"] = {
-        help = [[Usage: ]] .. arg[0] .. [[ [DEPLOYMENT_DIR] install MODULES...]],
+        help = [[
+Usage: luadist [DEPLOYMENT_DIRECTORY] install MODULES...
+
+The 'install' command will install specified modules to DEPLOYMENT_DIRECTORY.
+Luadist will also automatically resolve, download and install all dependencies.
+        ]],
 
         run = function (deploy_dir, modules)
             deploy_dir = deploy_dir or dist.get_deploy_dir()
@@ -39,7 +68,12 @@ commands = {
 
     -- Remove modules.
     ["remove"] = {
-        help = [[Usage: ]] .. arg[0] .. [[ [DEPLOYMENT_DIR] remove MODULES...]],
+        help = [[
+Usage: luadist [DEPLOYMENT_DIRECTORY] remove MODULES...
+
+The 'remove' command will remove all specified modules from
+DEPLOYMENT_DIRECTORY. Dependencies between modules are not taken into account.
+        ]],
 
         run = function (deploy_dir, modules)
             deploy_dir = deploy_dir or dist.get_deploy_dir()
@@ -61,7 +95,12 @@ commands = {
 
     -- Update repositories.
     ["update"] = {
-        help = [[Usage: ]] .. arg[0] .. [[ [DEPLOYMENT_DIR] update]],
+        help = [[
+Usage: luadist [DEPLOYMENT_DIRECTORY] update
+
+The 'update' command will update all software repositories of specified
+DEPLOYMENT_DIRECTORY.
+        ]],
 
         run = function (deploy_dir)
             deploy_dir = deploy_dir or dist.get_deploy_dir()
@@ -80,7 +119,12 @@ commands = {
 
     -- List installed modules.
     ["list"] = {
-        help = [[Usage: ]] .. arg[0] .. [[ [DEPLOYMENT_DIR] list]],
+        help = [[
+Usage: luadist [DEPLOYMENT_DIRECTORY] list
+
+The 'list' command will list all modules installed in specified
+DEPLOYMENT_DIRECTORY.
+        ]],
 
         run = function (deploy_dir)
             deploy_dir = deploy_dir or dist.get_deploy_dir()
@@ -122,5 +166,5 @@ elseif commands[arg[1]] then
     return run_command(dist.get_deploy_dir(), arg[1], 2)
 else
     -- unknown command
-    return run_command(dist.get_deploy_dir(), "help")
+    return run_command(dist.get_deploy_dir(), "help", 2)
 end
