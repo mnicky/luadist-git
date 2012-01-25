@@ -126,7 +126,7 @@ local function packages_conflicts(pkg, installed_pkg)
         -- direct conflicts with 'pkg'
         for _, conflict in pairs (installed_pkg.conflicts) do
             if conflict == pkg.name then
-                return "Already '" .. selected_or_installed(installed_pkg) .. " package '" .. pkg_full_name(installed_pkg.name, installed_pkg.version) .. "' conflicts with package '" .. pkg_full_name(pkg.name, pkg.version) .. "'."
+                return "Already " .. selected_or_installed(installed_pkg) .. " package '" .. pkg_full_name(installed_pkg.name, installed_pkg.version) .. "' conflicts with package '" .. pkg_full_name(pkg.name, pkg.version) .. "'."
             end
         end
 
