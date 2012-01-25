@@ -9,7 +9,7 @@ local const = require "dist.constraints"
 local utils = require "dist.utils"
 
 -- Return all packages with specified names from manifest.
--- Name can also contain version constraint (e.g. 'copas>=1.2.3', 'saci-1.0' etc.).
+-- Names can also contain version constraint (e.g. 'copas>=1.2.3', 'saci-1.0' etc.).
 function find_packages(package_names, manifest)
     if type(package_names) == "string" then package_names = {package_names} end
     manifest = manifest or mf.get_manifest()
@@ -20,9 +20,9 @@ function find_packages(package_names, manifest)
     local packages_found = {}
     -- find matching packages in manifest
     for _, pkg_to_find in pairs(package_names) do
-        local pkg_name , pkg_constraint = split_name_constraint(pkg_to_find)
+        local pkg_name, pkg_constraint = split_name_constraint(pkg_to_find)
         for _, repo_pkg in pairs(manifest) do
-            if repo_pkg.name == pkg_name and (pkg_constraint and satisfies_constraint(repo_pkg.version, pkg_constraint) or true) then
+            if repo_pkg.name == pkg_name and (not pkg_constraint or satisfies_constraint(repo_pkg.version, pkg_constraint)) then
                 table.insert(packages_found, repo_pkg)
             end
         end
@@ -149,7 +149,7 @@ end
 
 -- Return all packages needed in order to install 'package'
 -- and with specified 'installed' packages in the system using 'manifest'.
--- Optional version 'constraint' can be added.
+-- 'package' can also contain version constraint (e.g. 'copas>=1.2.3', 'saci-1.0' etc.).
 --
 -- All returned packages (and their provides) are also inserted into the table 'installed'
 --
@@ -162,9 +162,8 @@ end
 -- in installed packages between the recursive calls of this function.
 --
 -- TODO: refactor this spaghetti code!
-local function get_packages_to_install(package, installed, manifest, constraint, dependency_parents, tmp_installed)
+local function get_packages_to_install(package, installed, manifest, dependency_parents, tmp_installed)
     manifest = manifest or mf.get_manifest()
-    constraint = constraint or ""
     dependency_parents = dependency_parents or {}
 
     -- set helper table 'tmp_installed'
@@ -173,12 +172,12 @@ local function get_packages_to_install(package, installed, manifest, constraint,
     assert(type(package) == "string", "depends.get_packages_to_install: Argument 'package' is not a string.")
     assert(type(installed) == "table", "depends.get_packages_to_install: Argument 'installed' is not a table.")
     assert(type(manifest) == "table", "depends.get_packages_to_install: Argument 'manifest' is not a table.")
-    assert(type(constraint) == "string", "depends.get_packages_to_install: Argument 'constraint' is not a string.")
     assert(type(dependency_parents) == "table", "depends.get_packages_to_install: Argument 'dependency_parents' is not a table.")
     assert(type(tmp_installed) == "table", "depends.get_packages_to_install: Argument 'tmp_installed' is not a table.")
 
     -- check if package is already installed
-    local pkg_is_installed, err = is_installed(package, tmp_installed, constraint)
+    local pkg_name, pkg_constraint = split_name_constraint(package)
+    local pkg_is_installed, err = is_installed(pkg_name, tmp_installed, pkg_constraint)
     if pkg_is_installed then return {} end
     if err then return nil, err end
 
@@ -188,12 +187,9 @@ local function get_packages_to_install(package, installed, manifest, constraint,
     -- find candidates & filter them
     local candidates_to_install = find_packages(package, manifest)
     candidates_to_install = filter_packages_by_arch_and_type(candidates_to_install, cfg.arch, cfg.type)
-    if constraint ~= "" then
-        candidates_to_install = filter_packages_by_version(candidates_to_install, constraint)
-    end
 
     if #candidates_to_install == 0 then
-        return nil, "No suitable candidate for package '" .. package .. ((constraint ~= "") and " " .. constraint or "") .. "' found."
+        return nil, "No suitable candidate for package '" .. package .. "' found."
     end
 
     sort_by_versions(candidates_to_install)
@@ -203,13 +199,8 @@ local function get_packages_to_install(package, installed, manifest, constraint,
         -- clear the state from previous candidate
         pkg_is_installed, err = false, nil
 
-        -- set required version if constraint specified
-        if constraint ~= "" then
-            pkg.version_wanted = constraint
-        end
-
         -- check whether this package has already been added to 'tmp_installed' by another of its candidates
-        pkg_is_installed, err = is_installed(pkg.name, tmp_installed, pkg.version_wanted)
+        pkg_is_installed, err = is_installed(pkg.name, tmp_installed, pkg_constraint)
         if pkg_is_installed then break end
 
         -- checks for conflicts with other installed (or previously selected) packages
@@ -248,7 +239,7 @@ local function get_packages_to_install(package, installed, manifest, constraint,
 
                     -- skip tables of OS specific dependencies
                     if type(depend) ~= "table" then
-                        local dep_name, dep_constraint = split_name_constraint(depend)
+                        local dep_name = split_name_constraint(depend)
 
                         -- detect circular dependencies using 'dependency_parents'
                         local is_circular_dependency = false
@@ -263,7 +254,7 @@ local function get_packages_to_install(package, installed, manifest, constraint,
                         if not is_circular_dependency then
 
                             -- recursively call this function on the candidates of this pkg's dependency
-                            local depends_to_install, dep_err = get_packages_to_install(dep_name, installed, manifest, dep_constraint, dependency_parents, tmp_installed)
+                            local depends_to_install, dep_err = get_packages_to_install(depend, installed, manifest, dependency_parents, tmp_installed)
 
                             -- if any suitable dependency packages were found, insert them to the 'to_install' table
                             if depends_to_install then
@@ -358,8 +349,7 @@ function get_depends(packages, installed, manifest)
     -- get packages needed to to satisfy dependencies
     for _, pkg in pairs(packages) do
 
-        local pkg_name, pkg_constraint = split_name_constraint(pkg)
-        local needed_to_install, err = get_packages_to_install(pkg_name, tmp_installed, manifest, pkg_constraint)
+        local needed_to_install, err = get_packages_to_install(pkg, tmp_installed, manifest)
 
         if needed_to_install then
             for _, needed_pkg in pairs(needed_to_install) do
