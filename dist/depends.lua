@@ -75,7 +75,7 @@ local function is_installed(package_name, installed_pkgs, version_wanted)
                 pkg_is_installed = true
                 break
             else
-                err = "Package '" .. package_name .. (version_wanted or "") .. "' needed, but installed at version '" .. installed_pkg.version .. "'."
+                err = "Package '" .. package_name .. (version_wanted and " " .. version_wanted or "") .. "' needed, but installed at version '" .. installed_pkg.version .. "'."
                 break
             end
         end
@@ -191,7 +191,7 @@ local function get_packages_to_install(package, installed, manifest, constraint,
     end
 
     if #candidates_to_install == 0 then
-        return nil, "No suitable candidate for package '" .. package .. "'" .. (constraint and " of version '" .. constraint .. "'" or "") .. " found."
+        return nil, "No suitable candidate for package '" .. package .. ((constraint ~= "") and " " .. constraint or "") .. "' found."
     end
 
     sort_by_versions(candidates_to_install)

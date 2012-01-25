@@ -85,12 +85,14 @@ commands = {
         run = function (deploy_dir)
             deploy_dir = deploy_dir or dist.get_deploy_dir()
             assert(type(deploy_dir) == "string", "luadist.list: Argument 'deploy_dir' is not a string.")
-
             local deployed = dist.get_deployed(deploy_dir)
+            print("\nInstalled packages:")
+            print("===================\n")
             for _, pkg in pairs(deployed) do
                 -- TODO: print more information
-                print(pkg.name .. "-" .. pkg.version)
+                print("\t" .. pkg.name .. "-" .. pkg.version .. "\t(" .. pkg.arch .. "-" .. pkg.type .. ")" .. (pkg.provided_by and "\t [provided by " .. pkg.provided_by .. "]" or ""))
             end
+            print("\n")
             return 0
         end
     },

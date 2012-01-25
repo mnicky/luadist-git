@@ -14,7 +14,7 @@ function get_deploy_dir()
     return cfg.root_dir
 end
 
--- Return packages deployed in 'deploy_dir' also with their provides
+-- Return packages deployed in 'deploy_dir' also with their provides.
 function get_deployed(deploy_dir)
     deploy_dir = deploy_dir or cfg.root_dir
     assert(type(deploy_dir) == "string", "dist.get_deployed: Argument 'deploy_dir' is not a string.")
@@ -24,6 +24,7 @@ function get_deployed(deploy_dir)
 
     for _, pkg in pairs(deployed) do
         for _, provided_pkg in pairs(depends.get_provides(pkg)) do
+            provided_pkg.provided_by = pkg.name .. "-" .. pkg.version
             table.insert(provided, provided_pkg)
         end
     end
@@ -31,6 +32,8 @@ function get_deployed(deploy_dir)
     for _, provided_pkg in pairs(provided) do
         table.insert(deployed, provided_pkg)
     end
+
+    table.sort(deployed, function (a,b) return a.name .. "-" .. a.version < b.name .. "-" .. b.version end)
 
     return deployed
 end
@@ -81,6 +84,7 @@ function install(package_names, deploy_dir)
     -- resolve dependencies
     local dependencies, err = depends.get_depends(package_names, installed, manifest)
     if err then return nil, err end
+    if #dependencies == 0 then return nil, "No packages to install." end
 
     -- fetch the packages from repository
     local dirs_or_err = {}
