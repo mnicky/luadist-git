@@ -8,7 +8,8 @@ local sys = require "dist.sys"
 local const = require "dist.constraints"
 local utils = require "dist.utils"
 
--- Return all packages with specified names from manifest
+-- Return all packages with specified names from manifest.
+-- Name can also contain version constraint (e.g. 'copas>=1.2.3', 'saci-1.0' etc.).
 function find_packages(package_names, manifest)
     if type(package_names) == "string" then package_names = {package_names} end
     manifest = manifest or mf.get_manifest()
@@ -19,8 +20,9 @@ function find_packages(package_names, manifest)
     local packages_found = {}
     -- find matching packages in manifest
     for _, pkg_to_find in pairs(package_names) do
+        local pkg_name , pkg_constraint = split_name_constraint(pkg_to_find)
         for _, repo_pkg in pairs(manifest) do
-            if repo_pkg.name == pkg_to_find then
+            if repo_pkg.name == pkg_name and (pkg_constraint and satisfies_constraint(repo_pkg.version, pkg_constraint) or true) then
                 table.insert(packages_found, repo_pkg)
             end
         end
