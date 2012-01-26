@@ -7,7 +7,7 @@ The main goals
 --------------
 
  * access git repositories directly and get rid of unnecessary
-   dependencies (i.e. luasocket, luasec, md5, unzip)
+   dependencies (i.e. luasocket, luasec, md5, openssl, unzip)
 
  * add functionality for uploading binary versions of modules to repositories
 
