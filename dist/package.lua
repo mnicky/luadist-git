@@ -150,6 +150,7 @@ function build_pkg(src_dir, build_dir, variables)
     --sys.change_dir(cmake_build_dir)
 
     src_dir = sys.get_absolute_path(src_dir)
+    print("Building " .. sys.extract_name(src_dir) .. "...")
 
     -- set the cmake cache
     local ok = sys.exec("cd " .. sys.quote(cmake_build_dir) .. " && " .. cfg.cmake .. " -C cache.cmake " .. sys.quote(src_dir))
