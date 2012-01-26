@@ -55,8 +55,10 @@ function update_manifest(deploy_dir)
 
     -- if couldn't download new manifest then restore the backup and return error message
     if not manifest then
-        sys.copy(deploy_dir .. "/" .. cfg.temp_dir .. "/" .. sys.extract_name(cfg.manifest_file), deploy_dir .. "/" .. cfg.cache_dir)
-        sys.delete(deploy_dir .. "/" .. cfg.temp_dir .. "/" .. sys.extract_name(cfg.manifest_file))
+        if sys.exists(deploy_dir .. "/" .. cfg.temp_dir .. "/" .. sys.extract_name(cfg.manifest_file)) then
+            sys.copy(deploy_dir .. "/" .. cfg.temp_dir .. "/" .. sys.extract_name(cfg.manifest_file), deploy_dir .. "/" .. cfg.cache_dir)
+            sys.delete(deploy_dir .. "/" .. cfg.temp_dir .. "/" .. sys.extract_name(cfg.manifest_file))
+        end
         return nil, err
     -- else delete the backup and return the new manifest
     else
