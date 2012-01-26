@@ -22,6 +22,14 @@ end
 function exec(command)
     assert(type(command) == "string", "sys.exec: Argument 'command' is not a string.")
 
+    if not cfg.debug then
+        if cfg.arch == "Windows" then
+            command = command .. " > NUL 2>&1"
+        else
+            command = command .. " > /dev/null 2>&1"
+        end
+    end
+
     local ok = os.execute(command)
 
     if ok ~= 0 then
@@ -160,7 +168,7 @@ function copy(source, dest_dir)
 
     assert(is_dir(dest_dir), "sys.move: destination '" .. dest_dir .."' is not a directory.")
 
-    if (cfg.arch == "Windows") then
+    if cfg.arch == "Windows" then
         if is_dir(source) then
             mkdir(dest_dir .. "/" .. extract_name(source))
             return exec("xcopy /E /I /Y /Q " .. quote(source) .. " " .. quote(dest_dir .. "\\" .. extract_name(source)))
@@ -180,7 +188,7 @@ end
 function delete(path)
     assert(type(path) == "string", "sys.delete: Argument 'path' is not a string.")
 
-    if (cfg.arch == "Windows") then
+    if cfg.arch == "Windows" then
         return exec("rd /S /Q " .. quote(path))
     else
         return exec("rm -rf " .. quote(path))
