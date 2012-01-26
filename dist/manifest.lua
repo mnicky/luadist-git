@@ -1,4 +1,4 @@
--- Working with manifest
+-- Working with manifest and dist.info files
 
 module ("dist.manifest", package.seeall)
 
@@ -28,7 +28,7 @@ end
 function download_manifest(repository_urls, dest_dir)
 
     repository_urls = repository_urls or cfg.repositories
-    dest_dir = dest_dir or cfg.cache_dir
+    dest_dir = dest_dir or cfg.root_dir .. "/" .. cfg.cache_dir
 
     if type(repository_urls) == "string" then repository_urls = {repository_urls} end
 
@@ -63,7 +63,7 @@ end
 -- Load and return manifest table from the manifest file.
 -- If manifest file not present, return nil.
 function load_manifest(manifest_file)
-    manifest_file = manifest_file or cfg.manifest_file
+    manifest_file = manifest_file or cfg.root_dir .. "/" .. cfg.manifest_file
 
     assert(type(manifest_file) == "string", "manifest.load_manifest: Argument 'manifest_file' is not a string.")
 
