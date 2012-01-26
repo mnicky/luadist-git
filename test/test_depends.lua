@@ -1,5 +1,6 @@
 -- Tests of LuaDist's dependency resolving
 
+local dist = require "dist"
 local cfg = require "dist.config"
 local depends = require "dist.depends"
 
