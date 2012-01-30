@@ -418,7 +418,7 @@ function filter_packages_by_arch_and_type(packages, req_arch, req_type)
 end
 
 -- Return only packages that contain one of the specified strings in their 'name-version'.
--- If no strings were specified, return all the packages.
+-- If no strings are specified, return all the packages.
 function filter_packages_by_strings(packages, strings)
     if type(strings) == "string" then strings = {strings} end
     assert(type(packages) == "table", "depends.filter_packages_by_strings: Argument 'packages' is not a table.")
