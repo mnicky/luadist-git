@@ -406,9 +406,7 @@ end
 
 -- Return only packages that can be installed on the specified architecture and type
 function filter_packages_by_arch_and_type(packages, req_arch, req_type)
-    if type(packages) == "string" then packages = {packages} end
-
-    assert(type(packages) == "table", "depends.filter_packages_by_arch_and_type: Argument 'packages' is not a string or table.")
+    assert(type(packages) == "table", "depends.filter_packages_by_arch_and_type: Argument 'packages' is not a table.")
     assert(type(req_arch) == "string", "depends.filter_packages_by_arch_and_type: Argument 'req_arch' is not a string.")
     assert(type(req_type) == "string", "depends.filter_packages_by_arch_and_type: Argument 'pkg_type' is not a string.")
 
@@ -418,6 +416,27 @@ function filter_packages_by_arch_and_type(packages, req_arch, req_type)
                                 end,
                             packages)
 end
+
+-- Return only packages that contain one of the specified strings in their 'name-version'.
+-- If no strings were specified, return all the packages.
+function filter_packages_by_strings(packages, strings)
+    if type(strings) == "string" then strings = {strings} end
+    assert(type(packages) == "table", "depends.filter_packages_by_strings: Argument 'packages' is not a table.")
+    assert(type(strings) == "table", "depends.filter_packages_by_strings: Argument 'strings' is not a string or table.")
+
+    if #strings ~= 0 then
+        return utils.filter_by(function (pkg)
+                                    for _,str in pairs(strings) do
+                                        local name = pkg.name .. "-" .. pkg.version
+                                        if name:find(str, 1 ,true) ~= nil then return true end
+                                    end
+                                end,
+                                packages)
+    else
+        return packages
+    end
+end
+
 
 -- Return full package name and version string (e.g. 'luajit-2.0'). When version
 -- is nil or '' then return only name (e.g. 'luajit') and when name is nil or ''
