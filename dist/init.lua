@@ -33,8 +33,7 @@ function get_deployed(deploy_dir)
         table.insert(deployed, provided_pkg)
     end
 
-    table.sort(deployed, function (a,b) return a.name .. "-" .. a.version < b.name .. "-" .. b.version end)
-
+    deployed = depends.sort_by_names(deployed)
     return deployed
 end
 

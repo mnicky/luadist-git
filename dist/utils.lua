@@ -22,14 +22,22 @@ function deepcopy(object)
     return _copy(object)
 end
 
--- Return deep copy of 'a_table', containing only items for which 'predicate_fn' returns true.
-function filter_by(predicate_fn, a_table)
-    assert(type(predicate_fn) == "function", "utils.filter_by: Argument 'predicate_fn' is not a function.")
-    assert(type(a_table) == "table", "utils.filter_by: Argument 'a_table' is not a table.")
-
+-- Return deep copy of table 'array', containing only items for which 'predicate_fn' returns true.
+function filter(array, predicate_fn)
+    assert(type(array) == "table", "utils.filter: Argument 'array' is not a table.")
+    assert(type(predicate_fn) == "function", "utils.filter: Argument 'predicate_fn' is not a function.")
     local tbl = {}
-    for k, v in pairs(a_table) do
-        if predicate_fn(v) == true then tbl[k] = deepcopy(v) end
+    for _,v in pairs(array) do
+        if predicate_fn(v) == true then table.insert(tbl, deepcopy(v)) end
     end
+    return tbl
+end
+
+-- Return deep copy of table 'array', sorted according to the 'compare_fn' function.
+function sort(array, compare_fn)
+    assert(type(array) == "table", "utils.sort: Argument 'array' is not a table.")
+    assert(type(compare_fn) == "function", "utils.sort: Argument 'compare_fn' is not a function.")
+    local tbl = deepcopy(array)
+    table.sort(tbl, compare_fn)
     return tbl
 end

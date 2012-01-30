@@ -5,6 +5,8 @@
 local dist = require "dist"
 local utils = require "dist.utils"
 local depends = require "dist.depends"
+local mf = require "dist.manifest"
+local cfg = require "dist.config"
 
 local commands
 commands = {
@@ -20,15 +22,17 @@ Released under the MIT License. See https://github.com/luadist/luadist-git
         Commands:
 
             help      - print this help
-            install   - install packages
-            remove    - remove packages
+            install   - install modules
+            remove    - remove modules
             update    - update repositories
-            list      - list installed packages
+            list      - list installed modules
+            search    - search repositories for modules
 
         To get help on specific command, run:
             luadist help <COMMAND>
         ]],
         run = function (deploy_dir, help_item)
+            deploy_dir = deploy_dir or dist.get_deploy_dir()
             help_item = help_item or {}
             assert(type(help_item) == "table", "luadist.help: Argument 'help_item' is not a table.")
             if not help_item or not commands[help_item[1]] then
@@ -126,7 +130,7 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] list [STRING...]
 
 The 'list' command will list all modules installed in specified
 DEPLOYMENT_DIRECTORY, which contain one or more optional STRINGs.
-If STRINGs are not specified, all installed packages are listed.
+If STRINGs are not specified, all installed modules are listed.
         ]],
 
         run = function (deploy_dir, strings)
@@ -135,12 +139,42 @@ If STRINGs are not specified, all installed packages are listed.
             assert(type(deploy_dir) == "string", "luadist.list: Argument 'deploy_dir' is not a string.")
             assert(type(strings) == "table", "luadist.list: Argument 'strings' is not a table.")
             local deployed = dist.get_deployed(deploy_dir)
-            deployed  = depends.filter_packages_by_strings(deployed , strings)
-            print("\nInstalled packages:")
-            print("===================\n")
+            deployed  = depends.filter_packages_by_strings(deployed, strings)
+            print("\nInstalled modules:")
+            print("==================\n")
             for _, pkg in pairs(deployed) do
                 -- TODO: print more information
                 print("\t" .. pkg.name .. "-" .. pkg.version .. "\t(" .. pkg.arch .. "-" .. pkg.type .. ")" .. (pkg.provided_by and "\t [provided by " .. pkg.provided_by .. "]" or ""))
+            end
+            print("\n")
+            return 0
+        end
+    },
+
+    -- Search for modules in repositories.
+    ["search"] = {
+        help = [[
+Usage: luadist search [STRING...]
+
+The 'search' command will list all modules from repositories,
+which contain one or more STRINGs. If no STRING is specified,
+all available modules are listed.
+Only modules suitable for the platform LuaDist is running on are listed.
+        ]],
+
+        run = function (deploy_dir, strings)
+            deploy_dir = deploy_dir or dist.get_deploy_dir()
+            strings = strings or {}
+            assert(type(strings) == "table", "luadist.list: Argument 'strings' is not a table.")
+            local available = mf.get_manifest()
+            available = depends.filter_packages_by_strings(available, strings)
+            available = depends.filter_packages_by_arch_and_type(available, cfg.arch, cfg.type)
+            available = depends.sort_by_names(available)
+            print("\nModules found:")
+            print("==============\n")
+            for _, pkg in pairs(available) do
+                -- TODO: print more information
+                print("\t" .. pkg.name .. "-" .. pkg.version .. (pkg.desc and "\t\t" .. pkg.desc or ""))
             end
             print("\n")
             return 0

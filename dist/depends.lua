@@ -192,7 +192,7 @@ local function get_packages_to_install(package, installed, manifest, dependency_
         return nil, "No suitable candidate for package '" .. package .. "' found."
     end
 
-    sort_by_versions(candidates_to_install)
+    candidates_to_install = sort_by_versions(candidates_to_install)
 
     for k, pkg in pairs(candidates_to_install) do
 
@@ -410,11 +410,11 @@ function filter_packages_by_arch_and_type(packages, req_arch, req_type)
     assert(type(req_arch) == "string", "depends.filter_packages_by_arch_and_type: Argument 'req_arch' is not a string.")
     assert(type(req_type) == "string", "depends.filter_packages_by_arch_and_type: Argument 'pkg_type' is not a string.")
 
-    return utils.filter_by(function (pkg)
+    return utils.filter(packages,
+                        function (pkg)
                                 return (pkg.arch == "Universal" or pkg.arch == req_arch) and
                                         (pkg.type == "all" or pkg.type == "source" or pkg.type == req_type)
-                                end,
-                            packages)
+                                end)
 end
 
 -- Return only packages that contain one of the specified strings in their 'name-version'.
@@ -425,13 +425,13 @@ function filter_packages_by_strings(packages, strings)
     assert(type(strings) == "table", "depends.filter_packages_by_strings: Argument 'strings' is not a string or table.")
 
     if #strings ~= 0 then
-        return utils.filter_by(function (pkg)
+        return utils.filter(packages,
+                            function (pkg)
                                     for _,str in pairs(strings) do
                                         local name = pkg.name .. "-" .. pkg.version
                                         if name:find(str, 1 ,true) ~= nil then return true end
                                     end
-                                end,
-                                packages)
+                                end)
     else
         return packages
     end
@@ -457,10 +457,22 @@ function pkg_full_name(name, version)
     end
 end
 
--- Sort table of packages descendingly by versions (newer ones are moved to the top).
+-- Return table of packages, sorted descendingly by versions (newer ones are moved to the top).
 function sort_by_versions(packages)
-    assert(type(packages) == "table", "depends.sort_by_versions: Argument 'packages' is not a string or table.")
-    table.sort(packages, function (a,b) return compare_versions(a.version, b.version) end)
+    assert(type(packages) == "table", "depends.sort_by_versions: Argument 'packages' is not a table.")
+    return utils.sort(packages, function (a, b) return compare_versions(a.version, b.version) end)
+end
+
+-- Return table of packages, sorted alphabetically by name and then descendingly by version.
+function sort_by_names(packages)
+    assert(type(packages) == "table", "depends.sort_by_names: Argument 'packages' is not a table.")
+    return utils.sort(packages, function (a, b)
+                        if a.name == b.name then
+                            return compare_versions(a.version, b.version)
+                        else
+                            return a.name < b.name
+                        end
+                     end)
 end
 
 -- Return if version satisfies the specified constraint
@@ -470,9 +482,9 @@ function satisfies_constraint(version, constraint)
     return const.constraint_satisfied(version, constraint)
 end
 
--- Return for package versions if: 'version_a' > 'version_b'
+-- For package versions, return whether: 'version_a' > 'version_b'
 function compare_versions(version_a, version_b)
     assert(type(version_a) == "string", "depends.compare_versions: Argument 'version_a' is not a string.")
     assert(type(version_b) == "string", "depends.compare_versions: Argument 'version_b' is not a string.")
-    return const.compareVersions(version_a,version_b)
+    return const.compareVersions(version_a, version_b)
 end
