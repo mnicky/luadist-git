@@ -21,3 +21,12 @@ function deepcopy(object)
     end
     return _copy(object)
 end
+
+-- Return shallow copy of 'a_table', containing only items for which 'predicate_fn' returns true.
+function filter_by(predicate_fn, a_table)
+    local tbl = {}
+    for k, v in pairs(a_table) do
+        if predicate_fn(v) == true then tbl[k] = v end
+    end
+    return tbl
+end
