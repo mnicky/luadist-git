@@ -24,6 +24,9 @@ end
 
 -- Return shallow copy of 'a_table', containing only items for which 'predicate_fn' returns true.
 function filter_by(predicate_fn, a_table)
+    assert(type(predicate_fn) == "function", "utils.filter_by: Argument 'predicate_fn' is not a function.")
+    assert(type(a_table) == "table", "utils.filter_by: Argument 'a_table' is not a table.")
+
     local tbl = {}
     for k, v in pairs(a_table) do
         if predicate_fn(v) == true then tbl[k] = v end
