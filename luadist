@@ -143,7 +143,6 @@ If STRINGs are not specified, all installed modules are listed.
             print("\nInstalled modules:")
             print("==================\n")
             for _, pkg in pairs(deployed) do
-                -- TODO: print more information
                 print("\t" .. pkg.name .. "-" .. pkg.version .. "\t(" .. pkg.arch .. "-" .. pkg.type .. ")" .. (pkg.provided_by and "\t [provided by " .. pkg.provided_by .. "]" or ""))
             end
             print("\n")
@@ -158,8 +157,8 @@ Usage: luadist search [STRING...]
 
 The 'search' command will list all modules from repositories,
 which contain one or more STRINGs. If no STRING is specified,
-all available modules are listed.
-Only modules suitable for the platform LuaDist is running on are listed.
+all available modules are listed. Only modules suitable for
+the platform LuaDist is running on are listed.
         ]],
 
         run = function (deploy_dir, strings)
@@ -173,7 +172,6 @@ Only modules suitable for the platform LuaDist is running on are listed.
             print("\nModules found:")
             print("==============\n")
             for _, pkg in pairs(available) do
-                -- TODO: print more information
                 print("\t" .. pkg.name .. "-" .. pkg.version .. (pkg.desc and "\t\t" .. pkg.desc or ""))
             end
             print("\n")
@@ -181,8 +179,6 @@ Only modules suitable for the platform LuaDist is running on are listed.
         end
     },
 }
-
--- TODO: add parsing of other command line variables
 
 -- Run the 'command' in the 'deploy_dir' with other items starting
 -- at 'other_idx' index of special variable 'arg.
