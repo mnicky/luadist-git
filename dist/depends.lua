@@ -404,22 +404,6 @@ function split_name_constraint(version_constraint)
     end
 end
 
--- Return only packages that satisfy specified version constraint
-function filter_packages_by_version(packages, constraint)
-    if type(packages) == "string" then packages = {packages} end
-
-    assert(type(packages) == "table", "depends.filter_packages_by_version: Argument 'packages' is not a string or table.")
-    assert(type(constraint) == "string", "depends.filter_packages_by_version: Argument 'constraint' is not a string.")
-
-    local passed_pkgs = {}
-    for _, pkg in pairs(packages) do
-        if satisfies_constraint(pkg.version, constraint) then
-            table.insert(passed_pkgs, pkg)
-        end
-    end
-    return passed_pkgs
-end
-
 -- Return only packages that can be installed on the specified architecture and type
 function filter_packages_by_arch_and_type(packages, req_arch, req_type)
     if type(packages) == "string" then packages = {packages} end
@@ -428,15 +412,11 @@ function filter_packages_by_arch_and_type(packages, req_arch, req_type)
     assert(type(req_arch) == "string", "depends.filter_packages_by_arch_and_type: Argument 'req_arch' is not a string.")
     assert(type(req_type) == "string", "depends.filter_packages_by_arch_and_type: Argument 'pkg_type' is not a string.")
 
-    local passed_pkgs = {}
-    for _, pkg in pairs(packages) do
-
-        -- check package's architecture
-        if (pkg.arch == "Universal" or pkg.arch == req_arch) and (pkg.type == "all" or pkg.type == "source" or pkg.type == req_type) then
-            table.insert(passed_pkgs, pkg)
-        end
-    end
-    return passed_pkgs
+    return utils.filter_by(function (pkg)
+                                return (pkg.arch == "Universal" or pkg.arch == req_arch) and
+                                        (pkg.type == "all" or pkg.type == "source" or pkg.type == req_type)
+                                end,
+                            packages)
 end
 
 -- Return full package name and version string (e.g. 'luajit-2.0'). When version
