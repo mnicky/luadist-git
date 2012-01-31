@@ -60,7 +60,7 @@ end
 -- also satisfy specified version constraint.
 -- If package is installed but doesn't satisfy version constraint, error message
 -- is returned as the second value.
-local function is_installed(package_name, installed_pkgs, version_wanted)
+function is_installed(package_name, installed_pkgs, version_wanted)
     assert(type(package_name) == "string", "depends.is_installed: Argument 'package_name' is not a string.")
     assert(type(installed_pkgs) == "table", "depends.is_installed: Argument 'installed_pkgs' is not a table.")
     assert(type(version_wanted) == "string" or type(version_wanted) == "nil", "depends.is_installed: Argument 'version_wanted' is not a string or nil.")
