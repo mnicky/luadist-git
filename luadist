@@ -26,6 +26,7 @@ Released under the MIT License. See https://github.com/luadist/luadist-git
             remove    - remove modules
             update    - update repositories
             list      - list installed modules
+            info      - show information about modules
             search    - search repositories for modules
 
         To get help on specific command, run:
@@ -126,11 +127,11 @@ DEPLOYMENT_DIRECTORY.
     -- List installed modules.
     ["list"] = {
         help = [[
-Usage: luadist [DEPLOYMENT_DIRECTORY] list [STRING...]
+Usage: luadist [DEPLOYMENT_DIRECTORY] list [STRINGS...]
 
 The 'list' command will list all modules installed in specified
-DEPLOYMENT_DIRECTORY, which contain one or more optional STRINGs.
-If STRINGs are not specified, all installed modules are listed.
+DEPLOYMENT_DIRECTORY, which contain one or more optional STRINGS.
+If STRINGS are not specified, all installed modules are listed.
         ]],
 
         run = function (deploy_dir, strings)
@@ -145,7 +146,7 @@ If STRINGs are not specified, all installed modules are listed.
             for _, pkg in pairs(deployed) do
                 print("\t" .. pkg.name .. "-" .. pkg.version .. "\t(" .. pkg.arch .. "-" .. pkg.type .. ")" .. (pkg.provided_by and "\t [provided by " .. pkg.provided_by .. "]" or ""))
             end
-            print("\n")
+            print("")
             return 0
         end
     },
@@ -153,10 +154,10 @@ If STRINGs are not specified, all installed modules are listed.
     -- Search for modules in repositories.
     ["search"] = {
         help = [[
-Usage: luadist search [STRING...]
+Usage: luadist search [STRINGS...]
 
 The 'search' command will list all modules from repositories,
-which contain one or more STRINGs. If no STRING is specified,
+which contain one or more STRINGS. If no STRINGS are specified,
 all available modules are listed. Only modules suitable for
 the platform LuaDist is running on are listed.
         ]],
@@ -174,7 +175,47 @@ the platform LuaDist is running on are listed.
             for _, pkg in pairs(available) do
                 print("\t" .. pkg.name .. "-" .. pkg.version .. (pkg.desc and "\t\t" .. pkg.desc or ""))
             end
-            print("\n")
+            print("")
+            return 0
+        end
+    },
+
+    -- Search for modules in repositories.
+    ["info"] = {
+        help = [[
+Usage: luadist [DEPLOYMENT_DIRECTORY] info [MODULES...]
+
+The 'info' command shows information about specified modules from repositories.
+If no MODULES are specified, all available modules are showed. This command
+also shows whether the modules are installed in DEPLOYMENT_DIRECTORY.
+        ]],
+
+        run = function (deploy_dir, modules)
+            deploy_dir = deploy_dir or dist.get_deploy_dir()
+            modules = modules or {}
+            assert(type(deploy_dir) == "string", "luadist.info: Argument 'deploy_dir' is not a string.")
+            assert(type(modules) == "table", "luadist.info: Argument 'modules' is not a table.")
+            local manifest = mf.get_manifest()
+            if #modules == 0 then
+                modules = manifest
+            else
+                modules = depends.find_packages(modules, manifest)
+            end
+            modules = depends.sort_by_names(modules)
+            print("")
+            for _, pkg in pairs(modules) do
+                print(pkg.name .. "-" .. pkg.version)
+                print("Description: " .. (pkg.desc or "N/A"))
+                print("Author: " .. (pkg.author or "N/A"))
+                print("Maintainer: " .. (pkg.maintainer or "N/A"))
+                print("Url: " .. (pkg.url or "N/A"))
+                print("License: " .. (pkg.license or "N/A"))
+                if pkg.provides then print("Provides: " .. utils.table_tostring(pkg.provides)) end
+                if pkg.depends then print("Depends: " .. utils.table_tostring(pkg.depends)) end
+                if pkg.conflicts then print("Conflicts: " .. utils.table_tostring(pkg.conflicts)) end
+                print("State: " .. (depends.is_installed(pkg.name, dist.get_deployed(deploy_dir), pkg.version) and "installed" or "not installed"))
+                print("")
+            end
             return 0
         end
     },
