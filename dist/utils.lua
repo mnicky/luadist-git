@@ -41,3 +41,22 @@ function sort(array, compare_fn)
     table.sort(tbl, compare_fn)
     return tbl
 end
+
+-- Return single line string consisting of values in 'tbl' separated by comma.
+-- Used for printing the dependencies/provides/conflicts.
+function table_tostring(tbl, label)
+    assert(type(tbl) == "table", "utils.table_tostring: Argument 'tbl' is not a table.")
+    local str = ""
+    for k,v in pairs(tbl) do
+        if type(v) == "table" then
+            str = str .. table_tostring(v, k)
+        else
+            if label ~= nil then
+                str = str .. tostring(v) .. " [" .. tostring(label) .. "]" .. ", "
+            else
+                str = str .. tostring(v) .. ", "
+            end
+        end
+    end
+    return str
+end
