@@ -28,7 +28,7 @@ set ( DIST_ARCH ${DETECTED_ARCH} CACHE STRING "Host system architecture. PLEASE 
 configure_file ( dist/config.lua.in ${CMAKE_CURRENT_BINARY_DIR}/dist/config.lua @ONLY )
 
 # Install files
-install_lua_executable ( luadist luadist )
+install_lua_executable ( luadist luadist.lua )
 install_lua_module ( dist.config ${CMAKE_CURRENT_BINARY_DIR}/dist/config.lua )
 install_lua_module ( dist.constraints dist/constraints.lua )
 install_lua_module ( dist.depends dist/depends.lua )
