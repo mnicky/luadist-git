@@ -418,8 +418,9 @@ function filter_packages_by_arch_and_type(packages, req_arch, req_type)
 end
 
 -- Return only packages that contain one of the specified strings in their 'name-version'.
--- If no strings are specified, return all the packages.
-function filter_packages_by_strings(packages, strings)
+-- Case is ignored. If no strings are specified, return all the packages.
+-- Argument 'search_in_desc' specifies if search also in description of packages.
+function filter_packages_by_strings(packages, strings, search_in_desc)
     if type(strings) == "string" then strings = {strings} end
     assert(type(packages) == "table", "depends.filter_packages_by_strings: Argument 'packages' is not a table.")
     assert(type(strings) == "table", "depends.filter_packages_by_strings: Argument 'strings' is not a string or table.")
@@ -428,8 +429,11 @@ function filter_packages_by_strings(packages, strings)
         return utils.filter(packages,
                             function (pkg)
                                     for _,str in pairs(strings) do
-                                        local name = string.lower(pkg.name .. "-" .. pkg.version .. " " .. (pkg.desc or ""))
-                                        if name:find(string.lower(str), 1 ,true) ~= nil then return true end
+                                        local name = pkg.name .. "-" .. pkg.version
+                                        if search_in_desc then
+                                            name = name .. " " .. (pkg.desc or "")
+                                        end
+                                        if string.find(string.lower(name), string.lower(str), 1 ,true) ~= nil then return true end
                                     end
                                 end)
     else

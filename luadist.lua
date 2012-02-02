@@ -37,12 +37,15 @@ Released under the MIT License. See https://github.com/luadist/luadist-git
         run = function (deploy_dir, help_item)
             deploy_dir = deploy_dir or dist.get_deploy_dir()
             help_item = help_item or {}
+            assert(type(deploy_dir) == "string", "luadist.help: Argument 'deploy_dir' is not a string.")
             assert(type(help_item) == "table", "luadist.help: Argument 'help_item' is not a table.")
+
             if not help_item or not commands[help_item[1]] then
                 help_item = "help"
             else
                 help_item = help_item[1]
             end
+
             print(commands[help_item].help)
             return 0
         end
@@ -141,8 +144,10 @@ If STRINGS are not specified, all installed modules are listed.
             strings = strings or {}
             assert(type(deploy_dir) == "string", "luadist.list: Argument 'deploy_dir' is not a string.")
             assert(type(strings) == "table", "luadist.list: Argument 'strings' is not a table.")
+
             local deployed = dist.get_deployed(deploy_dir)
             deployed  = depends.filter_packages_by_strings(deployed, strings)
+
             print("\nInstalled modules:")
             print("==================\n")
             for _, pkg in pairs(deployed) do
@@ -156,24 +161,35 @@ If STRINGS are not specified, all installed modules are listed.
     -- Search for modules in repositories.
     ["search"] = {
         help = [[
-Usage: luadist [DEPLOYMENT_DIRECTORY] search [STRINGS...]
+Usage: luadist [DEPLOYMENT_DIRECTORY] search [-d] [STRINGS...]
 
 The 'search' command will list all modules from repositories,
 which contain one or more STRINGS. If no STRINGS are specified,
 all available modules are listed. Only modules suitable for
 the platform LuaDist is running on are listed. This command
 also shows whether the modules are installed in DEPLOYMENT_DIRECTORY.
+
+The -d option makes luadist to search also in the description of modules.
         ]],
 
         run = function (deploy_dir, strings)
             deploy_dir = deploy_dir or dist.get_deploy_dir()
             strings = strings or {}
-            assert(type(strings) == "table", "luadist.list: Argument 'strings' is not a table.")
+            assert(type(deploy_dir) == "string", "luadist.search: Argument 'deploy_dir' is not a string.")
+            assert(type(strings) == "table", "luadist.search: Argument 'strings' is not a table.")
+
+            local search_in_desc = false
+            if strings[1] == "-d" then
+                search_in_desc = true
+                table.remove(strings, 1)
+            end
+
             local available = mf.get_manifest()
-            available = depends.filter_packages_by_strings(available, strings)
+            available = depends.filter_packages_by_strings(available, strings, search_in_desc)
             available = depends.filter_packages_by_arch_and_type(available, cfg.arch, cfg.type)
             available = depends.sort_by_names(available)
             local deployed = dist.get_deployed(deploy_dir)
+
             print("\nModules found:")
             print("==============\n")
             for _, pkg in pairs(available) do
@@ -200,14 +216,18 @@ also shows whether the modules are installed in DEPLOYMENT_DIRECTORY.
             modules = modules or {}
             assert(type(deploy_dir) == "string", "luadist.info: Argument 'deploy_dir' is not a string.")
             assert(type(modules) == "table", "luadist.info: Argument 'modules' is not a table.")
+
             local manifest = mf.get_manifest()
+
             if #modules == 0 then
                 modules = manifest
             else
                 modules = depends.find_packages(modules, manifest)
             end
+
             modules = depends.sort_by_names(modules)
             local deployed = dist.get_deployed(deploy_dir)
+
             print("")
             for _, pkg in pairs(modules) do
                 print("  " .. pkg.name .. "-" .. pkg.version)
@@ -236,6 +256,7 @@ The 'selftest' command tests the luadist itself and displays the results.
 
         run = function (deploy_dir)
             deploy_dir = deploy_dir or dist.get_deploy_dir()
+            assert(type(deploy_dir) == "string", "luadist.selftest: Argument 'deploy_dir' is not a string.")
             local test_dir = deploy_dir .. "/" .. cfg.test_dir
             print("\nRunning tests:")
             print("==============")
