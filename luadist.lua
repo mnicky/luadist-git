@@ -7,6 +7,7 @@ local utils = require "dist.utils"
 local depends = require "dist.depends"
 local mf = require "dist.manifest"
 local cfg = require "dist.config"
+local sys = require "dist.sys"
 
 local commands
 commands = {
@@ -28,6 +29,7 @@ Released under the MIT License. See https://github.com/luadist/luadist-git
             list      - list installed modules
             info      - show information about modules
             search    - search repositories for modules
+            selftest  - run selftest of luadist
 
         To get help on specific command, run:
             luadist help <COMMAND>
@@ -180,7 +182,7 @@ the platform LuaDist is running on are listed.
         end
     },
 
-    -- Search for modules in repositories.
+    -- Show information about modules.
     ["info"] = {
         help = [[
 Usage: luadist [DEPLOYMENT_DIRECTORY] info [MODULES...]
@@ -216,6 +218,32 @@ also shows whether the modules are installed in DEPLOYMENT_DIRECTORY.
                 print("State: " .. (depends.is_installed(pkg.name, dist.get_deployed(deploy_dir), pkg.version) and "installed" or "not installed"))
                 print("")
             end
+            return 0
+        end
+    },
+
+    -- Selftest of luadist.
+    ["selftest"] = {
+        help = [[
+Usage: luadist selftest
+
+The 'selftest' command tests the luadist itself and displays the results.
+        ]],
+
+        run = function (deploy_dir)
+            deploy_dir = deploy_dir or dist.get_deploy_dir()
+            local test_dir = deploy_dir .. "/" .. cfg.test_dir
+            print("\nRunning tests:")
+            print("==============")
+            for item in sys.get_directory(test_dir) do
+                item = test_dir .. "/" .. item
+                if sys.is_file(item) then
+                    print()
+                    print(sys.extract_name(item) .. ":")
+                    dofile(item)
+                end
+            end
+            print()
             return 0
         end
     },
