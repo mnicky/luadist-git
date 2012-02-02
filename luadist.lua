@@ -146,9 +146,9 @@ If STRINGS are not specified, all installed modules are listed.
             print("\nInstalled modules:")
             print("==================\n")
             for _, pkg in pairs(deployed) do
-                print("\t" .. pkg.name .. "-" .. pkg.version .. "\t(" .. pkg.arch .. "-" .. pkg.type .. ")" .. (pkg.provided_by and "\t [provided by " .. pkg.provided_by .. "]" or ""))
+                print("  " .. pkg.name .. "-" .. pkg.version .. "\t(" .. pkg.arch .. "-" .. pkg.type .. ")" .. (pkg.provided_by and "\t [provided by " .. pkg.provided_by .. "]" or ""))
             end
-            print("")
+            print()
             return 0
         end
     },
@@ -156,12 +156,13 @@ If STRINGS are not specified, all installed modules are listed.
     -- Search for modules in repositories.
     ["search"] = {
         help = [[
-Usage: luadist search [STRINGS...]
+Usage: luadist [DEPLOYMENT_DIRECTORY] search [STRINGS...]
 
 The 'search' command will list all modules from repositories,
 which contain one or more STRINGS. If no STRINGS are specified,
 all available modules are listed. Only modules suitable for
-the platform LuaDist is running on are listed.
+the platform LuaDist is running on are listed. This command
+also shows whether the modules are installed in DEPLOYMENT_DIRECTORY.
         ]],
 
         run = function (deploy_dir, strings)
@@ -172,12 +173,14 @@ the platform LuaDist is running on are listed.
             available = depends.filter_packages_by_strings(available, strings)
             available = depends.filter_packages_by_arch_and_type(available, cfg.arch, cfg.type)
             available = depends.sort_by_names(available)
+            local deployed = dist.get_deployed(deploy_dir)
             print("\nModules found:")
             print("==============\n")
             for _, pkg in pairs(available) do
-                print("\t" .. pkg.name .. "-" .. pkg.version .. (pkg.desc and "\t\t" .. pkg.desc or ""))
+                local installed = (depends.is_installed(pkg.name, deployed, pkg.version))
+                print("  " .. (installed and "i " or "  ") .. pkg.name .. "-" .. pkg.version .. (pkg.desc and "\t\t" .. pkg.desc or ""))
             end
-            print("")
+            print()
             return 0
         end
     },
@@ -204,19 +207,20 @@ also shows whether the modules are installed in DEPLOYMENT_DIRECTORY.
                 modules = depends.find_packages(modules, manifest)
             end
             modules = depends.sort_by_names(modules)
+            local deployed = dist.get_deployed(deploy_dir)
             print("")
             for _, pkg in pairs(modules) do
-                print(pkg.name .. "-" .. pkg.version)
-                print("Description: " .. (pkg.desc or "N/A"))
-                print("Author: " .. (pkg.author or "N/A"))
-                print("Maintainer: " .. (pkg.maintainer or "N/A"))
-                print("Url: " .. (pkg.url or "N/A"))
-                print("License: " .. (pkg.license or "N/A"))
-                if pkg.provides then print("Provides: " .. utils.table_tostring(pkg.provides)) end
-                if pkg.depends then print("Depends: " .. utils.table_tostring(pkg.depends)) end
-                if pkg.conflicts then print("Conflicts: " .. utils.table_tostring(pkg.conflicts)) end
-                print("State: " .. (depends.is_installed(pkg.name, dist.get_deployed(deploy_dir), pkg.version) and "installed" or "not installed"))
-                print("")
+                print("  " .. pkg.name .. "-" .. pkg.version)
+                print("  Description: " .. (pkg.desc or "N/A"))
+                print("  Author: " .. (pkg.author or "N/A"))
+                print("  Maintainer: " .. (pkg.maintainer or "N/A"))
+                print("  Url: " .. (pkg.url or "N/A"))
+                print("  License: " .. (pkg.license or "N/A"))
+                if pkg.provides then print("  Provides: " .. utils.table_tostring(pkg.provides)) end
+                if pkg.depends then print("  Depends: " .. utils.table_tostring(pkg.depends)) end
+                if pkg.conflicts then print("  Conflicts: " .. utils.table_tostring(pkg.conflicts)) end
+                print("  State: " .. (depends.is_installed(pkg.name, deployed, pkg.version) and "installed" or "not installed"))
+                print()
             end
             return 0
         end
