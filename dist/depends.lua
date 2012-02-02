@@ -428,8 +428,8 @@ function filter_packages_by_strings(packages, strings)
         return utils.filter(packages,
                             function (pkg)
                                     for _,str in pairs(strings) do
-                                        local name = pkg.name .. "-" .. pkg.version
-                                        if name:find(str, 1 ,true) ~= nil then return true end
+                                        local name = string.lower(pkg.name .. "-" .. pkg.version .. " " .. (pkg.desc or ""))
+                                        if name:find(string.lower(str), 1 ,true) ~= nil then return true end
                                     end
                                 end)
     else
