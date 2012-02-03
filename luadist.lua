@@ -8,6 +8,7 @@ local depends = require "dist.depends"
 local mf = require "dist.manifest"
 local cfg = require "dist.config"
 local sys = require "dist.sys"
+local package = require "dist.package"
 
 local commands
 commands = {
@@ -30,6 +31,7 @@ Released under the MIT License. See https://github.com/luadist/luadist-git
             info      - show information about modules
             search    - search repositories for modules
             selftest  - run selftest of luadist
+            make      - manually deploy modules from local paths
 
         To get help on specific command, run:
             luadist help <COMMAND>
@@ -136,6 +138,42 @@ DEPLOYMENT_DIRECTORY.
                print("Update successful.")
                return 0
             end
+        end
+    },
+
+    -- Manually deploy modules.
+    ["make"] = {
+        help = [[
+Usage: luadist [DEPLOYMENT_DIRECTORY] make MODULE_PATHS...
+
+The 'make' command will manually deploy modules from specified local
+MODULE_PATHS into the DEPLOYMENT_DIRECTORY. The MODULE_PATHS will be preserved.
+
+WARNING: this command doesn't check whether the dependencies of modules are
+satisfied or not.
+        ]],
+
+        run = function (deploy_dir, modules)
+            deploy_dir = deploy_dir or dist.get_deploy_dir()
+            modules = modules or {}
+            assert(type(deploy_dir) == "string", "luadist.make: Argument 'deploy_dir' is not a string.")
+            assert(type(modules) == "table", "luadist.make: Argument 'modules' is not a string or table.")
+
+            if #modules == 0 then
+                print("No module paths to deploy specified.")
+                return 0
+            end
+
+            local ok, err
+            for _, path in pairs(modules) do
+                ok, err = package.install_pkg(path, deploy_dir, nil, true)
+                if not ok then
+                    print(err)
+                    return 1
+                end
+            end
+            print("Deployment sucessful.")
+            return 0
         end
     },
 
