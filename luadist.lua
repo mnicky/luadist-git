@@ -32,6 +32,7 @@ Released under the MIT License. See https://github.com/luadist/luadist-git
             search    - search repositories for modules
             selftest  - run selftest of luadist
             make      - manually deploy modules from local paths
+            fetch     - download modules
 
         To get help on specific command, run:
             luadist help <COMMAND>
@@ -159,7 +160,7 @@ satisfied or not!
             deploy_dir = deploy_dir or dist.get_deploy_dir()
             modules = modules or {}
             assert(type(deploy_dir) == "string", "luadist.make: Argument 'deploy_dir' is not a string.")
-            assert(type(modules) == "table", "luadist.make: Argument 'modules' is not a string or table.")
+            assert(type(modules) == "table", "luadist.make: Argument 'modules' is not a table.")
 
             if #modules == 0 then
                 print("No module paths to deploy specified.")
@@ -176,6 +177,44 @@ satisfied or not!
             end
             print("Deployment sucessful.")
             return 0
+        end
+    },
+
+    -- Download modules.
+    ["fetch"] = {
+        help = [[
+Usage: luadist [FETCH_DIRECTORY] fetch MODULES...
+
+The 'fetch' command will download specified MODULES to the FETCH_DIRECTORY.
+
+If no FETCH_DIRECTORY is specified, the temporary directory of current
+deployment directory (']] .. cfg.temp_dir .. [[') is used.
+If the version is not specified in module name, the most recent version
+available will be downloaded.
+        ]],
+
+        run = function (fetch_dir, modules)
+            fetch_dir = fetch_dir or dist.get_deploy_dir()modules = modules or {}
+            assert(type(fetch_dir) == "string", "luadist.fetch: Argument 'fetch_dir' is not a string.")
+            assert(type(modules) == "table", "luadist.fetch: Argument 'modules' is not a table.")
+
+            if fetch_dir == dist.get_deploy_dir() then
+                fetch_dir = fetch_dir .. "/" .. cfg.temp_dir
+            end
+
+            if #modules == 0 then
+                print("No modules to download specified.")
+                return 0
+            end
+
+            local ok, err = dist.fetch(modules, fetch_dir)
+            if not ok then
+                print(err)
+                return 1
+            else
+                print("Modules successfuly downloaded to '" .. fetch_dir .. "'.")
+                return 0
+            end
         end
     },
 
