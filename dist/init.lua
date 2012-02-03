@@ -121,3 +121,30 @@ function remove(package_names, deploy_dir)
 
     return true
 end
+
+-- Download 'pkg_names' to 'fetch_dir'.
+function fetch(pkg_names, fetch_dir)
+    fetch_dir = fetch_dir or sys.current_dir()
+    fetch_dir = sys.get_absolute_path(fetch_dir)
+    assert(type(pkg_names) == "table", "dist.fetch: Argument 'pkg_names' is not a string or table.")
+    assert(type(fetch_dir) == "string", "dist.fetch: Argument 'fetch_dir' is not a string.")
+
+    local manifest = mf.get_manifest()
+    local pkgs_to_fetch = {}
+
+    for _, pkg_name in pairs(pkg_names) do
+        local packages = depends.find_packages(pkg_name, manifest)
+        if #packages == 0 then return nil, "No packages found for '" .. pkg_name .. "'." end
+
+        packages = depends.sort_by_versions(packages)
+        table.insert(pkgs_to_fetch, packages[1])
+    end
+
+    local ok, err = package.fetch_pkgs(pkgs_to_fetch, fetch_dir)
+
+    if not ok then
+        return nil, err
+    else
+        return ok
+    end
+end
