@@ -30,9 +30,9 @@ Released under the MIT License. See https://github.com/luadist/luadist-git
             list      - list installed modules
             info      - show information about modules
             search    - search repositories for modules
-            selftest  - run selftest of luadist
             make      - manually deploy modules from local paths
             fetch     - download modules
+            selftest  - run the selftest of luadist
 
         To get help on specific command, run:
             luadist help <COMMAND>
@@ -60,7 +60,10 @@ Released under the MIT License. See https://github.com/luadist/luadist-git
 Usage: luadist [DEPLOYMENT_DIRECTORY] install MODULES...
 
 The 'install' command will install specified modules to DEPLOYMENT_DIRECTORY.
-Luadist will also automatically resolve, download and install all dependencies.
+LuaDist will also automatically resolve, download and install all dependencies.
+
+If DEPLOYMENT_DIRECTORY is not specified, the deployment directory of LuaDist
+is used.
         ]],
 
         run = function (deploy_dir, modules)
@@ -91,10 +94,12 @@ Luadist will also automatically resolve, download and install all dependencies.
         help = [[
 Usage: luadist [DEPLOYMENT_DIRECTORY] remove MODULES...
 
-The 'remove' command will remove all specified modules from
-DEPLOYMENT_DIRECTORY.
+The 'remove' command will remove specified modules from DEPLOYMENT_DIRECTORY.
 
-WARNING: dependencies between modules are not taken into account!
+If DEPLOYMENT_DIRECTORY is not specified, the deployment directory of LuaDist
+is used.
+
+WARNING: dependencies between modules are NOT taken into account!
         ]],
 
         run = function (deploy_dir, modules)
@@ -127,6 +132,9 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] update
 
 The 'update' command will update all software repositories of specified
 DEPLOYMENT_DIRECTORY.
+
+If DEPLOYMENT_DIRECTORY is not specified, the deployment directory of LuaDist
+is used.
         ]],
 
         run = function (deploy_dir)
@@ -150,9 +158,12 @@ DEPLOYMENT_DIRECTORY.
 Usage: luadist [DEPLOYMENT_DIRECTORY] make MODULE_PATHS...
 
 The 'make' command will manually deploy modules from specified local
-MODULE_PATHS into the DEPLOYMENT_DIRECTORY. The MODULE_PATHS will be preserved.
+MODULE_PATHS into the DEPLOYMENT_DIRECTORY.
 
-WARNING: this command doesn't check whether the dependencies of modules are
+The MODULE_PATHS will be preserved. If DEPLOYMENT_DIRECTORY is not specified,
+the deployment directory of LuaDist is used.
+
+WARNING: this command does NOT check whether the dependencies of modules are
 satisfied or not!
         ]],
 
@@ -187,8 +198,8 @@ Usage: luadist [FETCH_DIRECTORY] fetch MODULES...
 
 The 'fetch' command will download specified MODULES to the FETCH_DIRECTORY.
 
-If no FETCH_DIRECTORY is specified, the temporary directory of current
-deployment directory (']] .. cfg.temp_dir .. [[') is used.
+If no FETCH_DIRECTORY is specified, the temporary directory of LuaDist
+deployment directory (i.e. ']] .. cfg.temp_dir .. [[') is used.
 If the version is not specified in module name, the most recent version
 available will be downloaded.
         ]],
@@ -225,7 +236,9 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] list [STRINGS...]
 
 The 'list' command will list all modules installed in specified
 DEPLOYMENT_DIRECTORY, which contain one or more optional STRINGS.
-If STRINGS are not specified, all installed modules are listed.
+
+If DEPLOYMENT_DIRECTORY is not specified, the deployment directory of LuaDist
+is used. If STRINGS are not specified, all installed modules are listed.
         ]],
 
         run = function (deploy_dir, strings)
@@ -252,11 +265,13 @@ If STRINGS are not specified, all installed modules are listed.
         help = [[
 Usage: luadist [DEPLOYMENT_DIRECTORY] search [-d] [STRINGS...]
 
-The 'search' command will list all modules from repositories,
-which contain one or more STRINGS. If no STRINGS are specified,
-all available modules are listed. Only modules suitable for
-the platform LuaDist is running on are listed. This command
-also shows whether the modules are installed in DEPLOYMENT_DIRECTORY.
+The 'search' command will list all modules from repositories, which contain
+one or more STRINGS. This command also shows whether modules are installed
+in DEPLOYMENT_DIRECTORY.
+
+If no STRINGS are specified, all available modules are listed. If
+DEPLOYMENT_DIRECTORY is not specified, the deployment directory of LuaDist is
+used. Only modules suitable for the platform LuaDist is running on are showed.
 
 The -d option makes luadist to search also in the description of modules.
         ]],
@@ -296,8 +311,11 @@ The -d option makes luadist to search also in the description of modules.
 Usage: luadist [DEPLOYMENT_DIRECTORY] info [MODULES...]
 
 The 'info' command shows information about specified modules from repositories.
-If no MODULES are specified, all available modules are showed. This command
-also shows whether the modules are installed in DEPLOYMENT_DIRECTORY.
+This command also shows whether modules are installed in DEPLOYMENT_DIRECTORY.
+
+If no MODULES are specified, all available modules are showed.
+If DEPLOYMENT_DIRECTORY is not specified, the deployment directory of LuaDist
+is used.
         ]],
 
         run = function (deploy_dir, modules)
