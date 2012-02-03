@@ -53,7 +53,7 @@ function install_pkg(pkg_dir, deploy_dir, variables, preserve_pkg_dir)
 
     -- check for dist.info
     local info, err = mf.load_distinfo(pkg_dir .. "/dist.info")
-    if not info then return nil, "Error installing '" .. info.name .. "-" .. info.version .. "': package in '" .. pkg_dir .. "' doesn't contain valid 'dist.info' file." end
+    if not info then return nil, "Error installing: package in directory '" .. pkg_dir .. "' doesn't contain valid 'dist.info' file." end
 
     -- check if the package is source
     if sys.exists(pkg_dir .. "/CMakeLists.txt") then
