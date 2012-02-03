@@ -41,7 +41,8 @@ function remove_pkg(pkg_dir, deploy_dir)
 end
 
 -- Install package from 'pkg_dir' to 'deploy_dir', using optional CMake 'variables'.
-function install_pkg(pkg_dir, deploy_dir, variables)
+-- Optional 'preserve_pkg_dir' argument specified whether to preserve the 'pkg_dir'.
+function install_pkg(pkg_dir, deploy_dir, variables, preserve_pkg_dir)
 
     deploy_dir = deploy_dir or cfg.root_dir
     variables = variables or {}
@@ -105,7 +106,7 @@ function install_pkg(pkg_dir, deploy_dir, variables)
     end
 
     -- delete directory of fetched package
-    if not cfg.debug then sys.delete(pkg_dir) end
+    if not (cfg.debug or preserve_pkg_dir) then sys.delete(pkg_dir) end
 
     return ok, err
 end
