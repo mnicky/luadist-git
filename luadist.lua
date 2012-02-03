@@ -67,6 +67,11 @@ Luadist will also automatically resolve, download and install all dependencies.
             assert(type(deploy_dir) == "string", "luadist.install: Argument 'deploy_dir' is not a string.")
             assert(type(modules) == "table", "luadist.install: Argument 'modules' is not a string or table.")
 
+            if #modules == 0 then
+                print("No modules to install specified.")
+                return 0
+            end
+
             local ok, err = dist.install(modules, deploy_dir)
             if not ok then
                 print(err)
@@ -93,6 +98,11 @@ DEPLOYMENT_DIRECTORY. Dependencies between modules are not taken into account.
 
             assert(type(deploy_dir) == "string", "luadist.remove: Argument 'deploy_dir' is not a string.")
             assert(type(modules) == "table", "luadist.remove: Argument 'modules' is not a string or table.")
+
+            if #modules == 0 then
+                print("No modules to remove specified.")
+                return 0
+            end
 
             local ok, err = dist.remove(modules, deploy_dir)
             if not ok then
