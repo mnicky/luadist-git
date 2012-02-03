@@ -91,7 +91,9 @@ Luadist will also automatically resolve, download and install all dependencies.
 Usage: luadist [DEPLOYMENT_DIRECTORY] remove MODULES...
 
 The 'remove' command will remove all specified modules from
-DEPLOYMENT_DIRECTORY. Dependencies between modules are not taken into account.
+DEPLOYMENT_DIRECTORY.
+
+WARNING: dependencies between modules are not taken into account!
         ]],
 
         run = function (deploy_dir, modules)
@@ -150,7 +152,7 @@ The 'make' command will manually deploy modules from specified local
 MODULE_PATHS into the DEPLOYMENT_DIRECTORY. The MODULE_PATHS will be preserved.
 
 WARNING: this command doesn't check whether the dependencies of modules are
-satisfied or not.
+satisfied or not!
         ]],
 
         run = function (deploy_dir, modules)
