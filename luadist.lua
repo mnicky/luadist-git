@@ -8,7 +8,6 @@ local depends = require "dist.depends"
 local mf = require "dist.manifest"
 local cfg = require "dist.config"
 local sys = require "dist.sys"
-local package = require "dist.package"
 
 local commands
 commands = {
@@ -167,24 +166,21 @@ WARNING: this command does NOT check whether the dependencies of modules are
 satisfied or not!
         ]],
 
-        run = function (deploy_dir, modules)
+        run = function (deploy_dir, module_paths)
             deploy_dir = deploy_dir or dist.get_deploy_dir()
-            modules = modules or {}
+            module_paths = module_paths or {}
             assert(type(deploy_dir) == "string", "luadist.make: Argument 'deploy_dir' is not a string.")
-            assert(type(modules) == "table", "luadist.make: Argument 'modules' is not a table.")
+            assert(type(module_paths) == "table", "luadist.make: Argument 'module_paths' is not a table.")
 
-            if #modules == 0 then
+            if #module_paths == 0 then
                 print("No module paths to deploy specified.")
                 return 0
             end
 
-            local ok, err
-            for _, path in pairs(modules) do
-                ok, err = package.install_pkg(path, deploy_dir, nil, true)
-                if not ok then
-                    print(err)
-                    return 1
-                end
+            local ok, err = dist.make(deploy_dir, module_paths)
+            if not ok then
+                print(err)
+                return 1
             end
             print("Deployment sucessful.")
             return 0
