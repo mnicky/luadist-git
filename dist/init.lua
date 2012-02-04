@@ -97,7 +97,22 @@ function install(package_names, deploy_dir)
         ok, err = package.install_pkg(dir, deploy_dir)
         if not ok then return nil, err end
     end
+    return ok
+end
 
+-- Manually deploy packages from 'package_paths' to 'deploy_dir'.
+-- The 'package_paths' are preserved (will not be deleted).
+function make(deploy_dir, package_paths)
+    deploy_dir = deploy_dir or cfg.root_dir
+    package_paths = package_paths or {}
+    assert(type(deploy_dir) == "string", "dist.make: Argument 'deploy_dir' is not a string.")
+    assert(type(package_paths) == "table", "dist.make: Argument 'package_paths' is not a table.")
+
+    local ok, err
+    for _, path in pairs(package_paths) do
+        ok, err = package.install_pkg(path, deploy_dir, nil, true)
+        if not ok then return nil, err end
+    end
     return ok
 end
 
