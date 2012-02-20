@@ -5,35 +5,39 @@ module ("dist.manifest", package.seeall)
 local cfg = require "dist.config"
 local git = require "dist.git"
 local sys = require "dist.sys"
+local utils = require "dist.utils"
 
--- Return the manifest table
-function get_manifest()
+-- Return the manifest table from 'manifest_file'.
+-- If optional 'force_no_cache' parameter is true, then the cache is not used.
+function get_manifest(manifest_file, force_no_cache)
+    manifest_file = manifest_file or cfg.root_dir .. "/" .. cfg.manifest_file
+    force_no_cache = force_no_cache or false
+    assert(type(manifest_file) == "string", "manifest.get_manifest: Argument 'manifest_file' is not a string.")
+    assert(type(force_no_cache) == "boolean", "manifest.get_manifest: Argument 'force_no_cache' is not a boolean.")
 
-    -- get manifest from cache
-    local manifest = load_manifest()
-
-    --if manifest not in cache, download it
-    if not manifest then
-        local ok, err = download_manifest()
+    -- download manifest to the cache
+    if not sys.exists(manifest_file) or force_no_cache or not cfg.cache or utils.cache_timeout_expired(cfg.cache_timeout, manifest_file) then
+        local ok, err = download_manifest(sys.parent_dir(manifest_file), cfg.repositories)
         if not ok then return nil, err end
-        manifest, err = load_manifest()
-        if not manifest then return nil, err end
     end
+
+    -- load manifest from cache
+    local manifest, err = load_manifest(manifest_file)
+    if not manifest then return nil, err end
 
     return manifest
 end
 
 -- Download manifest from the table of git 'repository_urls' to 'dest_dir' and return true on success
 -- and nil and error message on error.
-function download_manifest(repository_urls, dest_dir)
-
-    repository_urls = repository_urls or cfg.repositories
+function download_manifest(dest_dir, repository_urls)
     dest_dir = dest_dir or cfg.root_dir .. "/" .. cfg.cache_dir
+    repository_urls = repository_urls or cfg.repositories
 
     if type(repository_urls) == "string" then repository_urls = {repository_urls} end
 
-    assert(type(repository_urls) == "table", "manifest.download_manifest: Argument 'repository_urls' is not a table or string.")
     assert(type(dest_dir) == "string", "manifest.download_manifest: Argument 'dest_dir' is not a string.")
+    assert(type(repository_urls) == "table", "manifest.download_manifest: Argument 'repository_urls' is not a table or string.")
 
     local manifest = {}
 
@@ -64,12 +68,12 @@ end
 -- If manifest file not present, return nil.
 function load_manifest(manifest_file)
     manifest_file = manifest_file or cfg.root_dir .. "/" .. cfg.manifest_file
-
     assert(type(manifest_file) == "string", "manifest.load_manifest: Argument 'manifest_file' is not a string.")
 
-    if (sys.exists(manifest_file)) then
+    if sys.exists(manifest_file) then
         -- load the manifest file
-        local manifest = loadfile(manifest_file)
+        local manifest, err = loadfile(manifest_file)
+        if not manifest then return nil, err end
 
         -- set clear environment for the manifest file execution
         local manifest_env = {}
@@ -130,10 +134,11 @@ function load_distinfo(distinfo_file)
 
     assert(type(distinfo_file) == "string", "manifest.load_distinfo: Argument 'distinfo_file' is not a string.")
 
-    if (sys.exists(distinfo_file)) then
+    if sys.exists(distinfo_file) then
 
         -- load the distinfo file
-        local distinfo = loadfile(distinfo_file)
+        local distinfo, err = loadfile(distinfo_file)
+        if not distinfo then return nil, err end
 
         -- set clear environment for the distinfo file execution and collect values into it
         local distinfo_env = {}
