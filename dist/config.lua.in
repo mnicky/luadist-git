@@ -29,7 +29,7 @@ repositories = {
 -- Settings
 debug = false           -- Use debug mode.
 cache = true            -- Use cache.
-cache_timeout = 5 * 60  -- Cache timeout in seconds.
+cache_timeout = 60 * 60  -- Cache timeout in seconds.
 
 -- CMake variables
 variables	= {
