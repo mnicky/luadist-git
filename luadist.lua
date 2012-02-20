@@ -336,10 +336,10 @@ is used.
                 print("  " .. pkg.name .. "-" .. pkg.version .. "  (" .. pkg.arch .. "-" .. pkg.type ..")")
                 print("  Description: " .. (pkg.desc or "N/A"))
                 print("  Author: " .. (pkg.author or "N/A"))
-                print("  Maintainer: " .. (pkg.maintainer or "N/A"))
                 print("  Homepage: " .. (pkg.url or "N/A"))
                 print("  License: " .. (pkg.license or "N/A"))
                 print("  Repository url: " .. (pkg.path or "N/A"))
+                print("  Maintainer: " .. (pkg.maintainer or "N/A"))
                 if pkg.provides then print("  Provides: " .. utils.table_tostring(pkg.provides)) end
                 if pkg.depends then print("  Depends: " .. utils.table_tostring(pkg.depends)) end
                 if pkg.conflicts then print("  Conflicts: " .. utils.table_tostring(pkg.conflicts)) end
