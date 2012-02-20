@@ -83,7 +83,8 @@ function extract_name(path)
         path = path:sub(1,-2)
     end
 
-    return path:gsub("^.*/", "")
+    local name = path:gsub("^.*/", "")
+    return name
 end
 
 -- Return parent directory of the 'path'. If 'path' is file path, return
@@ -98,7 +99,8 @@ function parent_dir(path)
         path = path:sub(1,-2)
     end
 
-    return path:gsub(extract_name(path) .. "$", "")
+    local dir = path:gsub(extract_name(path) .. "$", "")
+    return dir
 end
 
 -- Return table of all paths in 'dir'
