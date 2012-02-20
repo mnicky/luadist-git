@@ -122,6 +122,17 @@ function current_dir()
     return lfs.currentdir()
 end
 
+-- Return time of the last modification of 'file'.
+function last_modification_time(file)
+    assert(type(file) == "string", "sys.last_modification_time: Argument 'file' is not a string.")
+    return lfs.attributes(file, "modification")
+end
+
+-- Return the current time (in seconds since epoch).
+function current_time()
+    return os.time()
+end
+
 -- Change the current working directory and return 'true' and previous working
 -- directory on success and 'nil' and error message on error.
 function change_dir(dir_name)
