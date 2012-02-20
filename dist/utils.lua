@@ -2,6 +2,8 @@
 
 module ("dist.utils", package.seeall)
 
+local sys = require "dist.sys"
+
 -- Returns a deep copy of 'table' with reference to the same metadata table.
 -- Source: http://lua-users.org/wiki/CopyTable
 function deepcopy(object)
@@ -59,4 +61,11 @@ function table_tostring(tbl, label)
         end
     end
     return str
+end
+
+-- Return whether the 'cache_timeout' for 'file' has expired.
+function cache_timeout_expired(cache_timeout, file)
+    assert(type(cache_timeout) == "number", "utils.cache_timeout_expired: Argument 'cache_timeout' is not a number.")
+    assert(type(file) == "string", "utils.cache_timeout_expired: Argument 'file' is not a string.")
+    return sys.last_modification_time(file) + cache_timeout < sys.current_time()
 end
