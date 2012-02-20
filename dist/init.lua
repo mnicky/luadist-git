@@ -49,8 +49,8 @@ function update_manifest(deploy_dir)
     end
     sys.delete(deploy_dir .. "/" .. cfg.manifest_file)
 
-    -- retrieve the new manifest
-    local manifest, err = mf.get_manifest()
+    -- retrieve the new manifest (forcing no cache use)
+    local manifest, err = mf.get_manifest(nil, true)
 
     -- if couldn't download new manifest then restore the backup and return error message
     if not manifest then
