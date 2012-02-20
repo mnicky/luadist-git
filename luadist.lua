@@ -56,13 +56,16 @@ Released under the MIT License. See https://github.com/luadist/luadist-git
     -- Install modules.
     ["install"] = {
         help = [[
-Usage: luadist [DEPLOYMENT_DIRECTORY] install MODULES...
+Usage: luadist [DEPLOYMENT_DIRECTORY] install [-s] MODULES...
 
 The 'install' command will install specified modules to DEPLOYMENT_DIRECTORY.
 LuaDist will also automatically resolve, download and install all dependencies.
 
 If DEPLOYMENT_DIRECTORY is not specified, the deployment directory of LuaDist
 is used.
+
+The -s option makes LuaDist only to simulate the installation of modules
+(no modules will be really installed).
         ]],
 
         run = function (deploy_dir, modules)
@@ -72,17 +75,24 @@ is used.
             assert(type(deploy_dir) == "string", "luadist.install: Argument 'deploy_dir' is not a string.")
             assert(type(modules) == "table", "luadist.install: Argument 'modules' is not a string or table.")
 
+            local simulate_only = false
+            if modules[1] == "-s" then
+                simulate_only = true
+                table.remove(modules, 1)
+                print("NOTE: this is just simulation.")
+            end
+
             if #modules == 0 then
                 print("No modules to install specified.")
                 return 0
             end
 
-            local ok, err = dist.install(modules, deploy_dir)
+            local ok, err = dist.install(modules, deploy_dir, simulate_only)
             if not ok then
                 print(err)
                 return 1
             else
-               print("Installation successful.")
+               print((simulate_only and "Simulated installation" or "Installation") .. " successful.")
                return 0
             end
         end
@@ -154,13 +164,16 @@ is used.
     -- Manually deploy modules.
     ["make"] = {
         help = [[
-Usage: luadist [DEPLOYMENT_DIRECTORY] make MODULE_PATHS...
+Usage: luadist [DEPLOYMENT_DIRECTORY] make [-s] MODULE_PATHS...
 
 The 'make' command will manually deploy modules from specified local
 MODULE_PATHS into the DEPLOYMENT_DIRECTORY.
 
 The MODULE_PATHS will be preserved. If DEPLOYMENT_DIRECTORY is not specified,
 the deployment directory of LuaDist is used.
+
+The -s option makes LuaDist only to simulate the deployment of modules
+(no modules will be really deployed).
 
 WARNING: this command does NOT check whether the dependencies of modules are
 satisfied or not!
@@ -172,17 +185,24 @@ satisfied or not!
             assert(type(deploy_dir) == "string", "luadist.make: Argument 'deploy_dir' is not a string.")
             assert(type(module_paths) == "table", "luadist.make: Argument 'module_paths' is not a table.")
 
+            local simulate_only = false
+            if module_paths[1] == "-s" then
+                simulate_only = true
+                table.remove(module_paths, 1)
+                print("NOTE: this is just simulation.")
+            end
+
             if #module_paths == 0 then
                 print("No module paths to deploy specified.")
                 return 0
             end
 
-            local ok, err = dist.make(deploy_dir, module_paths)
+            local ok, err = dist.make(deploy_dir, module_paths, simulate_only)
             if not ok then
                 print(err)
                 return 1
             end
-            print("Deployment sucessful.")
+            print((simulate_only and "Simulated deployment" or "Deployment") .. " successful.")
             return 0
         end
     },
@@ -269,7 +289,7 @@ If no STRINGS are specified, all available modules are listed. If
 DEPLOYMENT_DIRECTORY is not specified, the deployment directory of LuaDist is
 used. Only modules suitable for the platform LuaDist is running on are showed.
 
-The -d option makes luadist to search also in the description of modules.
+The -d option makes LuaDist to search also in the description of modules.
         ]],
 
         run = function (deploy_dir, strings)
