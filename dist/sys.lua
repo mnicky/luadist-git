@@ -86,6 +86,21 @@ function extract_name(path)
     return path:gsub("^.*/", "")
 end
 
+-- Return parent directory of the 'path'. If 'path' is file path, return
+-- directory the file is in.
+function parent_dir(path)
+    assert(type(path) == "string", "sys.parent_dir: Argument 'path' is not a string.")
+
+    path = path:gsub("\\", "/")
+
+    -- remove the trailing '/' character
+    if (path:sub(-1) == "/") then
+        path = path:sub(1,-2)
+    end
+
+    return path:gsub(extract_name(path) .. "$", "")
+end
+
 -- Return table of all paths in 'dir'
 function get_file_list(dir)
 
