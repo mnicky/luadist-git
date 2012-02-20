@@ -66,15 +66,20 @@ function update_manifest(deploy_dir)
     end
 end
 
--- Install package_names to deploy_dir
-function install(package_names, deploy_dir)
+-- Install 'package_names' to 'deploy_dir'.
+-- If optional 'simulate' argument is true, the installation of packages will
+-- be only simulated.
+function install(package_names, deploy_dir, simulate)
     if not package_names then return true end
 
     deploy_dir = deploy_dir or cfg.root_dir
+    simulate = simulate or false
+
     if type(package_names) == "string" then package_names = {package_names} end
 
     assert(type(package_names) == "table", "dist.install: Argument 'package_names' is not a table or string.")
     assert(type(deploy_dir) == "string", "dist.install: Argument 'deploy_dir' is not a string.")
+    assert(type(simulate) == "boolean", "dist.install: Argument 'simulate' is not a boolean.")
 
     -- find installed packages
     local installed = depends.get_installed(deploy_dir)
@@ -94,7 +99,7 @@ function install(package_names, deploy_dir)
 
     -- install fetched packages
     for _, dir in pairs(dirs_or_err) do
-        ok, err = package.install_pkg(dir, deploy_dir)
+        ok, err = package.install_pkg(dir, deploy_dir, nil, nil, simulate)
         if not ok then return nil, err end
     end
     return ok
@@ -102,15 +107,19 @@ end
 
 -- Manually deploy packages from 'package_paths' to 'deploy_dir'.
 -- The 'package_paths' are preserved (will not be deleted).
-function make(deploy_dir, package_paths)
+-- If optional 'simulate' argument is true, the deployment of packages will
+-- be only simulated.
+function make(deploy_dir, package_paths, simulate)
     deploy_dir = deploy_dir or cfg.root_dir
     package_paths = package_paths or {}
+    simulate = simulate or false
     assert(type(deploy_dir) == "string", "dist.make: Argument 'deploy_dir' is not a string.")
     assert(type(package_paths) == "table", "dist.make: Argument 'package_paths' is not a table.")
+    assert(type(simulate) == "boolean", "dist.install: Argument 'simulate' is not a boolean.")
 
     local ok, err
     for _, path in pairs(package_paths) do
-        ok, err = package.install_pkg(path, deploy_dir, nil, true)
+        ok, err = package.install_pkg(path, deploy_dir, nil, true, simulate)
         if not ok then return nil, err end
     end
     return ok
