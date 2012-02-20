@@ -25,7 +25,7 @@ Released under the MIT License. See https://github.com/luadist/luadist-git
             help      - print this help
             install   - install modules
             remove    - remove modules
-            update    - update repositories
+            refresh   - update information about modules in repositories
             list      - list installed modules
             info      - show information about modules
             search    - search repositories for modules
@@ -125,12 +125,12 @@ WARNING: dependencies between modules are NOT taken into account!
     },
 
     -- Update repositories.
-    ["update"] = {
+    ["refresh"] = {
         help = [[
-Usage: luadist [DEPLOYMENT_DIRECTORY] update
+Usage: luadist [DEPLOYMENT_DIRECTORY] refresh
 
-The 'update' command will update all software repositories of specified
-DEPLOYMENT_DIRECTORY.
+The 'refresh' command will update information about modules in all software
+repositories of specified DEPLOYMENT_DIRECTORY.
 
 If DEPLOYMENT_DIRECTORY is not specified, the deployment directory of LuaDist
 is used.
@@ -138,14 +138,14 @@ is used.
 
         run = function (deploy_dir)
             deploy_dir = deploy_dir or dist.get_deploy_dir()
-            assert(type(deploy_dir) == "string", "luadist.update: Argument 'deploy_dir' is not a string.")
+            assert(type(deploy_dir) == "string", "luadist.refresh: Argument 'deploy_dir' is not a string.")
 
             local ok, err = dist.update_manifest(deploy_dir)
             if not ok then
                 print(err)
                 return 1
             else
-               print("Update successful.")
+               print("Repositories successfuly updated.")
                return 0
             end
         end
