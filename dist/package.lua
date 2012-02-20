@@ -42,14 +42,20 @@ end
 
 -- Install package from 'pkg_dir' to 'deploy_dir', using optional CMake 'variables'.
 -- Optional 'preserve_pkg_dir' argument specified whether to preserve the 'pkg_dir'.
-function install_pkg(pkg_dir, deploy_dir, variables, preserve_pkg_dir)
+-- If optional 'simulate' argument is true, the installation of package will
+-- be only simulated.
+function install_pkg(pkg_dir, deploy_dir, variables, preserve_pkg_dir, simulate)
 
     deploy_dir = deploy_dir or cfg.root_dir
     variables = variables or {}
+    preserve_pkg_dir = preserve_pkg_dir or false
+    simulate = simulate or false
 
     assert(type(pkg_dir) == "string", "package.make_pkg: Argument 'pkg_dir' is not a string.")
     assert(type(deploy_dir) == "string", "package.make_pkg: Argument 'deploy_dir' is not a string.")
     assert(type(variables) == "table", "package.make_pkg: Argument 'variables' is not a table.")
+    assert(type(preserve_pkg_dir) == "boolean", "package.make_pkg: Argument 'preserve_pkg_dir' is not a boolean.")
+    assert(type(simulate) == "boolean", "package.make_pkg: Argument 'simulate' is not a boolean.")
 
     -- check for dist.info
     local info, err = mf.load_distinfo(pkg_dir .. "/dist.info")
@@ -75,7 +81,7 @@ function install_pkg(pkg_dir, deploy_dir, variables, preserve_pkg_dir)
 
     -- if package is of source type, just deploy it
     if info.type ~= "source" then
-        ok, err = deploy_pkg(pkg_dir, deploy_dir)
+        ok, err = deploy_pkg(pkg_dir, deploy_dir, simulate)
     -- else build and then deploy
     else
 
@@ -101,7 +107,7 @@ function install_pkg(pkg_dir, deploy_dir, variables, preserve_pkg_dir)
         if not build_dir then return nil, err end
 
         -- and deploy it
-        ok, err = deploy_pkg(build_dir, deploy_dir)
+        ok, err = deploy_pkg(build_dir, deploy_dir, simulate)
         if not cfg.debug then sys.delete(build_dir) end
     end
 
@@ -173,13 +179,17 @@ function build_pkg(src_dir, build_dir, variables)
     return pkg_build_dir
 end
 
--- Deploy package from 'pkg_dir' to 'deploy_dir' by copying
-function deploy_pkg(pkg_dir, deploy_dir)
+-- Deploy package from 'pkg_dir' to 'deploy_dir' by copying.
+-- If optional 'simulate' argument is true, the deployment of package will
+-- be only simulated.
+function deploy_pkg(pkg_dir, deploy_dir, simulate)
 
     deploy_dir = deploy_dir or cfg.root_dir
+    simulate = simulate or false
 
     assert(type(pkg_dir) == "string", "package.deploy_pkg: Argument 'pkg_dir' is not a string.")
     assert(type(deploy_dir) == "string", "package.deploy_pkg: Argument 'deploy_dir' is not a string.")
+    assert(type(simulate) == "boolean", "package.deploy_pkg: Argument 'simulate' is not a boolean.")
 
     -- check for dist.info
     local info, err = mf.load_distinfo(pkg_dir .. "/dist.info")
@@ -187,6 +197,11 @@ function deploy_pkg(pkg_dir, deploy_dir)
 
     -- delete the 'dist.info' file
     sys.delete(pkg_dir .. "/dist.info")
+
+    -- if this is only simulation, exit sucessfully, skipping the next actions
+    if simulate then
+        return true, "Simulated deployment of package '" .. info.name .. "-" .. info.version .. "' sucessfull."
+    end
 
     -- copy all files to the deploy_dir
     local ok, err = sys.copy(pkg_dir .. "/.", deploy_dir)
