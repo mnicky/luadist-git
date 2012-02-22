@@ -45,7 +45,7 @@ end
 -- If optional 'simulate' argument is true, the installation of package will
 -- be only simulated.
 function install_pkg(pkg_dir, deploy_dir, variables, preserve_pkg_dir, simulate)
-    deploy_dir = deploy_dir or cfg.root_dir
+    deploy_dir = sys.get_absolute_path(deploy_dir) or cfg.root_dir
     variables = variables or {}
     preserve_pkg_dir = preserve_pkg_dir or false
     simulate = simulate or false
