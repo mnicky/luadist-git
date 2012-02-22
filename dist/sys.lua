@@ -87,8 +87,8 @@ function extract_name(path)
     return name
 end
 
--- Return parent directory of the 'path'. If 'path' is file path, return
--- directory the file is in.
+-- Return parent directory of the 'path' or nil if there's no parent directory.
+-- If 'path' is file path, return directory the file is in.
 function parent_dir(path)
     assert(type(path) == "string", "sys.parent_dir: Argument 'path' is not a string.")
 
@@ -100,7 +100,11 @@ function parent_dir(path)
     end
 
     local dir = path:gsub(extract_name(path) .. "$", "")
-    return dir
+    if dir == "" then
+        return nil
+    else
+        return dir
+    end
 end
 
 -- Return table of all paths in 'dir'
@@ -190,11 +194,10 @@ end
 -- If 'source' is a directory, then recursive copying is used.
 -- For non-recursive copying of directories use the make_dir() function.
 function copy(source, dest_dir)
-
     assert(type(source) == "string", "sys.copy: Argument 'file_or_dir' is not a string.")
     assert(type(dest_dir) == "string", "sys.copy: Argument 'dest_dir' is not a string.")
 
-    assert(is_dir(dest_dir), "sys.move: destination '" .. dest_dir .."' is not a directory.")
+    assert(is_dir(dest_dir), "sys.copy: destination '" .. dest_dir .."' is not a directory.")
 
     if cfg.arch == "Windows" then
         if is_dir(source) then
