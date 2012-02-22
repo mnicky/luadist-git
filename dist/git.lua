@@ -8,8 +8,8 @@ local cfg = require "dist.config"
 
 -- Clone the repository from url to dest_dir
 function clone(repository_url, dest_dir, depth, branch)
-
     assert(type(repository_url) == "string", "git.clone: Argument 'repository_url' is not a string.")
+    assert(type(dest_dir) == "string", "git.clone: Argument 'dest_dir' is not a string.")
 
     local command = "git clone " .. repository_url
 
@@ -23,33 +23,22 @@ function clone(repository_url, dest_dir, depth, branch)
         command = command .. " -b " .. branch
     end
 
-    local ok = nil
+    command = command .. " " .. dest_dir
+    if sys.exists(dest_dir) then sys.delete(dest_dir) end
+    sys.make_dir(dest_dir)
 
-    if dest_dir then
-        assert(type(dest_dir) == "string", "git.clone: Argument 'dest_dir' is not a string.")
-        command = command .. " " .. dest_dir
+    -- change the current working directory to dest_dir
+    local prev_current_dir = sys.current_dir()
+    sys.change_dir(dest_dir)
 
-        if not sys.exists(dest_dir) then
-            sys.make_dir(dest_dir)
-        end
+    -- execute git clone
+    if not cfg.debug then command = command .. " -q" end
+    local ok, err = sys.exec(command)
 
-        -- change the current working directory to dest_dir
-        local prev_current_dir = sys.current_dir()
+    -- change the current working directory back
+    sys.change_dir(prev_current_dir)
 
-        sys.change_dir(dest_dir)
-
-        -- execute git clone
-        if not cfg.debug then command = command .. " -q" end
-        ok = sys.exec(command)
-
-        -- change the current working directory back
-        sys.change_dir(prev_current_dir)
-    else
-        if not cfg.debug then command = command .. " -q" end
-        ok = sys.exec(command)
-    end
-
-    return ok
+    return ok, err
 end
 
 -- Return git repository url from git url (used when old 'dist.manifest' format is present)
@@ -67,7 +56,6 @@ end
 
 -- Checkout specified tag in specified git_repo_dir
 function checkout_tag(tag, git_repo_dir)
-
     git_repo_dir = git_repo_dir or sys.current_dir()
 
     assert(type(tag) == "string", "git.checkout_tag: Argument 'tag' is not a string.")
