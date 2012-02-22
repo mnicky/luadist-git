@@ -226,7 +226,7 @@ function fetch_pkg(pkg, download_dir)
     assert(type(download_dir) == "string", "package.fetch_pkg: Argument 'download_dir' is not a string.")
 
     local repo_url = git.get_repo_url(pkg.path)
-    local clone_dir = download_dir .. "/" .. pkg.name .. "-" .. pkg.version .. "-" .. pkg.arch .. "-" .. pkg.type
+    local clone_dir = sys.get_absolute_path(download_dir .. "/" .. pkg.name .. "-" .. pkg.version .. "-" .. pkg.arch .. "-" .. pkg.type)
 
     -- clone pkg's repository
     print("Getting " .. pkg.name .. "-" .. pkg.version .. "...")
