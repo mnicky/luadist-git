@@ -45,7 +45,6 @@ end
 -- If optional 'simulate' argument is true, the installation of package will
 -- be only simulated.
 function install_pkg(pkg_dir, deploy_dir, variables, preserve_pkg_dir, simulate)
-
     deploy_dir = deploy_dir or cfg.root_dir
     variables = variables or {}
     preserve_pkg_dir = preserve_pkg_dir or false
@@ -82,9 +81,9 @@ function install_pkg(pkg_dir, deploy_dir, variables, preserve_pkg_dir, simulate)
     -- if package is of source type, just deploy it
     if info.type ~= "source" then
         ok, err = deploy_pkg(pkg_dir, deploy_dir, simulate)
+
     -- else build and then deploy
     else
-
         -- set cmake variables
         local cmake_variables = {}
 
@@ -103,12 +102,14 @@ function install_pkg(pkg_dir, deploy_dir, variables, preserve_pkg_dir, simulate)
         cmake_variables.CMAKE_PROGRAM_PATH = table.concat({cmake_variables.CMAKE_PROGRAM_PATH or "", deploy_dir .. "/bin"}, ";")
 
         -- build the package
-        local build_dir, err = build_pkg(pkg_dir, deploy_dir .. "/" .. cfg.temp_dir, cmake_variables)
+        local build_dir
+        build_dir, err = build_pkg(pkg_dir, deploy_dir .. "/" .. cfg.temp_dir, cmake_variables)
         if not build_dir then return nil, err end
 
         -- and deploy it
         ok, err = deploy_pkg(build_dir, deploy_dir, simulate)
         if not cfg.debug then sys.delete(build_dir) end
+
     end
 
     -- delete directory of fetched package
@@ -121,7 +122,6 @@ end
 -- Return directory to which the package was built or nil on error.
 -- 'variables' is table of optional CMake variables.
 function build_pkg(src_dir, build_dir, variables)
-
     build_dir = build_dir or sys.current_dir()
     variables = variables or {}
 
@@ -183,7 +183,6 @@ end
 -- If optional 'simulate' argument is true, the deployment of package will
 -- be only simulated.
 function deploy_pkg(pkg_dir, deploy_dir, simulate)
-
     deploy_dir = deploy_dir or cfg.root_dir
     simulate = simulate or false
 
@@ -210,7 +209,6 @@ function deploy_pkg(pkg_dir, deploy_dir, simulate)
     -- save modified 'dist.info' file
     info.files = sys.get_file_list(pkg_dir)
     local pkg_distinfo_dir = deploy_dir .. "/" .. cfg.distinfos_dir .. "/" .. info.name .. "-" .. info.version
-    sys.make_dir(deploy_dir .. "/" .. cfg.distinfos_dir)
     sys.make_dir(pkg_distinfo_dir)
 
     ok, err = mf.save_distinfo(info, pkg_distinfo_dir .. "/dist.info")
