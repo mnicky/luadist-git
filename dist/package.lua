@@ -217,8 +217,8 @@ function deploy_pkg(pkg_dir, deploy_dir, simulate)
     return true, "Package '" .. info.name .. "-" .. info.version .. "' successfully deployed to '" .. deploy_dir .. "'."
 end
 
--- Fetch package (table 'pkg') to download_dir
--- Return if the operation was successful and a path to the directory on success or an error message on error.
+-- Fetch package (table 'pkg') to download_dir. Return whether the operation
+-- was successful and a path to the directory on success or an error message on error.
 function fetch_pkg(pkg, download_dir)
     download_dir = download_dir or sys.current_dir()
 
@@ -228,30 +228,19 @@ function fetch_pkg(pkg, download_dir)
     local repo_url = git.get_repo_url(pkg.path)
     local clone_dir = download_dir .. "/" .. pkg.name .. "-" .. pkg.version .. "-" .. pkg.arch .. "-" .. pkg.type
 
-    local ok, err
-
-    -- clone pkg's repository if it doesn't exist in download_dir
-    if not sys.exists(clone_dir) then
-        print("Getting " .. pkg.name .. "-" .. pkg.version .. "...")
-        sys.make_dir(clone_dir)
-        ok = git.clone(repo_url, clone_dir, 1)
-    -- if clone_dir exists but doesn't contain dist.info, delete it and then clone the pkg
-    elseif not sys.exists(clone_dir .. "/dist.info") then
-        print("Getting " .. pkg.name .. "-" .. pkg.version .. "...")
-        sys.delete(clone_dir)
-        sys.make_dir(clone_dir)
-        ok = git.clone(repo_url, clone_dir, 1)
-    end
+    -- clone pkg's repository
+    print("Getting " .. pkg.name .. "-" .. pkg.version .. "...")
+    local ok, err = git.clone(repo_url, clone_dir, 1)
 
     -- checkout git tag according to the version of pkg
     if ok and pkg.version ~= "scm" then
-        ok = git.checkout_tag(pkg.version, clone_dir)
+        ok, err = git.checkout_tag(pkg.version, clone_dir)
     end
 
     if not ok then
         -- clean up
         sys.delete(clone_dir)
-        return nil, "Error fetching package '" .. pkg.name .. "-" .. pkg.version .. "' from '" .. pkg.path .. "' to '" .. download_dir .. "'."
+        return nil, "Error fetching package '" .. pkg.name .. "-" .. pkg.version .. "' from '" .. pkg.path .. "' to '" .. download_dir .. "': " .. err
     end
 
     -- delete '.git' directory
