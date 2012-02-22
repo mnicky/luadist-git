@@ -17,7 +17,8 @@ function get_manifest(manifest_file, force_no_cache)
 
     -- download manifest to the cache
     if not sys.exists(manifest_file) or force_no_cache or not cfg.cache or utils.cache_timeout_expired(cfg.cache_timeout, manifest_file) then
-        local ok, err = download_manifest(sys.parent_dir(manifest_file), cfg.repositories)
+        local manifest_dest = sys.parent_dir(manifest_file) or sys.current_dir()
+        local ok, err = download_manifest(manifest_dest, cfg.repositories)
         if not ok then return nil, err end
     end
 
