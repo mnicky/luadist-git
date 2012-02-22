@@ -138,8 +138,8 @@ function build_pkg(src_dir, build_dir, variables)
 	info.type = cfg.type
 
     -- create build dirs
-    local pkg_build_dir = build_dir .. "/" .. info.name .. "-" .. info.version .. "-" .. cfg.arch .. "-" .. cfg.type
-    local cmake_build_dir = build_dir .. "/" .. info.name .. "-" .. info.version .. "-CMake-build"
+    local pkg_build_dir = sys.get_absolute_path(build_dir .. "/" .. info.name .. "-" .. info.version .. "-" .. cfg.arch .. "-" .. cfg.type)
+    local cmake_build_dir = sys.get_absolute_path(build_dir .. "/" .. info.name .. "-" .. info.version .. "-CMake-build")
     sys.make_dir(pkg_build_dir)
     sys.make_dir(cmake_build_dir)
 
