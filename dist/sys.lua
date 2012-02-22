@@ -214,7 +214,7 @@ function copy(source, dest_dir)
         end
     else
         if is_dir(source) then
-            return exec("cp -frH " .. quote(source) .. " " .. quote(dest_dir))
+            return exec("cp -fRH " .. quote(source) .. " " .. quote(dest_dir))
         else
             return exec("cp -fH " .. quote(source) .. " " .. quote(dest_dir))
         end
