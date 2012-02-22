@@ -236,12 +236,10 @@ end
 function get_absolute_path(path)
     assert(type(path) == "string", "sys.get_abs_path: Argument 'path' is not a string.")
 
-    -- check if the path is already absolute
-    local cur_dir = current_dir()
-    local pos1 = string.find(cur_dir, path, 1, true)
-    local pos2 = string.find(path, cur_dir, 1, true)
+    local cur_dir, err = current_dir()
+    if not cur_dir then return nil, err end
 
-    if pos1 == 1 or pos2 == 1 then
+    if path:sub(1,1) == "/" then
         return path
     else
         return cur_dir .. "/" .. path
