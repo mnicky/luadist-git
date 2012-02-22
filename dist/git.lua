@@ -64,16 +64,15 @@ function checkout_tag(tag, git_repo_dir)
     local command = "git checkout " .. tag
     if not cfg.debug then command = command .. " -q" end
 
+    local ok, err
     if git_repo_dir ~= sys.current_dir() then
         local prev_current_dir = sys.current_dir()
         sys.change_dir(git_repo_dir)
-
-        ok = sys.exec(command)
-
+        ok, err = sys.exec(command)
         sys.change_dir(prev_current_dir)
     else
-        ok = sys.exec(command)
+        ok, err = sys.exec(command)
     end
 
-    return ok
+    return ok, err
 end
