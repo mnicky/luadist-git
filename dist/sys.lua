@@ -3,6 +3,7 @@
 module ("dist.sys", package.seeall)
 
 local cfg = require "dist.config"
+local utils = require "dist.utils"
 local lfs = require "lfs"
 
 -- TODO test functionality of this module on Windows
@@ -99,7 +100,7 @@ function parent_dir(path)
         path = path:sub(1,-2)
     end
 
-    local dir = path:gsub(extract_name(path) .. "$", "")
+    local dir = path:gsub(utils.escape(extract_name(path)) .. "$", "")
     if dir == "" then
         return nil
     else
@@ -167,12 +168,17 @@ function change_dir(dir_name)
     end
 end
 
--- Make a new directory
+-- Make a new directory, making also all of its parent directories that doesn't exist.
 function make_dir(dir_name)
     assert(type(dir_name) == "string", "sys.make_dir: Argument 'dir_name' is not a string.")
     if exists(dir_name) then
         return true
     else
+        local par_dir = parent_dir(dir_name)
+        if par_dir then
+            local ok, err = make_dir(par_dir)
+            if not ok then return nil, err end
+        end
         return lfs.mkdir(dir_name)
     end
 end
