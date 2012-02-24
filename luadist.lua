@@ -407,7 +407,7 @@ local function run_command(deploy_dir, command, other_idx)
             table.insert(items, arg[i])
         end
     end
-    return commands[command].run(sys.get_absolute_path(deploy_dir), items)
+    return commands[command].run(sys.abs_path(deploy_dir), items)
 end
 
 

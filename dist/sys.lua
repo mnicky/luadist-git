@@ -233,7 +233,7 @@ function delete(path)
 end
 
 -- Return absolute path from 'path'
-function get_absolute_path(path)
+function abs_path(path)
     assert(type(path) == "string", "sys.get_abs_path: Argument 'path' is not a string.")
 
     local cur_dir, err = current_dir()

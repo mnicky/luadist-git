@@ -16,7 +16,7 @@ end
 
 -- Return packages deployed in 'deploy_dir' also with their provides.
 function get_deployed(deploy_dir)
-    deploy_dir = sys.get_absolute_path(deploy_dir) or cfg.root_dir
+    deploy_dir = sys.abs_path(deploy_dir) or cfg.root_dir
     assert(type(deploy_dir) == "string", "dist.get_deployed: Argument 'deploy_dir' is not a string.")
 
     local deployed = depends.get_installed(deploy_dir)
@@ -40,7 +40,7 @@ end
 -- Download new 'manifest_file' from repository and returns it.
 -- Return nil and error message on error.
 function update_manifest(deploy_dir)
-    deploy_dir = sys.get_absolute_path(deploy_dir) or cfg.root_dir
+    deploy_dir = sys.abs_path(deploy_dir) or cfg.root_dir
     assert(type(deploy_dir) == "string", "dist.update_manifest: Argument 'deploy_dir' is not a string.")
 
     -- make backup and delete the old manifest file
@@ -72,7 +72,7 @@ end
 function install(package_names, deploy_dir, simulate)
     if not package_names then return true end
 
-    deploy_dir = sys.get_absolute_path(deploy_dir) or cfg.root_dir
+    deploy_dir = sys.abs_path(deploy_dir) or cfg.root_dir
     simulate = simulate or false
 
     if type(package_names) == "string" then package_names = {package_names} end
@@ -110,7 +110,7 @@ end
 -- If optional 'simulate' argument is true, the deployment of packages will
 -- be only simulated.
 function make(deploy_dir, package_paths, simulate)
-    deploy_dir = sys.get_absolute_path(deploy_dir) or cfg.root_dir
+    deploy_dir = sys.abs_path(deploy_dir) or cfg.root_dir
     package_paths = package_paths or {}
     simulate = simulate or false
     assert(type(deploy_dir) == "string", "dist.make: Argument 'deploy_dir' is not a string.")
@@ -127,7 +127,7 @@ end
 
 -- Remove 'package_names' from 'deploy_dir'
 function remove(package_names, deploy_dir)
-    deploy_dir = sys.get_absolute_path(deploy_dir) or cfg.root_dir
+    deploy_dir = sys.abs_path(deploy_dir) or cfg.root_dir
     if type(package_names) == "string" then package_names = {package_names} end
 
     assert(type(package_names) == "table", "dist.remove: Argument 'package_names' is not a string or table.")
@@ -149,7 +149,7 @@ end
 -- Download 'pkg_names' to 'fetch_dir'.
 function fetch(pkg_names, fetch_dir)
     fetch_dir = fetch_dir or sys.current_dir()
-    fetch_dir = sys.get_absolute_path(fetch_dir)
+    fetch_dir = sys.abs_path(fetch_dir)
     assert(type(pkg_names) == "table", "dist.fetch: Argument 'pkg_names' is not a string or table.")
     assert(type(fetch_dir) == "string", "dist.fetch: Argument 'fetch_dir' is not a string.")
 

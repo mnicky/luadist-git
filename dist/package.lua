@@ -45,7 +45,7 @@ end
 -- If optional 'simulate' argument is true, the installation of package will
 -- be only simulated.
 function install_pkg(pkg_dir, deploy_dir, variables, preserve_pkg_dir, simulate)
-    deploy_dir = sys.get_absolute_path(deploy_dir) or cfg.root_dir
+    deploy_dir = sys.abs_path(deploy_dir) or cfg.root_dir
     variables = variables or {}
     preserve_pkg_dir = preserve_pkg_dir or false
     simulate = simulate or false
@@ -138,8 +138,8 @@ function build_pkg(src_dir, build_dir, variables)
 	info.type = cfg.type
 
     -- create build dirs
-    local pkg_build_dir = sys.get_absolute_path(build_dir .. "/" .. info.name .. "-" .. info.version .. "-" .. cfg.arch .. "-" .. cfg.type)
-    local cmake_build_dir = sys.get_absolute_path(build_dir .. "/" .. info.name .. "-" .. info.version .. "-CMake-build")
+    local pkg_build_dir = sys.abs_path(build_dir .. "/" .. info.name .. "-" .. info.version .. "-" .. cfg.arch .. "-" .. cfg.type)
+    local cmake_build_dir = sys.abs_path(build_dir .. "/" .. info.name .. "-" .. info.version .. "-CMake-build")
     sys.make_dir(pkg_build_dir)
     sys.make_dir(cmake_build_dir)
 
@@ -156,7 +156,7 @@ function build_pkg(src_dir, build_dir, variables)
     --local prev_cur_dir = sys.current_dir()
     --sys.change_dir(cmake_build_dir)
 
-    src_dir = sys.get_absolute_path(src_dir)
+    src_dir = sys.abs_path(src_dir)
     print("Building " .. sys.extract_name(src_dir) .. "...")
 
     -- set the cmake cache
@@ -226,7 +226,7 @@ function fetch_pkg(pkg, download_dir)
     assert(type(download_dir) == "string", "package.fetch_pkg: Argument 'download_dir' is not a string.")
 
     local repo_url = git.get_repo_url(pkg.path)
-    local clone_dir = sys.get_absolute_path(download_dir .. "/" .. pkg.name .. "-" .. pkg.version .. "-" .. pkg.arch .. "-" .. pkg.type)
+    local clone_dir = sys.abs_path(download_dir .. "/" .. pkg.name .. "-" .. pkg.version .. "-" .. pkg.arch .. "-" .. pkg.type)
 
     -- clone pkg's repository
     print("Getting " .. pkg.name .. "-" .. pkg.version .. "...")
