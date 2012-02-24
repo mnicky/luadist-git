@@ -59,6 +59,11 @@ function is_dir(dir)
     return lfs.attributes(dir, "mode") == "directory"
 end
 
+-- Return the current working directory
+function current_dir()
+    return lfs.currentdir()
+end
+
 -- Return iterator over directory dir.
 -- If dir does not exist or is not a directory, return nil and error message.
 function get_directory(dir)
@@ -106,6 +111,37 @@ function parent_dir(path)
     end
 end
 
+-- Compose path composed from specified parts or current
+-- working directory when no part specified.
+function make_path(...)
+    local parts = arg
+    assert(type(parts) == "table", "sys.make_path: Argument 'parts' is not a table.")
+
+    local path, err
+    if parts.n == 0 then
+        path, err = current_dir()
+    else
+        path, err = table.concat(parts, "/")
+    end
+    if not path then return nil, err end
+
+    return path
+end
+
+-- Return absolute path from 'path'
+function abs_path(path)
+    assert(type(path) == "string", "sys.get_abs_path: Argument 'path' is not a string.")
+
+    local cur_dir, err = current_dir()
+    if not cur_dir then return nil, err end
+
+    if path:sub(1,1) == "/" then
+        return path
+    else
+        return make_path(cur_dir, path)
+    end
+end
+
 -- Return table of all paths in 'dir'
 function get_file_list(dir)
     dir = dir or current_dir()
@@ -115,7 +151,7 @@ function get_file_list(dir)
     local function collect(path, all_paths)
         for item in get_directory(path) do
 
-            local item_path = path .. "/" .. item
+            local item_path = make_path(path, item)
             local _, last = item_path:find(dir .. "/", 1, true)
             local path_to_insert = item_path:sub(last + 1)
 
@@ -132,11 +168,6 @@ function get_file_list(dir)
     collect(dir, all_paths)
 
     return all_paths
-end
-
--- Return the current working directory
-function current_dir()
-    return lfs.currentdir()
 end
 
 -- Return time of the last modification of 'file'.
@@ -187,7 +218,7 @@ function move(file_or_dir, dest_dir)
     -- Extract file/dir name from its path
     local file_or_dir_name = extract_name(file_or_dir)
 
-    return os.rename(file_or_dir, dest_dir .. "/" .. file_or_dir_name)
+    return os.rename(file_or_dir, make_path(dest_dir, file_or_dir_name))
 end
 
 -- Copy 'source' to the destination directory 'dest_dir'.
@@ -200,7 +231,7 @@ function copy(source, dest_dir)
 
     if cfg.arch == "Windows" then
         if is_dir(source) then
-            mkdir(dest_dir .. "/" .. extract_name(source))
+            mkdir(make_path(dest_dir, extract_name(source)))
             return exec("xcopy /E /I /Y /Q " .. quote(source) .. " " .. quote(dest_dir .. "\\" .. extract_name(source)))
         else
             return exec("copy /Y " .. quote(source) .. " " .. quote(dest_dir))
@@ -223,35 +254,4 @@ function delete(path)
     else
         return exec("rm -rf " .. quote(path))
     end
-end
-
--- Return absolute path from 'path'
-function abs_path(path)
-    assert(type(path) == "string", "sys.get_abs_path: Argument 'path' is not a string.")
-
-    local cur_dir, err = current_dir()
-    if not cur_dir then return nil, err end
-
-    if path:sub(1,1) == "/" then
-        return path
-    else
-        return cur_dir .. "/" .. path
-    end
-end
-
--- Compose path composed from specified parts or current
--- working directory when no part specified.
-function make_path(...)
-    local parts = arg
-    assert(type(parts) == "table", "sys.make_path: Argument 'parts' is not a table.")
-
-    local path, err
-    if parts.n == 0 then
-        path, err = current_dir()
-    else
-        path, err = table.concat(parts, "/")
-    end
-    if not path then return nil, err end
-
-    return path
 end

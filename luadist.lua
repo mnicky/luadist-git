@@ -29,8 +29,8 @@ Released under the MIT License. See https://github.com/luadist/luadist-git
             list      - list installed modules
             info      - show information about modules
             search    - search repositories for modules
-            make      - manually deploy modules from local paths
             fetch     - download modules
+            make      - manually deploy modules from local paths
             selftest  - run the selftest of luadist
 
         To get help on specific command, run:
@@ -230,7 +230,7 @@ available will be downloaded.
             fetch_dir = sys.abs_path(fetch_dir)
 
             if fetch_dir == dist.get_deploy_dir() then
-                fetch_dir = fetch_dir .. "/" .. cfg.temp_dir
+                fetch_dir = sys.make_path(fetch_dir, cfg.temp_dir)
             end
 
             if #modules == 0 then
@@ -390,11 +390,11 @@ The 'selftest' command tests the luadist itself and displays the results.
             assert(type(deploy_dir) == "string", "luadist.selftest: Argument 'deploy_dir' is not a string.")
             deploy_dir = sys.abs_path(deploy_dir)
 
-            local test_dir = deploy_dir .. "/" .. cfg.test_dir
+            local test_dir = sys.make_path(deploy_dir, cfg.test_dir)
             print("\nRunning tests:")
             print("==============")
             for item in sys.get_directory(test_dir) do
-                item = test_dir .. "/" .. item
+                item = sys.make_path(test_dir, item)
                 if sys.is_file(item) then
                     print()
                     print(sys.extract_name(item) .. ":")

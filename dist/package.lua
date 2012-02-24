@@ -8,20 +8,22 @@ local sys = require "dist.sys"
 local mf = require "dist.manifest"
 
 -- Remove package from 'pkg_dir' of 'deploy_dir'.
-function remove_pkg(pkg_dir, deploy_dir)
+function remove_pkg(pkg_distinfo_dir, deploy_dir)
     deploy_dir = deploy_dir or cfg.root_dir
-    assert(type(pkg_dir) == "string", "package.remove_pkg: Argument 'pkg_dir' is not a string.")
+    assert(type(pkg_distinfo_dir) == "string", "package.remove_pkg: Argument 'pkg_distinfo_dir' is not a string.")
     assert(type(deploy_dir) == "string", "package.remove_pkg: Argument 'deploy_dir' is not a string.")
     deploy_dir = sys.abs_path(deploy_dir)
 
+    local abs_pkg_distinfo_dir = sys.make_path(deploy_dir, pkg_distinfo_dir)
+
     -- check for dist.info
-    local info, err = mf.load_distinfo(deploy_dir .. "/" .. pkg_dir .. "/dist.info")
-    if not info then return nil, "Error removing package from '" .. pkg_dir .. "' - it doesn't contain valid 'dist.info' file." end
-    if not info.files then return nil, "File '" .. pkg_dir .. "/dist.info" .."' doesn't contain list of installed files." end
+    local info, err = mf.load_distinfo(sys.make_path(abs_pkg_distinfo_dir, "dist.info"))
+    if not info then return nil, "Error removing package from '" .. pkg_distinfo_dir .. "' - it doesn't contain valid 'dist.info' file." end
+    if not info.files then return nil, "File '" .. sys.make_path(pkg_distinfo_dir, "dist.info") .."' doesn't contain list of installed files." end
 
     -- remove installed files
     for i = #info.files, 1, -1 do
-        local f = deploy_dir .. "/" .. info.files[i]
+        local f = sys.make_path(deploy_dir, info.files[i])
         if sys.is_file(f) then
             sys.delete(f)
         elseif sys.is_dir(f) then
@@ -34,8 +36,8 @@ function remove_pkg(pkg_dir, deploy_dir)
     end
 
     -- delete package info from deploy_dir
-    local ok = sys.delete(deploy_dir .. "/" .. pkg_dir)
-    if not ok then return nil, "Error removing package in '" .. deploy_dir .. "/" .. pkg_dir .. "'." end
+    local ok = sys.delete(abs_pkg_distinfo_dir)
+    if not ok then return nil, "Error removing package in '" .. abs_pkg_distinfo_dir .. "'." end
 
     return ok
 end
@@ -60,11 +62,11 @@ function install_pkg(pkg_dir, deploy_dir, variables, preserve_pkg_dir, simulate)
     deploy_dir = sys.abs_path(deploy_dir)
 
     -- check for dist.info
-    local info, err = mf.load_distinfo(pkg_dir .. "/dist.info")
+    local info, err = mf.load_distinfo(sys.make_path(pkg_dir, "dist.info"))
     if not info then return nil, "Error installing: package in directory '" .. pkg_dir .. "' doesn't contain valid 'dist.info' file." end
 
     -- check if the package is source
-    if sys.exists(pkg_dir .. "/CMakeLists.txt") then
+    if sys.exists(sys.make_path(pkg_dir, "CMakeLists.txt")) then
         info.arch = info.arch or "Universal"
         info.type = info.type or "source"
     end
@@ -100,13 +102,13 @@ function install_pkg(pkg_dir, deploy_dir, variables, preserve_pkg_dir, simulate)
             cmake_variables[k] = v
         end
 
-        cmake_variables.CMAKE_INCLUDE_PATH = table.concat({cmake_variables.CMAKE_INCLUDE_PATH or "", deploy_dir .. "/include"}, ";")
-        cmake_variables.CMAKE_LIBRARY_PATH = table.concat({cmake_variables.CMAKE_LIBRARY_PATH or "", deploy_dir .. "/lib", deploy_dir .. "/bin"}, ";")
-        cmake_variables.CMAKE_PROGRAM_PATH = table.concat({cmake_variables.CMAKE_PROGRAM_PATH or "", deploy_dir .. "/bin"}, ";")
+        cmake_variables.CMAKE_INCLUDE_PATH = table.concat({cmake_variables.CMAKE_INCLUDE_PATH or "", sys.make_path(deploy_dir, "include")}, ";")
+        cmake_variables.CMAKE_LIBRARY_PATH = table.concat({cmake_variables.CMAKE_LIBRARY_PATH or "", sys.make_path(deploy_dir, "lib"), sys.make_path(deploy_dir, "bin")}, ";")
+        cmake_variables.CMAKE_PROGRAM_PATH = table.concat({cmake_variables.CMAKE_PROGRAM_PATH or "", sys.make_path(deploy_dir, "bin")}, ";")
 
         -- build the package
-        local build_dir
-        build_dir, err = build_pkg(pkg_dir, deploy_dir .. "/" .. cfg.temp_dir, cmake_variables)
+        local build_dir, temp_dir = nil, sys.make_path(deploy_dir, cfg.temp_dir)
+        build_dir, err = build_pkg(pkg_dir, temp_dir, cmake_variables)
         if not build_dir then return nil, err end
 
         -- and deploy it
@@ -136,7 +138,7 @@ function build_pkg(src_dir, build_dir, variables)
     build_dir = sys.abs_path(build_dir)
 
     -- check for dist.info
-    local info, err = mf.load_distinfo(src_dir .. "/dist.info")
+    local info, err = mf.load_distinfo(sys.make_path(src_dir, "dist.info"))
     if not info then return nil, "Error building package from '" .. src_dir .. "': it doesn't contain valid 'dist.info' file." end
 
     -- set machine information
@@ -144,37 +146,33 @@ function build_pkg(src_dir, build_dir, variables)
 	info.type = cfg.type
 
     -- create build dirs
-    local pkg_build_dir = sys.abs_path(build_dir .. "/" .. info.name .. "-" .. info.version .. "-" .. cfg.arch .. "-" .. cfg.type)
-    local cmake_build_dir = sys.abs_path(build_dir .. "/" .. info.name .. "-" .. info.version .. "-CMake-build")
+    local pkg_build_dir = sys.abs_path(sys.make_path(build_dir, info.name .. "-" .. info.version .. "-" .. cfg.arch .. "-" .. cfg.type))
+    local cmake_build_dir = sys.abs_path(sys.make_path(build_dir, info.name .. "-" .. info.version .. "-CMake-build"))
     sys.make_dir(pkg_build_dir)
     sys.make_dir(cmake_build_dir)
 
     -- create cmake cache
     variables["CMAKE_INSTALL_PREFIX"] = pkg_build_dir
-    local cache_file = io.open(cmake_build_dir .. "/cache.cmake", "w")
+    local cache_file = io.open(sys.make_path(cmake_build_dir, "cache.cmake"), "w")
     if not cache_file then return nil, "Error creating CMake cache file in '" .. cmake_build_dir .. "'" end
     for k,v in pairs(variables) do
         cache_file:write("SET(" .. k .. " \"" .. v .. "\"" .. " CACHE STRING \"\" FORCE)\n")
     end
     cache_file:close()
 
-    -- change the directory
-    --local prev_cur_dir = sys.current_dir()
-    --sys.change_dir(cmake_build_dir)
-
     src_dir = sys.abs_path(src_dir)
     print("Building " .. sys.extract_name(src_dir) .. "...")
 
     -- set the cmake cache
     local ok = sys.exec("cd " .. sys.quote(cmake_build_dir) .. " && " .. cfg.cmake .. " -C cache.cmake " .. sys.quote(src_dir))
-    if not ok then return nil, "Error preloading the CMake cache script '" .. cmake_build_dir .. "/cmake.cache" .. "'" end
+    if not ok then return nil, "Error preloading the CMake cache script '" .. sys.make_path(cmake_build_dir, "cmake.cache") .. "'" end
 
     -- build with cmake
     ok = sys.exec("cd " .. sys.quote(cmake_build_dir) .. " && " .. cfg.build_command)
     if not ok then return nil, "Error building with CMake in directory '" .. cmake_build_dir .. "'" end
 
     -- add dist.info
-    ok, err = mf.save_distinfo(info, pkg_build_dir .. "/dist.info")
+    ok, err = mf.save_distinfo(info, sys.make_path(pkg_build_dir, "dist.info"))
     if not ok then return nil, err end
 
     -- clean up
@@ -200,30 +198,31 @@ function deploy_pkg(pkg_dir, deploy_dir, simulate)
     deploy_dir = sys.abs_path(deploy_dir)
 
     -- check for dist.info
-    local info, err = mf.load_distinfo(pkg_dir .. "/dist.info")
+    local info, err = mf.load_distinfo(sys.make_path(pkg_dir, "dist.info"))
+    local pkg_name = info.name .. "-" .. info.version
     if not info then return nil, "Error deploying package from '" .. pkg_dir .. "': it doesn't contain valid 'dist.info' file." end
 
     -- delete the 'dist.info' file
-    sys.delete(pkg_dir .. "/dist.info")
+    sys.delete(sys.make_path(pkg_dir, "dist.info"))
 
     -- if this is only simulation, exit sucessfully, skipping the next actions
     if simulate then
-        return true, "Simulated deployment of package '" .. info.name .. "-" .. info.version .. "' sucessfull."
+        return true, "Simulated deployment of package '" .. pkg_name .. "' sucessfull."
     end
 
     -- copy all files to the deploy_dir
-    local ok, err = sys.copy(pkg_dir .. "/.", deploy_dir)
-    if not ok then return nil, "Error deploying package '" .. info.name .. "-" .. info.version .. "': " .. err end
+    local ok, err = sys.copy(sys.make_path(pkg_dir, "."), deploy_dir)
+    if not ok then return nil, "Error deploying package '" .. pkg_name .. "': " .. err end
 
     -- save modified 'dist.info' file
     info.files = sys.get_file_list(pkg_dir)
-    local pkg_distinfo_dir = deploy_dir .. "/" .. cfg.distinfos_dir .. "/" .. info.name .. "-" .. info.version
+    local pkg_distinfo_dir = sys.make_path(deploy_dir, cfg.distinfos_dir, pkg_name)
     sys.make_dir(pkg_distinfo_dir)
 
-    ok, err = mf.save_distinfo(info, pkg_distinfo_dir .. "/dist.info")
+    ok, err = mf.save_distinfo(info, sys.make_path(pkg_distinfo_dir, "dist.info"))
     if not ok then return nil, err end
 
-    return true, "Package '" .. info.name .. "-" .. info.version .. "' successfully deployed to '" .. deploy_dir .. "'."
+    return true, "Package '" .. pkg_name .. "' successfully deployed to '" .. deploy_dir .. "'."
 end
 
 -- Fetch package (table 'pkg') to download_dir. Return whether the operation
@@ -234,11 +233,12 @@ function fetch_pkg(pkg, download_dir)
     assert(type(download_dir) == "string", "package.fetch_pkg: Argument 'download_dir' is not a string.")
     download_dir = sys.abs_path(download_dir)
 
+    local pkg_full_name = pkg.name .. "-" .. pkg.version
     local repo_url = git.get_repo_url(pkg.path)
-    local clone_dir = sys.abs_path(download_dir .. "/" .. pkg.name .. "-" .. pkg.version .. "-" .. pkg.arch .. "-" .. pkg.type)
+    local clone_dir = sys.abs_path(sys.make_path(download_dir, pkg_full_name .. "-" .. pkg.arch .. "-" .. pkg.type))
 
     -- clone pkg's repository
-    print("Getting " .. pkg.name .. "-" .. pkg.version .. "...")
+    print("Getting " .. pkg_full_name .. "...")
     local ok, err = git.clone(repo_url, clone_dir, 1)
 
     -- checkout git tag according to the version of pkg
@@ -249,11 +249,11 @@ function fetch_pkg(pkg, download_dir)
     if not ok then
         -- clean up
         sys.delete(clone_dir)
-        return nil, "Error fetching package '" .. pkg.name .. "-" .. pkg.version .. "' from '" .. pkg.path .. "' to '" .. download_dir .. "': " .. err
+        return nil, "Error fetching package '" .. pkg_full_name .. "' from '" .. pkg.path .. "' to '" .. download_dir .. "': " .. err
     end
 
     -- delete '.git' directory
-    sys.delete(clone_dir .. "/" .. ".git")
+    sys.delete(sys.make_path(clone_dir, ".git"))
 
     return ok, clone_dir
 end

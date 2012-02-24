@@ -45,25 +45,31 @@ function update_manifest(deploy_dir)
     assert(type(deploy_dir) == "string", "dist.update_manifest: Argument 'deploy_dir' is not a string.")
     deploy_dir = sys.abs_path(deploy_dir)
 
+    -- define used files and directories
+    local manifest_file = sys.make_path(deploy_dir, cfg.manifest_file)
+    local cache_dir = sys.make_path(deploy_dir, cfg.cache_dir)
+    local temp_dir = sys.make_path(deploy_dir, cfg.temp_dir)
+    local temp_manifest_file = sys.make_path(temp_dir, sys.extract_name(cfg.manifest_file))
+
     -- make backup and delete the old manifest file
-    if (sys.exists(deploy_dir .. "/" .. cfg.manifest_file)) then
-        sys.copy(deploy_dir .. "/" .. cfg.manifest_file, deploy_dir .. "/" .. cfg.temp_dir)
+    if (sys.exists(manifest_file)) then
+        sys.copy(manifest_file, temp_dir)
     end
-    sys.delete(deploy_dir .. "/" .. cfg.manifest_file)
+    sys.delete(manifest_file)
 
     -- retrieve the new manifest (forcing no cache use)
     local manifest, err = mf.get_manifest(nil, true)
 
     -- if couldn't download new manifest then restore the backup and return error message
     if not manifest then
-        if sys.exists(deploy_dir .. "/" .. cfg.temp_dir .. "/" .. sys.extract_name(cfg.manifest_file)) then
-            sys.copy(deploy_dir .. "/" .. cfg.temp_dir .. "/" .. sys.extract_name(cfg.manifest_file), deploy_dir .. "/" .. cfg.cache_dir)
-            sys.delete(deploy_dir .. "/" .. cfg.temp_dir .. "/" .. sys.extract_name(cfg.manifest_file))
+        if sys.exists(temp_manifest_file) then
+            sys.copy(temp_manifest_file, cache_dir)
+            sys.delete(temp_manifest_file)
         end
         return nil, err
     -- else delete the backup and return the new manifest
     else
-        sys.delete(deploy_dir .. "/" .. cfg.temp_dir .. "/" .. sys.extract_name(cfg.manifest_file))
+        sys.delete(temp_manifest_file)
         return manifest
     end
 end
@@ -95,7 +101,7 @@ function install(package_names, deploy_dir, simulate)
 
     -- fetch the packages from repository
     local dirs_or_err = {}
-    local ok, dirs_or_err = package.fetch_pkgs(dependencies, deploy_dir .. "/" .. cfg.temp_dir)
+    local ok, dirs_or_err = package.fetch_pkgs(dependencies, sys.make_path(deploy_dir, cfg.temp_dir))
     if not ok then return nil, dirs_or_err end
 
     -- install fetched packages
@@ -142,7 +148,7 @@ function remove(package_names, deploy_dir)
 
     -- remove them
     for _, pkg in pairs(pkgs_to_remove) do
-        local pkg_distinfo_dir = cfg.distinfos_dir .. "/" .. pkg.name .. "-" .. pkg.version
+        local pkg_distinfo_dir = sys.make_path(cfg.distinfos_dir, pkg.name .. "-" .. pkg.version)
         local ok, err = package.remove_pkg(pkg_distinfo_dir, deploy_dir)
         if not ok then return nil, err end
     end

@@ -10,7 +10,7 @@ local utils = require "dist.utils"
 -- Return the manifest table from 'manifest_file'.
 -- If optional 'force_no_cache' parameter is true, then the cache is not used.
 function get_manifest(manifest_file, force_no_cache)
-    manifest_file = manifest_file or cfg.root_dir .. "/" .. cfg.manifest_file
+    manifest_file = manifest_file or sys.make_path(cfg.root_dir, cfg.manifest_file)
     force_no_cache = force_no_cache or false
 
     assert(type(manifest_file) == "string", "manifest.get_manifest: Argument 'manifest_file' is not a string.")
@@ -34,7 +34,7 @@ end
 -- Download manifest from the table of git 'repository_urls' to 'dest_dir' and return true on success
 -- and nil and error message on error.
 function download_manifest(dest_dir, repository_urls)
-    dest_dir = dest_dir or cfg.root_dir .. "/" .. cfg.cache_dir
+    dest_dir = dest_dir or sys.make_path(cfg.root_dir, cfg.cache_dir)
     repository_urls = repository_urls or cfg.repositories
     if type(repository_urls) == "string" then repository_urls = {repository_urls} end
 
@@ -43,13 +43,14 @@ function download_manifest(dest_dir, repository_urls)
     dest_dir = sys.abs_path(dest_dir)
 
     local manifest = {}
+    print("Downloading repository information...")
 
     for _, repo in pairs(repository_urls) do
-        local clone_dir = cfg.root_dir .. "/" .. cfg.temp_dir .. "/repository"
+        local clone_dir = sys.make_path(cfg.root_dir, cfg.temp_dir, "repository")
 
         -- clone the repo and add its 'dist.manifest' to manifest
         if git.clone(repo, clone_dir, 1) then
-            for _, pkg in pairs(load_manifest(clone_dir .. "/dist.manifest")) do
+            for _, pkg in pairs(load_manifest(sys.make_path(clone_dir, "dist.manifest"))) do
                 table.insert(manifest, pkg)
             end
             sys.delete(clone_dir)
@@ -61,7 +62,7 @@ function download_manifest(dest_dir, repository_urls)
 
     -- save the manifest
     sys.make_dir(dest_dir)
-    local ok, err = save_manifest(manifest, dest_dir .. "/dist.manifest")
+    local ok, err = save_manifest(manifest, sys.make_path(dest_dir, "dist.manifest"))
     if not ok then return nil, err end
 
     return true
@@ -70,7 +71,7 @@ end
 -- Load and return manifest table from the manifest file.
 -- If manifest file not present, return nil.
 function load_manifest(manifest_file)
-    manifest_file = manifest_file or cfg.root_dir .. "/" .. cfg.manifest_file
+    manifest_file = manifest_file or sys.make_path(cfg.root_dir, cfg.manifest_file)
     assert(type(manifest_file) == "string", "manifest.load_manifest: Argument 'manifest_file' is not a string.")
     manifest_file = sys.abs_path(manifest_file)
 
