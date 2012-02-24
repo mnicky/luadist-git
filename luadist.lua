@@ -382,25 +382,41 @@ is used.
     -- Selftest of luadist.
     ["selftest"] = {
         help = [[
-Usage: luadist selftest
+Usage: luadist [TEST_DIRECTORY] selftest
 
-The 'selftest' command tests the luadist itself and displays the results.
+The 'selftest' command runs tests of LuaDist, located in TEST_DIRECTORY and
+displays the results.
+
+If no TEST_DIRECTORY is specified, the default test directory of LuaDist
+deployment directory (i.e. ']] .. cfg.test_dir .. [[') is used.
         ]],
 
-        run = function (deploy_dir)
-            deploy_dir = deploy_dir or dist.get_deploy_dir()
-            assert(type(deploy_dir) == "string", "luadist.selftest: Argument 'deploy_dir' is not a string.")
-            deploy_dir = sys.abs_path(deploy_dir)
+        run = function (test_dir)
+            test_dir = test_dir or dist.get_deploy_dir()
+            assert(type(test_dir) == "string", "luadist.selftest: Argument 'deploy_dir' is not a string.")
+            test_dir = sys.abs_path(test_dir)
 
-            local test_dir = sys.make_path(deploy_dir, cfg.test_dir)
+            -- if the default parameter (i.e. deploy_dir) is passed, use the default test_dir
+            if test_dir == dist.get_deploy_dir() then
+                test_dir = sys.make_path(test_dir, cfg.test_dir)
+            end
+
+            -- try to get an iterator over test files and check it
+            local test_iterator, err = sys.get_directory(test_dir)
+            if not test_iterator then
+                print("Running tests from '" .. test_dir .. "' failed: " .. err)
+                return 1
+            end
+
+            -- run the tests
             print("\nRunning tests:")
             print("==============")
-            for item in sys.get_directory(test_dir) do
-                item = sys.make_path(test_dir, item)
-                if sys.is_file(item) then
+            for test_file in sys.get_directory(test_dir) do
+                test_file = sys.make_path(test_dir, test_file)
+                if sys.is_file(test_file) then
                     print()
-                    print(sys.extract_name(item) .. ":")
-                    dofile(item)
+                    print(sys.extract_name(test_file) .. ":")
+                    dofile(test_file)
                 end
             end
             print()
