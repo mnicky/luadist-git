@@ -224,11 +224,13 @@ available will be downloaded.
         ]],
 
         run = function (fetch_dir, modules)
-            fetch_dir = fetch_dir or dist.get_deploy_dir()modules = modules or {}
+            fetch_dir = fetch_dir or dist.get_deploy_dir()
+            modules = modules or {}
             assert(type(fetch_dir) == "string", "luadist.fetch: Argument 'fetch_dir' is not a string.")
             assert(type(modules) == "table", "luadist.fetch: Argument 'modules' is not a table.")
             fetch_dir = sys.abs_path(fetch_dir)
 
+            -- if the default parameter (i.e. deploy_dir) is passed, use the default temp_dir
             if fetch_dir == dist.get_deploy_dir() then
                 fetch_dir = sys.make_path(fetch_dir, cfg.temp_dir)
             end
