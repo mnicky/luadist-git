@@ -10,6 +10,7 @@ local cfg = require "dist.config"
 function clone(repository_url, dest_dir, depth, branch)
     assert(type(repository_url) == "string", "git.clone: Argument 'repository_url' is not a string.")
     assert(type(dest_dir) == "string", "git.clone: Argument 'dest_dir' is not a string.")
+    dest_dir = sys.abs_path(dest_dir)
 
     local command = "git clone " .. repository_url
 
@@ -57,9 +58,9 @@ end
 -- Checkout specified tag in specified git_repo_dir
 function checkout_tag(tag, git_repo_dir)
     git_repo_dir = git_repo_dir or sys.current_dir()
-
     assert(type(tag) == "string", "git.checkout_tag: Argument 'tag' is not a string.")
     assert(type(git_repo_dir) == "string", "git.checkout_tag: Argument 'git_repo_dir' is not a string.")
+    git_repo_dir = sys.abs_path(git_repo_dir)
 
     local command = "git checkout " .. tag
     if not cfg.debug then command = command .. " -q" end

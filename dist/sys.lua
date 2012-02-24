@@ -62,9 +62,7 @@ end
 -- Return iterator over directory dir.
 -- If dir does not exist or is not a directory, return nil and error message.
 function get_directory(dir)
-
     dir = dir or current_dir()
-
     assert(type(dir) == "string", "sys.get_directory: Argument 'dir' is not a string.")
     if is_dir(dir) then
         return lfs.dir(dir)
@@ -110,11 +108,8 @@ end
 
 -- Return table of all paths in 'dir'
 function get_file_list(dir)
-
     dir = dir or current_dir()
-
     assert(type(dir) == "string", "sys.get_directory: Argument 'dir' is not a string.")
-
     if not exists(dir) then return nil, "Error getting file list of '" .. dir .. "': directory doesn't exist." end
 
     local function collect(path, all_paths)
@@ -187,7 +182,6 @@ end
 function move(file_or_dir, dest_dir)
     assert(type(file_or_dir) == "string", "sys.move: Argument 'file_or_dir' is not a string.")
     assert(type(dest_dir) == "string", "sys.move: Argument 'dest_dir' is not a string.")
-
     assert(is_dir(dest_dir), "sys.move: destination '" .. dest_dir .."' is not a directory.")
 
     -- Extract file/dir name from its path
@@ -202,7 +196,6 @@ end
 function copy(source, dest_dir)
     assert(type(source) == "string", "sys.copy: Argument 'file_or_dir' is not a string.")
     assert(type(dest_dir) == "string", "sys.copy: Argument 'dest_dir' is not a string.")
-
     assert(is_dir(dest_dir), "sys.copy: destination '" .. dest_dir .."' is not a directory.")
 
     if cfg.arch == "Windows" then

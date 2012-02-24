@@ -13,7 +13,6 @@ local utils = require "dist.utils"
 function find_packages(package_names, manifest)
     if type(package_names) == "string" then package_names = {package_names} end
     manifest = manifest or mf.get_manifest()
-
     assert(type(package_names) == "table", "depends.find_packages: Argument 'package_names' is not a table or string.")
     assert(type(manifest) == "table", "depends.find_packages: Argument 'manifest' is not a table.")
 
@@ -33,8 +32,8 @@ end
 -- Return manifest consisting of packages installed in specified deploy_dir directory
 function get_installed(deploy_dir)
     deploy_dir = deploy_dir or cfg.root_dir
-
     assert(type(deploy_dir) == "string", "depends.get_installed: Argument 'deploy_dir' is not a string.")
+    deploy_dir = sys.abs_path(deploy_dir)
 
     local distinfos_path = deploy_dir .. "/" .. cfg.distinfos_dir
     local manifest = {}
@@ -89,6 +88,8 @@ end
 -- Check whether the package 'pkg' conflicts with 'installed_pkg' and return
 -- false or error message.
 local function packages_conflicts(pkg, installed_pkg)
+    assert(type(pkg) == "table", "depends.packages_conflicts: Argument 'pkg' is not a table.")
+    assert(type(installed_pkg) == "table", "depends.packages_conflicts: Argument 'installed_pkg' is not a table.")
 
     -- If 'pkg.selected' == true then returns 'selected' else 'installed'.
     -- Used in error messages.
@@ -327,7 +328,6 @@ end
 -- 'packages' into the system with already 'installed' packages, using 'manifest'.
 function get_depends(packages, installed, manifest)
     if not packages then return {} end
-
     manifest = manifest or mf.get_manifest()
     if type(packages) == "string" then packages = {packages} end
 
@@ -373,7 +373,6 @@ end
 -- Return table of packages provided by specified package (from it's 'provides' field)
 function get_provides(package)
     assert(type(package) == "table", "depends.get_provides: Argument 'package' is not a table.")
-
     if not package.provides then return {} end
 
     local provided = {}
@@ -448,7 +447,6 @@ end
 function pkg_full_name(name, version)
     name = name or ""
     version = version or ""
-
     if type(version) == "number" then version = tostring(version) end
 
     assert(type(name) == "string", "depends.pkg_full_name: Argument 'name' is not a string.")

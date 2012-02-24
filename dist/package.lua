@@ -10,9 +10,9 @@ local mf = require "dist.manifest"
 -- Remove package from 'pkg_dir' of 'deploy_dir'.
 function remove_pkg(pkg_dir, deploy_dir)
     deploy_dir = deploy_dir or cfg.root_dir
-
     assert(type(pkg_dir) == "string", "package.remove_pkg: Argument 'pkg_dir' is not a string.")
     assert(type(deploy_dir) == "string", "package.remove_pkg: Argument 'deploy_dir' is not a string.")
+    deploy_dir = sys.abs_path(deploy_dir)
 
     -- check for dist.info
     local info, err = mf.load_distinfo(deploy_dir .. "/" .. pkg_dir .. "/dist.info")
@@ -45,7 +45,7 @@ end
 -- If optional 'simulate' argument is true, the installation of package will
 -- be only simulated.
 function install_pkg(pkg_dir, deploy_dir, variables, preserve_pkg_dir, simulate)
-    deploy_dir = sys.abs_path(deploy_dir) or cfg.root_dir
+    deploy_dir = deploy_dir or cfg.root_dir
     variables = variables or {}
     preserve_pkg_dir = preserve_pkg_dir or false
     simulate = simulate or false
@@ -55,6 +55,9 @@ function install_pkg(pkg_dir, deploy_dir, variables, preserve_pkg_dir, simulate)
     assert(type(variables) == "table", "package.make_pkg: Argument 'variables' is not a table.")
     assert(type(preserve_pkg_dir) == "boolean", "package.make_pkg: Argument 'preserve_pkg_dir' is not a boolean.")
     assert(type(simulate) == "boolean", "package.make_pkg: Argument 'simulate' is not a boolean.")
+
+    pkg_dir = sys.abs_path(pkg_dir)
+    deploy_dir = sys.abs_path(deploy_dir)
 
     -- check for dist.info
     local info, err = mf.load_distinfo(pkg_dir .. "/dist.info")
@@ -129,6 +132,9 @@ function build_pkg(src_dir, build_dir, variables)
     assert(type(build_dir) == "string", "package.build_pkg: Argument 'build_dir' is not a string.")
     assert(type(variables) == "table", "package.build_pkg: Argument 'variables' is not a table.")
 
+    src_dir = sys.abs_path(src_dir)
+    build_dir = sys.abs_path(build_dir)
+
     -- check for dist.info
     local info, err = mf.load_distinfo(src_dir .. "/dist.info")
     if not info then return nil, "Error building package from '" .. src_dir .. "': it doesn't contain valid 'dist.info' file." end
@@ -190,6 +196,9 @@ function deploy_pkg(pkg_dir, deploy_dir, simulate)
     assert(type(deploy_dir) == "string", "package.deploy_pkg: Argument 'deploy_dir' is not a string.")
     assert(type(simulate) == "boolean", "package.deploy_pkg: Argument 'simulate' is not a boolean.")
 
+    pkg_dir = sys.abs_path(pkg_dir)
+    deploy_dir = sys.abs_path(deploy_dir)
+
     -- check for dist.info
     local info, err = mf.load_distinfo(pkg_dir .. "/dist.info")
     if not info then return nil, "Error deploying package from '" .. pkg_dir .. "': it doesn't contain valid 'dist.info' file." end
@@ -221,9 +230,9 @@ end
 -- was successful and a path to the directory on success or an error message on error.
 function fetch_pkg(pkg, download_dir)
     download_dir = download_dir or sys.current_dir()
-
     assert(type(pkg) == "table", "package.fetch_pkg: Argument 'pkg' is not a table.")
     assert(type(download_dir) == "string", "package.fetch_pkg: Argument 'download_dir' is not a string.")
+    download_dir = sys.abs_path(download_dir)
 
     local repo_url = git.get_repo_url(pkg.path)
     local clone_dir = sys.abs_path(download_dir .. "/" .. pkg.name .. "-" .. pkg.version .. "-" .. pkg.arch .. "-" .. pkg.type)
@@ -253,9 +262,9 @@ end
 -- Return if the operation was successful and a table of paths to the directories on success or an error message on error.
 function fetch_pkgs(packages, download_dir)
     download_dir = download_dir or sys.current_dir()
-
     assert(type(packages) == "table", "package.fetch_pkgs: Argument 'pkg' is not a table.")
     assert(type(download_dir) == "string", "package.fetch_pkgs: Argument 'download_dir' is not a string.")
+    download_dir = sys.abs_path(download_dir)
 
     local fetched_dirs = {}
     local ok, dir_or_err

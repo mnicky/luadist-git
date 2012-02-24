@@ -41,6 +41,7 @@ Released under the MIT License. See https://github.com/luadist/luadist-git
             help_item = help_item or {}
             assert(type(deploy_dir) == "string", "luadist.help: Argument 'deploy_dir' is not a string.")
             assert(type(help_item) == "table", "luadist.help: Argument 'help_item' is not a table.")
+            deploy_dir = sys.abs_path(deploy_dir)
 
             if not help_item or not commands[help_item[1]] then
                 help_item = "help"
@@ -71,9 +72,9 @@ The -s option makes LuaDist only to simulate the installation of modules
         run = function (deploy_dir, modules)
             deploy_dir = deploy_dir or dist.get_deploy_dir()
             if type(modules) == "string" then modules = {modules} end
-
             assert(type(deploy_dir) == "string", "luadist.install: Argument 'deploy_dir' is not a string.")
             assert(type(modules) == "table", "luadist.install: Argument 'modules' is not a string or table.")
+            deploy_dir = sys.abs_path(deploy_dir)
 
             local simulate_only = false
             if modules[1] == "-s" then
@@ -114,9 +115,9 @@ WARNING: dependencies between modules are NOT taken into account!
         run = function (deploy_dir, modules)
             deploy_dir = deploy_dir or dist.get_deploy_dir()
             if type(modules) == "string" then modules = {modules} end
-
             assert(type(deploy_dir) == "string", "luadist.remove: Argument 'deploy_dir' is not a string.")
             assert(type(modules) == "table", "luadist.remove: Argument 'modules' is not a string or table.")
+            deploy_dir = sys.abs_path(deploy_dir)
 
             if #modules == 0 then
                 print("No modules to remove specified.")
@@ -149,6 +150,7 @@ is used.
         run = function (deploy_dir)
             deploy_dir = deploy_dir or dist.get_deploy_dir()
             assert(type(deploy_dir) == "string", "luadist.refresh: Argument 'deploy_dir' is not a string.")
+            deploy_dir = sys.abs_path(deploy_dir)
 
             local ok, err = dist.update_manifest(deploy_dir)
             if not ok then
@@ -184,6 +186,7 @@ satisfied or not!
             module_paths = module_paths or {}
             assert(type(deploy_dir) == "string", "luadist.make: Argument 'deploy_dir' is not a string.")
             assert(type(module_paths) == "table", "luadist.make: Argument 'module_paths' is not a table.")
+            deploy_dir = sys.abs_path(deploy_dir)
 
             local simulate_only = false
             if module_paths[1] == "-s" then
@@ -224,6 +227,7 @@ available will be downloaded.
             fetch_dir = fetch_dir or dist.get_deploy_dir()modules = modules or {}
             assert(type(fetch_dir) == "string", "luadist.fetch: Argument 'fetch_dir' is not a string.")
             assert(type(modules) == "table", "luadist.fetch: Argument 'modules' is not a table.")
+            fetch_dir = sys.abs_path(fetch_dir)
 
             if fetch_dir == dist.get_deploy_dir() then
                 fetch_dir = fetch_dir .. "/" .. cfg.temp_dir
@@ -262,6 +266,7 @@ is used. If STRINGS are not specified, all installed modules are listed.
             strings = strings or {}
             assert(type(deploy_dir) == "string", "luadist.list: Argument 'deploy_dir' is not a string.")
             assert(type(strings) == "table", "luadist.list: Argument 'strings' is not a table.")
+            deploy_dir = sys.abs_path(deploy_dir)
 
             local deployed = dist.get_deployed(deploy_dir)
             deployed  = depends.filter_packages_by_strings(deployed, strings)
@@ -297,6 +302,7 @@ The -d option makes LuaDist to search also in the description of modules.
             strings = strings or {}
             assert(type(deploy_dir) == "string", "luadist.search: Argument 'deploy_dir' is not a string.")
             assert(type(strings) == "table", "luadist.search: Argument 'strings' is not a table.")
+            deploy_dir = sys.abs_path(deploy_dir)
 
             local search_in_desc = false
             if strings[1] == "-d" then
@@ -339,6 +345,7 @@ is used.
             modules = modules or {}
             assert(type(deploy_dir) == "string", "luadist.info: Argument 'deploy_dir' is not a string.")
             assert(type(modules) == "table", "luadist.info: Argument 'modules' is not a table.")
+            deploy_dir = sys.abs_path(deploy_dir)
 
             local manifest = mf.get_manifest()
 
@@ -381,6 +388,8 @@ The 'selftest' command tests the luadist itself and displays the results.
         run = function (deploy_dir)
             deploy_dir = deploy_dir or dist.get_deploy_dir()
             assert(type(deploy_dir) == "string", "luadist.selftest: Argument 'deploy_dir' is not a string.")
+            deploy_dir = sys.abs_path(deploy_dir)
+
             local test_dir = deploy_dir .. "/" .. cfg.test_dir
             print("\nRunning tests:")
             print("==============")
