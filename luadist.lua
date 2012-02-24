@@ -31,7 +31,7 @@ Released under the MIT License. See https://github.com/luadist/luadist-git
             search    - search repositories for modules
             fetch     - download modules
             make      - manually deploy modules from local paths
-            selftest  - run the selftest of luadist
+            selftest  - run the selftest of LuaDist
 
         To get help on specific command, run:
             luadist help <COMMAND>
@@ -379,7 +379,7 @@ is used.
         end
     },
 
-    -- Selftest of luadist.
+    -- Selftest of LuaDist.
     ["selftest"] = {
         help = [[
 Usage: luadist [TEST_DIRECTORY] selftest
