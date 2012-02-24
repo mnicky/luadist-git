@@ -245,3 +245,20 @@ function get_absolute_path(path)
         return cur_dir .. "/" .. path
     end
 end
+
+-- Compose path composed from specified parts or current
+-- working directory when no part specified.
+function make_path(...)
+    local parts = arg
+    assert(type(parts) == "table", "sys.make_path: Argument 'parts' is not a table.")
+
+    local path, err
+    if parts.n == 0 then
+        path, err = current_dir()
+    else
+        path, err = table.concat(parts, "/")
+    end
+    if not path then return nil, err end
+
+    return path
+end
