@@ -312,7 +312,12 @@ The -d option makes LuaDist to search also in the description of modules.
                 table.remove(strings, 1)
             end
 
-            local available = mf.get_manifest()
+            local available, err = mf.get_manifest()
+            if not available then
+                print(err)
+                return 1
+            end
+
             available = depends.filter_packages_by_strings(available, strings, search_in_desc)
             available = depends.filter_packages_by_arch_and_type(available, cfg.arch, cfg.type)
             available = depends.sort_by_names(available)
@@ -349,7 +354,11 @@ is used.
             assert(type(modules) == "table", "luadist.info: Argument 'modules' is not a table.")
             deploy_dir = sys.abs_path(deploy_dir)
 
-            local manifest = mf.get_manifest()
+            local manifest, err = mf.get_manifest()
+            if not manifest then
+                print(err)
+                return 1
+            end
 
             if #modules == 0 then
                 modules = manifest
