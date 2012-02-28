@@ -45,32 +45,15 @@ function update_manifest(deploy_dir)
     assert(type(deploy_dir) == "string", "dist.update_manifest: Argument 'deploy_dir' is not a string.")
     deploy_dir = sys.abs_path(deploy_dir)
 
-    -- define used files and directories
-    local manifest_file = sys.make_path(deploy_dir, cfg.manifest_file)
-    local cache_dir = sys.make_path(deploy_dir, cfg.cache_dir)
-    local temp_dir = sys.make_path(deploy_dir, cfg.temp_dir)
-    local temp_manifest_file = sys.make_path(temp_dir, sys.extract_name(cfg.manifest_file))
-
-    -- make backup and delete the old manifest file
-    if (sys.exists(manifest_file)) then
-        sys.copy(manifest_file, temp_dir)
-    end
-    sys.delete(manifest_file)
+    -- TODO: use 'deploy_dir' argument in manifest functions
 
     -- retrieve the new manifest (forcing no cache use)
     local manifest, err = mf.get_manifest(nil, true)
 
-    -- if couldn't download new manifest then restore the backup and return error message
-    if not manifest then
-        if sys.exists(temp_manifest_file) then
-            sys.copy(temp_manifest_file, cache_dir)
-            sys.delete(temp_manifest_file)
-        end
-        return nil, err
-    -- else delete the backup and return the new manifest
-    else
-        sys.delete(temp_manifest_file)
+    if manifest then
         return manifest
+    else
+        return nil, err
     end
 end
 
