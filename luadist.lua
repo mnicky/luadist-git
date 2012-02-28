@@ -76,6 +76,8 @@ The -s option makes LuaDist only to simulate the installation of modules
             assert(type(modules) == "table", "luadist.install: Argument 'modules' is not a string or table.")
             deploy_dir = sys.abs_path(deploy_dir)
 
+            local variables = {}
+
             local simulate_only = false
             if modules[1] == "-s" then
                 simulate_only = true
@@ -88,7 +90,7 @@ The -s option makes LuaDist only to simulate the installation of modules
                 return 0
             end
 
-            local ok, err = dist.install(modules, deploy_dir, simulate_only)
+            local ok, err = dist.install(modules, deploy_dir, variables, simulate_only)
             if not ok then
                 print(err)
                 return 1
@@ -188,6 +190,8 @@ satisfied or not!
             assert(type(module_paths) == "table", "luadist.make: Argument 'module_paths' is not a table.")
             deploy_dir = sys.abs_path(deploy_dir)
 
+            local variables = {}
+
             local simulate_only = false
             if module_paths[1] == "-s" then
                 simulate_only = true
@@ -200,7 +204,7 @@ satisfied or not!
                 return 0
             end
 
-            local ok, err = dist.make(deploy_dir, module_paths, simulate_only)
+            local ok, err = dist.make(deploy_dir, module_paths, variables, simulate_only)
             if not ok then
                 print(err)
                 return 1

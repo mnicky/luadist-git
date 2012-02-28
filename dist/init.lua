@@ -57,10 +57,10 @@ function update_manifest(deploy_dir)
     end
 end
 
--- Install 'package_names' to 'deploy_dir'.
+-- Install 'package_names' to 'deploy_dir', using optional CMake 'variables'.
 -- If optional 'simulate' argument is true, the installation of packages will
 -- be only simulated.
-function install(package_names, deploy_dir, simulate)
+function install(package_names, deploy_dir, variables, simulate)
     if not package_names then return true end
     deploy_dir = deploy_dir or cfg.root_dir
     simulate = simulate or false
@@ -89,17 +89,17 @@ function install(package_names, deploy_dir, simulate)
 
     -- install fetched packages
     for _, dir in pairs(dirs_or_err) do
-        ok, err = package.install_pkg(dir, deploy_dir, nil, nil, simulate)
+        ok, err = package.install_pkg(dir, deploy_dir, variables, false, simulate)
         if not ok then return nil, err end
     end
     return ok
 end
 
--- Manually deploy packages from 'package_paths' to 'deploy_dir'.
--- The 'package_paths' are preserved (will not be deleted).
+-- Manually deploy packages from 'package_paths' to 'deploy_dir', using optional
+-- CMake 'variables'. The 'package_paths' are preserved (will not be deleted).
 -- If optional 'simulate' argument is true, the deployment of packages will
 -- be only simulated.
-function make(deploy_dir, package_paths, simulate)
+function make(deploy_dir, package_paths, variables, simulate)
     deploy_dir = deploy_dir or cfg.root_dir
     package_paths = package_paths or {}
     simulate = simulate or false
@@ -111,7 +111,7 @@ function make(deploy_dir, package_paths, simulate)
 
     local ok, err
     for _, path in pairs(package_paths) do
-        ok, err = package.install_pkg(sys.abs_path(path), deploy_dir, nil, true, simulate)
+        ok, err = package.install_pkg(sys.abs_path(path), deploy_dir, variables, true, simulate)
         if not ok then return nil, err end
     end
     return ok
