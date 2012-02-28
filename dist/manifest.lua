@@ -7,7 +7,9 @@ local git = require "dist.git"
 local sys = require "dist.sys"
 local utils = require "dist.utils"
 
--- Return the manifest table from 'manifest_file'.
+-- Return the manifest table from 'manifest_file'. If the manifest is in cache,
+-- then the cached version is used. You can set the cache timeout value in
+-- 'config.cache_timeout' variable.
 -- If optional 'force_no_cache' parameter is true, then the cache is not used.
 function get_manifest(manifest_file, force_no_cache)
     manifest_file = manifest_file or sys.make_path(cfg.root_dir, cfg.manifest_file)
@@ -17,7 +19,7 @@ function get_manifest(manifest_file, force_no_cache)
     assert(type(force_no_cache) == "boolean", "manifest.get_manifest: Argument 'force_no_cache' is not a boolean.")
     manifest_file = sys.abs_path(manifest_file)
 
-    -- download manifest to the cache
+    -- download new manifest to the cache if not present or cache not used or cache expired
     if not sys.exists(manifest_file) or force_no_cache or not cfg.cache or utils.cache_timeout_expired(cfg.cache_timeout, manifest_file) then
         local manifest_dest = sys.parent_dir(manifest_file) or sys.current_dir()
         local ok, err = download_manifest(manifest_dest, cfg.repositories)
