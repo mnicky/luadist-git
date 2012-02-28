@@ -44,29 +44,59 @@ function download_manifest(dest_dir, repository_urls)
     assert(type(repository_urls) == "table", "manifest.download_manifest: Argument 'repository_urls' is not a table or string.")
     dest_dir = sys.abs_path(dest_dir)
 
+    -- define used files and directories
+    local manifest_filename = sys.extract_name(cfg.manifest_file)
+    local manifest_file = sys.make_path(dest_dir, manifest_filename)
+    local temp_dir = sys.make_path(cfg.root_dir, cfg.temp_dir)
+    local temp_manifest_file = sys.make_path(temp_dir, manifest_filename)
+
+    -- make backup and delete the old manifest file
+    if (sys.exists(manifest_file)) then
+        sys.copy(manifest_file, temp_dir)
+        sys.delete(manifest_file)
+    end
+
+    -- ensure that destination directory exists
+    local ok, err = sys.make_dir(dest_dir)
+
+    -- retrieve manifests from repositories and collect them into one manifest table
     local manifest = {}
-    print("Downloading repository information...")
+    if ok then
+        print("Downloading repository information...")
+        for k, repo in pairs(repository_urls) do
+            local clone_dir = sys.make_path(temp_dir, "repository_" .. tostring(k))
 
-    for _, repo in pairs(repository_urls) do
-        local clone_dir = sys.make_path(cfg.root_dir, cfg.temp_dir, "repository")
-
-        -- clone the repo and add its 'dist.manifest' to manifest
-        if git.clone(repo, clone_dir, 1) then
-            for _, pkg in pairs(load_manifest(sys.make_path(clone_dir, "dist.manifest"))) do
-                table.insert(manifest, pkg)
+            -- clone the repo and add its 'dist.manifest' file to the manifest table
+            ok, err = git.clone(repo, clone_dir, 1)
+            if not ok then
+                err = "Error when downloading the manifest from: '" .. repo .. "': " .. err
+                sys.delete(clone_dir)
+                break
+            else
+                for _, pkg in pairs(load_manifest(sys.make_path(clone_dir, "dist.manifest"))) do
+                    table.insert(manifest, pkg)
+                end
             end
             sys.delete(clone_dir)
-        else
-            sys.delete(clone_dir)
-            return nil, "Error when downloading the manifest from: '" .. repo .. "'."
         end
     end
 
-    -- save the manifest
-    sys.make_dir(dest_dir)
-    local ok, err = save_manifest(manifest, sys.make_path(dest_dir, "dist.manifest"))
-    if not ok then return nil, err end
+    -- save the new manifest table to the file
+    if ok then ok, err = save_manifest(manifest, manifest_file) end
 
+    -- if error occured, restore the backup and return the error message
+    if not ok then
+        if sys.exists(temp_manifest_file) then
+            sys.copy(temp_manifest_file, dest_dir)
+            sys.delete(temp_manifest_file)
+            err = err .. "\nManifest restored to the previous state from backup."
+        else
+            err = err .. "\nManifest backup not present."
+        end
+        return nil, err
+    end
+
+    if sys.exists(temp_manifest_file) then sys.delete(temp_manifest_file) end
     return true
 end
 
