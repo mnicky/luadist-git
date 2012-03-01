@@ -52,18 +52,18 @@ function install_pkg(pkg_dir, deploy_dir, variables, preserve_pkg_dir, simulate)
     preserve_pkg_dir = preserve_pkg_dir or false
     simulate = simulate or false
 
-    assert(type(pkg_dir) == "string", "package.make_pkg: Argument 'pkg_dir' is not a string.")
-    assert(type(deploy_dir) == "string", "package.make_pkg: Argument 'deploy_dir' is not a string.")
-    assert(type(variables) == "table", "package.make_pkg: Argument 'variables' is not a table.")
-    assert(type(preserve_pkg_dir) == "boolean", "package.make_pkg: Argument 'preserve_pkg_dir' is not a boolean.")
-    assert(type(simulate) == "boolean", "package.make_pkg: Argument 'simulate' is not a boolean.")
+    assert(type(pkg_dir) == "string", "package.install_pkg: Argument 'pkg_dir' is not a string.")
+    assert(type(deploy_dir) == "string", "package.install_pkg: Argument 'deploy_dir' is not a string.")
+    assert(type(variables) == "table", "package.install_pkg: Argument 'variables' is not a table.")
+    assert(type(preserve_pkg_dir) == "boolean", "package.install_pkg: Argument 'preserve_pkg_dir' is not a boolean.")
+    assert(type(simulate) == "boolean", "package.install_pkg: Argument 'simulate' is not a boolean.")
 
     pkg_dir = sys.abs_path(pkg_dir)
     deploy_dir = sys.abs_path(deploy_dir)
 
     -- check for dist.info
     local info, err = mf.load_distinfo(sys.make_path(pkg_dir, "dist.info"))
-    if not info then return nil, "Error installing: package in directory '" .. pkg_dir .. "' doesn't contain valid 'dist.info' file." end
+    if not info then return nil, "Error installing: the directory '" .. pkg_dir .. "' doesn't exist or doesn't contain valid 'dist.info' file." end
 
     -- check if the package is source
     if sys.exists(sys.make_path(pkg_dir, "CMakeLists.txt")) then
