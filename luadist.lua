@@ -18,7 +18,7 @@ commands = {
 LuaDist-git is Lua package manager for the LuaDist deployment system.
 Released under the MIT License. See https://github.com/luadist/luadist-git
 
-        Usage: luadist [DEPLOYMENT_DIRECTORY] <COMMAND> [OTHER...]
+        Usage: luadist [DEPLOYMENT_DIRECTORY] <COMMAND> [ARGUMENTS...] [-VARIABLES...]
 
         Commands:
 
@@ -57,7 +57,7 @@ Released under the MIT License. See https://github.com/luadist/luadist-git
     -- Install modules.
     ["install"] = {
         help = [[
-Usage: luadist [DEPLOYMENT_DIRECTORY] install [-s] MODULES...
+Usage: luadist [DEPLOYMENT_DIRECTORY] install [-s] MODULES... [-VARIABLES...]
 
 The 'install' command will install specified modules to DEPLOYMENT_DIRECTORY.
 LuaDist will also automatically resolve, download and install all dependencies.
@@ -65,18 +65,21 @@ LuaDist will also automatically resolve, download and install all dependencies.
 If DEPLOYMENT_DIRECTORY is not specified, the deployment directory of LuaDist
 is used.
 
+Optional CMake VARIABLES in -D format (e.g. -Dvariable=value) or LuaDist
+configuration VARIABLES (e.g. -variable=value) can be specified.
+
 The -s option makes LuaDist only to simulate the installation of modules
 (no modules will be really installed).
         ]],
 
-        run = function (deploy_dir, modules)
+        run = function (deploy_dir, modules, cmake_variables)
             deploy_dir = deploy_dir or dist.get_deploy_dir()
             if type(modules) == "string" then modules = {modules} end
+            cmake_variables = cmake_variables or {}
             assert(type(deploy_dir) == "string", "luadist.install: Argument 'deploy_dir' is not a string.")
             assert(type(modules) == "table", "luadist.install: Argument 'modules' is not a string or table.")
+            assert(type(cmake_variables) == "table", "luadist.install: Argument 'cmake_variables' is not a table.")
             deploy_dir = sys.abs_path(deploy_dir)
-
-            local variables = {}
 
             local simulate_only = false
             if modules[1] == "-s" then
@@ -90,10 +93,10 @@ The -s option makes LuaDist only to simulate the installation of modules
                 return 0
             end
 
-            local ok, err = dist.install(modules, deploy_dir, variables, simulate_only)
+            local ok, err = dist.install(modules, deploy_dir, cmake_variables, simulate_only)
             if not ok then
                 print(err)
-                return 1
+                os.exit(1)
             else
                print((simulate_only and "Simulated installation" or "Installation") .. " successful.")
                return 0
@@ -104,12 +107,15 @@ The -s option makes LuaDist only to simulate the installation of modules
     -- Remove modules.
     ["remove"] = {
         help = [[
-Usage: luadist [DEPLOYMENT_DIRECTORY] remove MODULES...
+Usage: luadist [DEPLOYMENT_DIRECTORY] remove MODULES... [-VARIABLES...]
 
 The 'remove' command will remove specified modules from DEPLOYMENT_DIRECTORY.
 
 If DEPLOYMENT_DIRECTORY is not specified, the deployment directory of LuaDist
 is used.
+
+Optional LuaDist configuration VARIABLES (e.g. -variable=value) can be
+specified.
 
 WARNING: dependencies between modules are NOT taken into account!
         ]],
@@ -129,7 +135,7 @@ WARNING: dependencies between modules are NOT taken into account!
             local ok, err = dist.remove(modules, deploy_dir)
             if not ok then
                 print(err)
-                return 1
+                os.exit(1)
             else
                print("Removal successful.")
                return 0
@@ -140,13 +146,16 @@ WARNING: dependencies between modules are NOT taken into account!
     -- Update repositories.
     ["refresh"] = {
         help = [[
-Usage: luadist [DEPLOYMENT_DIRECTORY] refresh
+Usage: luadist [DEPLOYMENT_DIRECTORY] refresh [-VARIABLES...]
 
 The 'refresh' command will update information about modules in all software
 repositories of specified DEPLOYMENT_DIRECTORY.
 
 If DEPLOYMENT_DIRECTORY is not specified, the deployment directory of LuaDist
 is used.
+
+Optional LuaDist configuration VARIABLES (e.g. -variable=value) can be
+specified.
         ]],
 
         run = function (deploy_dir)
@@ -157,7 +166,7 @@ is used.
             local ok, err = dist.update_manifest(deploy_dir)
             if not ok then
                 print(err)
-                return 1
+                os.exit(1)
             else
                print("Repositories successfuly updated.")
                return 0
@@ -168,13 +177,16 @@ is used.
     -- Manually deploy modules.
     ["make"] = {
         help = [[
-Usage: luadist [DEPLOYMENT_DIRECTORY] make [-s] MODULE_PATHS...
+Usage: luadist [DEPLOYMENT_DIRECTORY] make [-s] MODULE_PATHS... [-VARIABLES...]
 
 The 'make' command will manually deploy modules from specified local
 MODULE_PATHS into the DEPLOYMENT_DIRECTORY.
 
 The MODULE_PATHS will be preserved. If DEPLOYMENT_DIRECTORY is not specified,
 the deployment directory of LuaDist is used.
+
+Optional CMake VARIABLES in -D format (e.g. -Dvariable=value) or LuaDist
+configuration VARIABLES (e.g. -variable=value) can be specified.
 
 The -s option makes LuaDist only to simulate the deployment of modules
 (no modules will be really deployed).
@@ -183,14 +195,14 @@ WARNING: this command does NOT check whether the dependencies of modules are
 satisfied or not!
         ]],
 
-        run = function (deploy_dir, module_paths)
+        run = function (deploy_dir, module_paths, cmake_variables)
             deploy_dir = deploy_dir or dist.get_deploy_dir()
             module_paths = module_paths or {}
+            cmake_variables = cmake_variables or {}
             assert(type(deploy_dir) == "string", "luadist.make: Argument 'deploy_dir' is not a string.")
             assert(type(module_paths) == "table", "luadist.make: Argument 'module_paths' is not a table.")
+            assert(type(cmake_variables) == "table", "luadist.make: Argument 'cmake_variables' is not a table.")
             deploy_dir = sys.abs_path(deploy_dir)
-
-            local variables = {}
 
             local simulate_only = false
             if module_paths[1] == "-s" then
@@ -204,10 +216,10 @@ satisfied or not!
                 return 0
             end
 
-            local ok, err = dist.make(deploy_dir, module_paths, variables, simulate_only)
+            local ok, err = dist.make(deploy_dir, module_paths, cmake_variables, simulate_only)
             if not ok then
                 print(err)
-                return 1
+                os.exit(1)
             end
             print((simulate_only and "Simulated deployment" or "Deployment") .. " successful.")
             return 0
@@ -217,7 +229,7 @@ satisfied or not!
     -- Download modules.
     ["fetch"] = {
         help = [[
-Usage: luadist [FETCH_DIRECTORY] fetch MODULES...
+Usage: luadist [FETCH_DIRECTORY] fetch MODULES... [-VARIABLES...]
 
 The 'fetch' command will download specified MODULES to the FETCH_DIRECTORY.
 
@@ -225,6 +237,9 @@ If no FETCH_DIRECTORY is specified, the temporary directory of LuaDist
 deployment directory (i.e. ']] .. cfg.temp_dir .. [[') is used.
 If the version is not specified in module name, the most recent version
 available will be downloaded.
+
+Optional LuaDist configuration VARIABLES (e.g. -variable=value) can be
+specified.
         ]],
 
         run = function (fetch_dir, modules)
@@ -247,7 +262,7 @@ available will be downloaded.
             local ok, err = dist.fetch(modules, fetch_dir)
             if not ok then
                 print(err)
-                return 1
+                os.exit(1)
             else
                 print("Modules successfuly downloaded to '" .. fetch_dir .. "'.")
                 return 0
@@ -258,13 +273,16 @@ available will be downloaded.
     -- List installed modules.
     ["list"] = {
         help = [[
-Usage: luadist [DEPLOYMENT_DIRECTORY] list [STRINGS...]
+Usage: luadist [DEPLOYMENT_DIRECTORY] list [STRINGS...] [-VARIABLES...]
 
 The 'list' command will list all modules installed in specified
 DEPLOYMENT_DIRECTORY, which contain one or more optional STRINGS.
 
 If DEPLOYMENT_DIRECTORY is not specified, the deployment directory of LuaDist
 is used. If STRINGS are not specified, all installed modules are listed.
+
+Optional LuaDist configuration VARIABLES (e.g. -variable=value) can be
+specified.
         ]],
 
         run = function (deploy_dir, strings)
@@ -290,7 +308,7 @@ is used. If STRINGS are not specified, all installed modules are listed.
     -- Search for modules in repositories.
     ["search"] = {
         help = [[
-Usage: luadist [DEPLOYMENT_DIRECTORY] search [-d] [STRINGS...]
+Usage: luadist [DEPLOYMENT_DIRECTORY] search [-d] [STRINGS...] [-VARIABLES...]
 
 The 'search' command will list all modules from repositories, which contain
 one or more STRINGS. This command also shows whether modules are installed
@@ -299,6 +317,9 @@ in DEPLOYMENT_DIRECTORY.
 If no STRINGS are specified, all available modules are listed. If
 DEPLOYMENT_DIRECTORY is not specified, the deployment directory of LuaDist is
 used. Only modules suitable for the platform LuaDist is running on are showed.
+
+Optional LuaDist configuration VARIABLES (e.g. -variable=value) can be
+specified.
 
 The -d option makes LuaDist to search also in the description of modules.
         ]],
@@ -319,7 +340,7 @@ The -d option makes LuaDist to search also in the description of modules.
             local available, err = mf.get_manifest()
             if not available then
                 print(err)
-                return 1
+                os.exit(1)
             end
 
             available = depends.filter_packages_by_strings(available, strings, search_in_desc)
@@ -341,7 +362,7 @@ The -d option makes LuaDist to search also in the description of modules.
     -- Show information about modules.
     ["info"] = {
         help = [[
-Usage: luadist [DEPLOYMENT_DIRECTORY] info [MODULES...]
+Usage: luadist [DEPLOYMENT_DIRECTORY] info [MODULES...] [-VARIABLES...]
 
 The 'info' command shows information about specified modules from repositories.
 This command also shows whether modules are installed in DEPLOYMENT_DIRECTORY.
@@ -349,6 +370,9 @@ This command also shows whether modules are installed in DEPLOYMENT_DIRECTORY.
 If no MODULES are specified, all available modules are showed.
 If DEPLOYMENT_DIRECTORY is not specified, the deployment directory of LuaDist
 is used.
+
+Optional LuaDist configuration VARIABLES (e.g. -variable=value) can be
+specified.
         ]],
 
         run = function (deploy_dir, modules)
@@ -361,7 +385,7 @@ is used.
             local manifest, err = mf.get_manifest()
             if not manifest then
                 print(err)
-                return 1
+                os.exit(1)
             end
 
             if #modules == 0 then
@@ -395,13 +419,16 @@ is used.
     -- Selftest of LuaDist.
     ["selftest"] = {
         help = [[
-Usage: luadist [TEST_DIRECTORY] selftest
+Usage: luadist [TEST_DIRECTORY] selftest [-VARIABLES...]
 
 The 'selftest' command runs tests of LuaDist, located in TEST_DIRECTORY and
 displays the results.
 
 If no TEST_DIRECTORY is specified, the default test directory of LuaDist
 deployment directory (i.e. ']] .. cfg.test_dir .. [[') is used.
+
+Optional LuaDist configuration VARIABLES (e.g. -variable=value) can be
+specified.
         ]],
 
         run = function (test_dir)
@@ -418,7 +445,7 @@ deployment directory (i.e. ']] .. cfg.test_dir .. [[') is used.
             local test_iterator, err = sys.get_directory(test_dir)
             if not test_iterator then
                 print("Running tests from '" .. test_dir .. "' failed: " .. err)
-                return 1
+                os.exit(1)
             end
 
             -- run the tests
@@ -438,16 +465,85 @@ deployment directory (i.e. ']] .. cfg.test_dir .. [[') is used.
     },
 }
 
--- Run the 'command' in the 'deploy_dir' with other items starting
--- at 'other_idx' index of special variable 'arg.
+-- Run the functionality of LuaDist 'command' in the 'deploy_dir' with other items
+-- or settings/variables starting at 'other_idx' index of special variable 'arg'.
 local function run_command(deploy_dir, command, other_idx)
+    deploy_dir = deploy_dir or dist.get_deploy_dir()
+    assert(type(deploy_dir) == "string", "luadist.run_command: Argument 'deploy_dir' is not a string.")
+    assert(type(command) == "string", "luadist.run_command: Argument 'command' is not a string.")
+    assert(not other_idx or type(other_idx) == "number", "luadist.run_command: Argument 'other_idx' is not a number.")
+    deploy_dir = sys.abs_path(deploy_dir)
+
     local items = {}
+    local cmake_variables = {}
+
+    -- parse items after the command (and LuaDist or CMake variables)
     if other_idx then
         for i = other_idx, #arg do
-            table.insert(items, arg[i])
+
+            -- CMake variable
+            if arg[i]:match("^%-D(.*)=(.*)$") then
+                local variable, value = arg[i]:match("^%-D(.*)=(.*)$")
+                cmake_variables[variable] = value
+
+            -- LuaDist variable
+            elseif arg[i]:match("^%-(.*)=(.*)$") then
+                local variable, value = arg[i]:match("^%-(.*)=(.*)$")
+                apply_settings(variable, value)
+
+            -- not a LuaDist or CMake variable
+            else
+                table.insert(items, arg[i])
+            end
         end
     end
-    return commands[command].run(sys.abs_path(deploy_dir), items)
+
+    -- run the required LuaDist functionality
+    return commands[command].run(sys.abs_path(deploy_dir), items, cmake_variables)
+end
+
+function print_help()
+    return run_command(nil, "help")
+end
+
+-- Set the LuaDist 'variable' to the 'value'.
+-- See available settings in 'dist.config' module.
+function apply_settings(variable, value)
+    assert(type(variable) == "string", "luadist.apply_settings: Argument 'variable' is not a string.")
+    assert(type(value) == "string", "luadist.apply_settings: Argument 'value' is not a string.")
+
+    -- check whether the settings variable exists
+    if cfg[variable] == nil then
+        print("Unknown LuaDist configuration option: '" .. variable .. "'. Printing help...\n")
+        print_help()
+        os.exit(1)
+
+    -- ensure the right type
+    elseif type(cfg[variable]) == "boolean" then
+        value = value:lower()
+        if value == "true" or value == "on" or value == "1" then
+            value = true
+        elseif value == "false" or value == "off" or value == "0" then
+            value = false
+        else
+            print("Value of LuaDist option '" .. variable .. "' must be a boolean. Printing help...\n")
+            print_help()
+            os.exit(1)
+        end
+    elseif type(cfg[variable]) == "number" then
+        value = tonumber(value)
+        if not value then
+            print("Value of LuaDist option '" .. variable .. "' must be a number. Printing help...\n")
+            print_help()
+            os.exit(1)
+        end
+    elseif type(cfg[variable]) == "table" then
+        -- TODO: add support for table options
+    end
+
+    -- set the LuaDist variable
+    cfg[variable] = value
+
 end
 
 
@@ -460,6 +556,10 @@ elseif commands[arg[1]] then
     return run_command(dist.get_deploy_dir(), arg[1], 2)
 else
     -- unknown command
-    if arg[1] then print("Unknown command. Printing help...\n") end
-    return run_command(dist.get_deploy_dir(), "help", 2)
+    if arg[1] then
+        print("Unknown command. Printing help...\n")
+        print_help()
+        os.exit(1)
+    end
+    return print_help()
 end
