@@ -460,5 +460,6 @@ elseif commands[arg[1]] then
     return run_command(dist.get_deploy_dir(), arg[1], 2)
 else
     -- unknown command
+    if arg[1] then print("Unknown command. Printing help...\n") end
     return run_command(dist.get_deploy_dir(), "help", 2)
 end
