@@ -514,8 +514,7 @@ function apply_settings(variable, value)
 
     -- check whether the settings variable exists
     if cfg[variable] == nil then
-        print("Unknown LuaDist configuration option: '" .. variable .. "'. Printing help...\n")
-        print_help()
+        print("Unknown LuaDist configuration option: '" .. variable .. "'.")
         os.exit(1)
 
     -- ensure the right type
@@ -527,28 +526,30 @@ function apply_settings(variable, value)
         elseif value == "false" or value == "off" or value == "0" then
             value = false
         else
-            print("Value of LuaDist option '" .. variable .. "' must be a boolean. Printing help...\n")
-            print_help()
+            print("Value of LuaDist option '" .. variable .. "' must be a boolean.")
             os.exit(1)
         end
 
     elseif type(cfg[variable]) == "number" then
         value = tonumber(value)
         if not value then
-            print("Value of LuaDist option '" .. variable .. "' must be a number. Printing help...\n")
-            print_help()
+            print("Value of LuaDist option '" .. variable .. "' must be a number.")
             os.exit(1)
         end
 
     elseif type(cfg[variable]) == "table" then
-        -- TODO: add support for table options
+        local err
+        value, err = utils.parse_table(value)
+        if not value then
+            print("Error when parsing the LuaDist variable '" .. variable .. "': " .. err)
+            os.exit(1)
+        end
     end
 
     -- set the LuaDist variable
     cfg[variable] = value
 
 end
-
 
 -- Parse command line input and run the required command.
 if not commands[arg[1]] and commands[arg[2]] then
