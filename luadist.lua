@@ -482,13 +482,13 @@ local function run_command(deploy_dir, command, other_idx)
         for i = other_idx, #arg do
 
             -- CMake variable
-            if arg[i]:match("^%-D(.*)=(.*)$") then
-                local variable, value = arg[i]:match("^%-D(.*)=(.*)$")
+            if arg[i]:match("^%-D(.-)=(.*)$") then
+                local variable, value = arg[i]:match("^%-D(.-)=(.*)$")
                 cmake_variables[variable] = value
 
             -- LuaDist variable
-            elseif arg[i]:match("^%-(.*)=(.*)$") then
-                local variable, value = arg[i]:match("^%-(.*)=(.*)$")
+            elseif arg[i]:match("^%-(.-)=(.*)$") then
+                local variable, value = arg[i]:match("^%-(.-)=(.*)$")
                 apply_settings(variable, value)
 
             -- not a LuaDist or CMake variable
@@ -519,6 +519,7 @@ function apply_settings(variable, value)
         os.exit(1)
 
     -- ensure the right type
+
     elseif type(cfg[variable]) == "boolean" then
         value = value:lower()
         if value == "true" or value == "on" or value == "1" then
@@ -530,6 +531,7 @@ function apply_settings(variable, value)
             print_help()
             os.exit(1)
         end
+
     elseif type(cfg[variable]) == "number" then
         value = tonumber(value)
         if not value then
@@ -537,6 +539,7 @@ function apply_settings(variable, value)
             print_help()
             os.exit(1)
         end
+
     elseif type(cfg[variable]) == "table" then
         -- TODO: add support for table options
     end
