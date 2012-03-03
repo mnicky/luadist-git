@@ -62,6 +62,9 @@ function download_manifest(dest_dir, repository_urls)
     -- retrieve manifests from repositories and collect them into one manifest table
     local manifest = {}
     if ok then
+        if #repository_urls == 0 then
+            return nil, "No repository url specified."
+        end
         print("Downloading repository information...")
         for k, repo in pairs(repository_urls) do
             local clone_dir = sys.make_path(temp_dir, "repository_" .. tostring(k))
@@ -69,7 +72,7 @@ function download_manifest(dest_dir, repository_urls)
             -- clone the repo and add its 'dist.manifest' file to the manifest table
             ok, err = git.clone(repo, clone_dir, 1)
             if not ok then
-                err = "Error when downloading the manifest from: '" .. repo .. "': " .. err
+                err = "Error when downloading the manifest from repository with url: '" .. repo .. "': " .. err
                 sys.delete(clone_dir)
                 break
             else
