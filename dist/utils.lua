@@ -63,6 +63,34 @@ function table_tostring(tbl, label)
     return str
 end
 
+-- Return table parsed from the string, retaining only values of number, string,
+-- boolean or table type.
+function parse_table(str)
+    assert(type(str) == "string", "luadist.parse_table: Argument 'str' is not a string.")
+
+    -- Retain only number, string, boolean & table values in table 'tbl'.
+    local function filter_table(tbl)
+        tbl = deepcopy(tbl)
+        local tmp_tbl = {}
+        for k,v in pairs(tbl) do
+            if type(v) == "table" then
+                tmp_tbl[k] = filter_table(v)
+            elseif type(v) == "number" or type(v) == "string" or type(v) == "boolean" then
+                tmp_tbl[k] = v
+            end
+        end
+        return tmp_tbl
+    end
+
+    str = "return " .. str
+
+    local eval, err = loadstring(str)
+    if not eval then return nil, err end
+
+    local evaled_table = eval()
+    return filter_table(evaled_table)
+end
+
 -- Return whether the 'cache_timeout' for 'file' has expired.
 function cache_timeout_expired(cache_timeout, file)
     assert(type(cache_timeout) == "number", "utils.cache_timeout_expired: Argument 'cache_timeout' is not a number.")
