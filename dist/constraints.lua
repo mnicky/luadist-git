@@ -23,18 +23,18 @@ module ("dist.constraints", package.seeall)
 
 
 local operators = {
-	["=="] 	= "==",
-	["~="] 	= "~=",
-	[">"] 	= ">",
-	["<"] 	= "<",
-	[">="] 	= ">=",
-	["<="] 	= "<=",
-	["~>"] 	= "~>",
-	-- plus some convenience translations
-	[""] 	= "==",
-	["-"]	= "==",
-	["="] 	= "==",
-	["!="] 	= "~="
+  ["=="]  = "==",
+  ["~="]  = "~=",
+  [">"]   = ">",
+  ["<"]   = "<",
+  [">="]  = ">=",
+  ["<="]  = "<=",
+  ["~>"]  = "~>",
+  -- plus some convenience translations
+  [""]  = "==",
+  ["-"] = "==",
+  ["="]   = "==",
+  ["!="]  = "~="
 }
 
 local deltas = {
@@ -106,50 +106,50 @@ setmetatable(version_cache, {
 -- @return table or nil: A version table or nil
 -- if the input string contains invalid characters.
 function parseVersion(vstring)
-	if not vstring then return nil end
-	assert(type(vstring) == "string")
+  if not vstring then return nil end
+  assert(type(vstring) == "string")
 
-	local cached = version_cache[vstring]
-	if cached then
-		return cached
-	end
+  local cached = version_cache[vstring]
+  if cached then
+    return cached
+  end
 
-	local version = {}
-	local i = 1
+  local version = {}
+  local i = 1
 
-	local function add_token(number)
-		version[i] = version[i] and version[i] + number/100000 or number
-		i = i + 1
-	end
+  local function add_token(number)
+    version[i] = version[i] and version[i] + number/100000 or number
+    i = i + 1
+  end
 
-	-- trim leading and trailing spaces
-	vstring = vstring:match("^%s*(.*)%s*$")
-	version.string = vstring
-	-- store revision separately if any
-	local main, revision = vstring:match("(.*)%-(%d+)$")
-	if revision then
-		vstring = main
-		version.revision = tonumber(revision)
-	end
-	while #vstring > 0 do
-		-- extract a number
-		local token, rest = vstring:match("^(%d+)[%.%-%_]*(.*)")
-		if token then
-			add_token(tonumber(token))
-		else
-			-- extract a word
-			token, rest = vstring:match("^(%a+)[%.%-%_]*(.*)")
-			if not token then
-				return nil
-			end
-			local last = #version
-			version[i] = deltas[token] or (token:byte() / 1000)
-		end
-		vstring = rest
-	end
-	setmetatable(version, version_mt)
-	version_cache[vstring] = version
-	return version
+  -- trim leading and trailing spaces
+  vstring = vstring:match("^%s*(.*)%s*$")
+  version.string = vstring
+  -- store revision separately if any
+  local main, revision = vstring:match("(.*)%-(%d+)$")
+  if revision then
+    vstring = main
+    version.revision = tonumber(revision)
+  end
+  while #vstring > 0 do
+    -- extract a number
+    local token, rest = vstring:match("^(%d+)[%.%-%_]*(.*)")
+    if token then
+      add_token(tonumber(token))
+    else
+      -- extract a word
+      token, rest = vstring:match("^(%a+)[%.%-%_]*(.*)")
+      if not token then
+        return nil
+      end
+      local last = #version
+      version[i] = deltas[token] or (token:byte() / 1000)
+    end
+    vstring = rest
+  end
+  setmetatable(version, version_mt)
+  version_cache[vstring] = version
+  return version
 end
 
 --- Utility function to compare version numbers given as strings.
@@ -157,7 +157,7 @@ end
 -- @param b string: another version.
 -- @return boolean: True if a > b.
 function compareVersions(a, b)
-	return parseVersion(a) > parseVersion(b)
+  return parseVersion(a) > parseVersion(b)
 end
 
 --- Consumes a constraint from a string, converting it to table format.
@@ -169,13 +169,13 @@ end
 -- constraints and the string with the unused input, or nil if the
 -- input string is invalid.
 local function parseConstraint(input)
-	assert(type(input) == "string")
+  assert(type(input) == "string")
 
-	local op, version, rest = input:match("^([<>=~!]*)%s*([%w%.%_%-]+)[%s,]*(.*)")
-	op = operators[op]
-	version = parseVersion(version)
-	if not op or not version then return nil end
-	return { op = op, version = version }, rest
+  local op, version, rest = input:match("^([<>=~!]*)%s*([%w%.%_%-]+)[%s,]*(.*)")
+  op = operators[op]
+  version = parseVersion(version)
+  if not op or not version then return nil end
+  return { op = op, version = version }, rest
 end
 
 --- Convert a list of constraints from string to table format.
@@ -187,18 +187,18 @@ end
 -- @return table or nil: A table representing the same constraints,
 -- or nil if the input string is invalid.
 function parseConstraints(input)
-	assert(type(input) == "string")
+  assert(type(input) == "string")
 
-	local constraints, constraint = {}, nil
-	while #input > 0 do
-		constraint, input = parseConstraint(input)
-		if constraint then
-			table.insert(constraints, constraint)
-	  	else
-			return nil
-		end
-	end
-	return constraints
+  local constraints, constraint = {}, nil
+  while #input > 0 do
+    constraint, input = parseConstraint(input)
+    if constraint then
+      table.insert(constraints, constraint)
+      else
+      return nil
+    end
+  end
+  return constraints
 end
 
 --- A more lenient check for equivalence between versions.
@@ -214,20 +214,20 @@ end
 -- @return boolean: True if the tested version matches the requested
 -- version, false otherwise.
 local function partialMatch(version, requested)
-	assert(type(version) == "string" or type(version) == "table")
-	assert(type(requested) == "string" or type(version) == "table")
+  assert(type(version) == "string" or type(version) == "table")
+  assert(type(requested) == "string" or type(version) == "table")
 
-	if type(version) ~= "table" then version = parseVersion(version) end
-	if type(requested) ~= "table" then requested = parseVersion(requested) end
-	if not version or not requested then return false end
+  if type(version) ~= "table" then version = parseVersion(version) end
+  if type(requested) ~= "table" then requested = parseVersion(requested) end
+  if not version or not requested then return false end
 
-	for i = 1, #requested do
-		if requested[i] ~= version[i] then return false end
-	end
-	if requested.revision then
-		return requested.revision == version.revision
-	end
-	return true
+  for i = 1, #requested do
+    if requested[i] ~= version[i] then return false end
+  end
+  if requested.revision then
+    return requested.revision == version.revision
+  end
+  return true
 end
 
 --- Check if a version satisfies a set of constraints.
@@ -236,24 +236,24 @@ end
 -- @return boolean: True if version satisfies all constraints,
 -- false otherwise.
 function matchConstraints(version, constraints)
-	assert(type(version) == "table")
-	assert(type(constraints) == "table")
-	local ok = true
-	setmetatable(version, version_mt)
-	for _, constr in pairs(constraints) do
-		local constr_version = constr.version
-      		setmetatable(constr.version, version_mt)
-		if     constr.op == "==" then ok = version == constr_version
-		elseif constr.op == "~=" then ok = version ~= constr_version
-		elseif constr.op == ">"  then ok = version >  constr_version
-		elseif constr.op == "<"  then ok = version <  constr_version
-		elseif constr.op == ">=" then ok = version >= constr_version
-		elseif constr.op == "<=" then ok = version <= constr_version
-		elseif constr.op == "~>" then ok = partialMatch(version, constr_version)
-		end
-		if not ok then break end
-	end
-	return ok
+  assert(type(version) == "table")
+  assert(type(constraints) == "table")
+  local ok = true
+  setmetatable(version, version_mt)
+  for _, constr in pairs(constraints) do
+    local constr_version = constr.version
+          setmetatable(constr.version, version_mt)
+    if     constr.op == "==" then ok = version == constr_version
+    elseif constr.op == "~=" then ok = version ~= constr_version
+    elseif constr.op == ">"  then ok = version >  constr_version
+    elseif constr.op == "<"  then ok = version <  constr_version
+    elseif constr.op == ">=" then ok = version >= constr_version
+    elseif constr.op == "<=" then ok = version <= constr_version
+    elseif constr.op == "~>" then ok = partialMatch(version, constr_version)
+    end
+    if not ok then break end
+  end
+  return ok
 end
 
 --- Check if a version string is satisfied by a constraint string.
@@ -262,10 +262,10 @@ end
 -- @return boolean: True if version satisfies all constraints,
 -- false otherwise.
 function constraint_satisfied(version, constraints)
-	local const = parseConstraints(constraints)
-	local ver = parseVersion(version)
-	if const and ver then
-		return matchConstraints(ver, const)
-	end
-	return nil, "Error parsing versions."
+  local const = parseConstraints(constraints)
+  local ver = parseVersion(version)
+  if const and ver then
+    return matchConstraints(ver, const)
+  end
+  return nil, "Error parsing versions."
 end

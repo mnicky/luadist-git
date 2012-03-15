@@ -3,13 +3,13 @@
 module ("dist.config", package.seeall)
 
 -- Look for _PROGDIR by default --------------------------------------
-local path = _PROGDIR
+local path    = _PROGDIR
 if path then path = path:gsub("\\", "/") .. "/.." end
 
 -- System information ------------------------------------------------
-version 	= "@DIST_VERSION@"   -- Current LuaDist version
-arch			= "@DIST_ARCH@"			 -- Host architecture
-type			= "@DIST_TYPE@"			 -- Host type
+version       = "@DIST_VERSION@"   -- Current LuaDist version
+arch          = "@DIST_ARCH@"      -- Host architecture
+type          = "@DIST_TYPE@"      -- Host type
 
 -- Directories -------------------------------------------------------
 root_dir      = path or os.getenv("DIST_ROOT") or "/"
@@ -28,10 +28,10 @@ repositories = {
 }
 
 -- Settings ----------------------------------------------------------
-debug = false           -- Use debug mode.
+debug        = false          -- Use debug mode.
 
-cache = true            -- Use cache.
-cache_timeout = 60 * 60  -- Cache timeout in seconds.
+cache        = true           -- Use cache.
+cache_timeout = 60 * 60       -- Cache timeout in seconds.
 
 -- Available log levels are: DEBUG, INFO, WARN, ERROR, FATAL (see dist.log for more information).
 print_log_level = "WARN"      -- Minimum level for log messages to be printed (nil to disable).
@@ -39,43 +39,42 @@ write_log_level = "INFO"      -- Minimum level for log messages to be logged (ni
 
 
 -- CMake variables ---------------------------------------------------
-variables	= {
-    --- Install defaults
-    INSTALL_BIN                       = "@INSTALL_BIN@",
-    INSTALL_LIB                       = "@INSTALL_LIB@",
-    INSTALL_INC                       = "@INSTALL_INC@",
-    INSTALL_ETC                       = "@INSTALL_ETC@",
-    INSTALL_LMOD                      = "@INSTALL_LMOD@",
-    INSTALL_CMOD                      = "@INSTALL_CMOD@",
+variables = {
+  --- Install defaults
+  INSTALL_BIN                        = "@INSTALL_BIN@",
+  INSTALL_LIB                        = "@INSTALL_LIB@",
+  INSTALL_INC                        = "@INSTALL_INC@",
+  INSTALL_ETC                        = "@INSTALL_ETC@",
+  INSTALL_LMOD                       = "@INSTALL_LMOD@",
+  INSTALL_CMOD                       = "@INSTALL_CMOD@",
 
-	--- LuaDist specific variables
-	DIST_VERSION                       = version,
-	DIST_ARCH                          = arch,
-	DIST_TYPE                          = type,
+  --- LuaDist specific variables
+  DIST_VERSION                       = version,
+  DIST_ARCH                          = arch,
+  DIST_TYPE                          = type,
 
-	-- CMake specific setup
-	CMAKE_GENERATOR                    = "@CMAKE_GENERATOR@",
-	CMAKE_BUILD_TYPE                   = "@CMAKE_BUILD_TYPE@",
+  -- CMake specific setup
+  CMAKE_GENERATOR                    = "@CMAKE_GENERATOR@",
+  CMAKE_BUILD_TYPE                   = "@CMAKE_BUILD_TYPE@",
 
-    -- RPath functionality
-    CMAKE_SKIP_BUILD_RPATH             = "@CMAKE_SKIP_BUILD_RPATH@",
-    CMAKE_BUILD_WITH_INSTALL_RPATH     = "@CMAKE_BUILD_WITH_INSTALL_RPATH@",
-    CMAKE_INSTALL_RPATH                = "@CMAKE_INSTALL_RPATH@",
-    CMAKE_INSTALL_RPATH_USE_LINK_PATH  = "@CMAKE_INSTALL_RPATH_USE_LINK_PATH@",
-    CMAKE_INSTALL_NAME_DIR             = "@CMAKE_INSTALL_NAME_DIR@",
+  -- RPath functionality
+  CMAKE_SKIP_BUILD_RPATH             = "@CMAKE_SKIP_BUILD_RPATH@",
+  CMAKE_BUILD_WITH_INSTALL_RPATH     = "@CMAKE_BUILD_WITH_INSTALL_RPATH@",
+  CMAKE_INSTALL_RPATH                = "@CMAKE_INSTALL_RPATH@",
+  CMAKE_INSTALL_RPATH_USE_LINK_PATH  = "@CMAKE_INSTALL_RPATH_USE_LINK_PATH@",
+  CMAKE_INSTALL_NAME_DIR             = "@CMAKE_INSTALL_NAME_DIR@",
 
-	-- OSX specific
-	CMAKE_OSX_ARCHITECTURES            = "@CMAKE_OSX_ARCHITECTURES@",
+  -- OSX specific
+  CMAKE_OSX_ARCHITECTURES            = "@CMAKE_OSX_ARCHITECTURES@",
 
-    -- Fixes and overrides
-    LUA_LIBRARY = root_dir .. "/@INSTALL_LIB@/@CMAKE_SHARED_LIBRARY_PREFIX@lua@CMAKE_SHARED_LIBRARY_SUFFIX@",
+  -- Fixes and overrides
+  LUA_LIBRARY                        = root_dir .. "/@DIST_LUA_LIBRARY@",
 
 }
 
 -- Building ----------------------------------------------------------
 cmake         = "cmake"
 ctest         = "ctest"
-build_command = cmake .. " --build . --target install --clean-first"
 
 if debug then
     cmake = cmake .. " -DCMAKE_VERBOSE_MAKEFILE=true -DCMAKE_BUILD_TYPE=Debug"
@@ -85,3 +84,10 @@ end
 if (variables.CMAKE_GENERATOR == "Unix Makefiles") then
         build_command = build_command .. " -- -j6"
 end
+
+-- Add -j option to make in case of MinGW makefiles to speed up builds
+if (variables.CMAKE_GENERATOR == "MinGW Makefiles") then
+        build_command = "set SHELL=cmd.exe && " .. build_command .. " -- -j"
+end
+
+build_command = cmake .. " --build . --target install --clean-first"

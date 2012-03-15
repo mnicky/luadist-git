@@ -1,10 +1,11 @@
-# Copyright (C) 2007-2011 LuaDist.
-# Created by Peter Drahoš, Peter Kapec
+# Copyright (C) 2012 LuaDist.
+# Created by Peter Drahoš
 # Redistribution and use of this file is allowed according to the terms of the MIT license.
 # For details see the COPYRIGHT file distributed with LuaDist.
 # Please note that the package source code is licensed under its own license.
 
-project ( luadist-git NONE )
+# C type needed for correct library suffix and prefix detection
+project ( luadist-git C )
 cmake_minimum_required ( VERSION 2.6 )
 include ( dist.cmake )
 
@@ -21,9 +22,15 @@ elseif ( MSVC )
 	set ( DETECTED_TYPE MSVC32 )
 endif ()
 
-set ( DIST_VERSION 0.1 )
+set ( DIST_VERSION 1.2 )
 set ( DIST_TYPE ${DETECTED_TYPE} CACHE STRING "Host system type. PLEASE CHECK!" FORCE )
 set ( DIST_ARCH ${DETECTED_ARCH} CACHE STRING "Host system architecture. PLEASE CHECK!" FORCE )
+
+set ( DIST_LUA_LIBRARY "/${INSTALL_LIB}/${CMAKE_SHARED_LIBRARY_PREFIX}lua${CMAKE_SHARED_LIBRARY_SUFFIX}" )
+if ( WIN32 OR CYGWIN )
+	# On Windows use the import library
+	set ( DIST_LUA_LIBRARY "/${INSTALL_LIB}/${CMAKE_IMPORT_LIBRARY_PREFIX}lua${CMAKE_IMPORT_LIBRARY_SUFFIX}" )
+endif ()
 
 configure_file ( dist/config.lua.in ${CMAKE_CURRENT_BINARY_DIR}/dist/config.lua @ONLY )
 
@@ -41,6 +48,7 @@ install_lua_module ( dist.utils dist/utils.lua )
 
 install_data ( COPYRIGHT.TXT )
 install_data ( README.TXT )
-
 install_test ( test/ )
+
+# Tests
 add_lua_test ( test/test_depends.lua )
