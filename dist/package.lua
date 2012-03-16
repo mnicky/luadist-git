@@ -6,6 +6,7 @@ local cfg = require "dist.config"
 local git = require "dist.git"
 local sys = require "dist.sys"
 local mf = require "dist.manifest"
+local utils = require "dist.utils"
 
 -- Remove package from 'pkg_dir' of 'deploy_dir'.
 function remove_pkg(pkg_distinfo_dir, deploy_dir)
@@ -279,4 +280,30 @@ function fetch_pkgs(packages, download_dir)
     end
 
     return ok, fetched_dirs
+end
+
+-- Returns table of informations about available versions of 'package'.
+function retrieve_versions(package)
+    assert(type(package) == "table", "package.retrieve_versions: Argument 'package' is not a table.")
+
+    -- get available versions
+    local tags, err = git.get_remote_tags(package.path)
+    if not tags then return nil, "Error when retrieving versions of package '" .. package.name .. "':" .. err end
+
+    -- filter out tags of binary packages
+    local versions = utils.filter(tags, function (tag) return tag:match("^[^%-]+%-?[^%-]*$") and true end)
+
+    packages = {}
+
+    -- create package information
+    for _, version in pairs(versions) do
+        print(version)
+        pkg = {}
+        pkg.name = package.name
+        pkg.version = version
+        pkg.path = package.path
+        table.insert(packages, pkg)
+    end
+
+    return packages
 end
