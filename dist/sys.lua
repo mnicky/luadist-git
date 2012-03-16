@@ -20,10 +20,14 @@ end
 
 -- Run the system command (in current directory).
 -- Return true on success, nil on fail and log string.
-function exec(command)
+-- When optional 'force_verbose' parameter is true, then the output will be show
+-- even when not in debug or verbose mode.
+function exec(command, force_verbose)
+    force_verbose = force_verbose or false
     assert(type(command) == "string", "sys.exec: Argument 'command' is not a string.")
+    assert(type(force_verbose) == "boolean", "sys.exec: Argument 'force_verbose' is not a boolean.")
 
-    if not (cfg.verbose or cfg.debug) then
+    if not (cfg.verbose or cfg.debug or force_verbose) then
         if cfg.arch == "Windows" then
             command = command .. " > NUL 2>&1"
         else
