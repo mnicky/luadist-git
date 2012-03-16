@@ -75,6 +75,7 @@ variables = {
 -- Building ----------------------------------------------------------
 cmake         = "cmake"
 ctest         = "ctest"
+build_command = cmake .. " --build . --target install --clean-first"
 
 if debug then
     cmake = cmake .. " -DCMAKE_VERBOSE_MAKEFILE=true -DCMAKE_BUILD_TYPE=Debug"
@@ -89,5 +90,3 @@ end
 if (variables.CMAKE_GENERATOR == "MinGW Makefiles") then
         build_command = "set SHELL=cmd.exe && " .. build_command .. " -- -j"
 end
-
-build_command = cmake .. " --build . --target install --clean-first"
