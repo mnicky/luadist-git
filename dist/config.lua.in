@@ -7,9 +7,9 @@ local path = _PROGDIR
 if path then path = path:gsub("\\", "/") .. "/.." end
 
 -- System information ------------------------------------------------
-version 	= "@DIST_VERSION@"   -- Current LuaDist version
-arch			= "@DIST_ARCH@"			 -- Host architecture
-type			= "@DIST_TYPE@"			 -- Host type
+version       = "@DIST_VERSION@" -- Current LuaDist version
+arch          = "@DIST_ARCH@"    -- Host architecture
+type          = "@DIST_TYPE@"    -- Host type
 
 -- Directories -------------------------------------------------------
 root_dir      = path or os.getenv("DIST_ROOT") or "/"
@@ -29,6 +29,7 @@ repositories = {
 
 -- Settings ----------------------------------------------------------
 debug = false           -- Use debug mode.
+verbose = false         -- Print verbose output.
 
 cache = true            -- Use cache.
 cache_timeout = 60 * 60  -- Cache timeout in seconds.

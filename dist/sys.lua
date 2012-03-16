@@ -23,7 +23,7 @@ end
 function exec(command)
     assert(type(command) == "string", "sys.exec: Argument 'command' is not a string.")
 
-    if not cfg.debug then
+    if not (cfg.verbose or cfg.debug) then
         if cfg.arch == "Windows" then
             command = command .. " > NUL 2>&1"
         else
