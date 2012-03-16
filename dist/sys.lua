@@ -44,6 +44,21 @@ function exec(command, force_verbose)
     end
 end
 
+-- Executes the 'command' and returns its output as a string.
+function capture_output(command)
+    assert(type(command) == "string", "sys.exec: Argument 'command' is not a string.")
+
+    local err
+    local executed = io.popen(command, "r")
+    if not executed then return nil, "Error running the command '" .. command .. "':" .. err end
+
+    local captured = executed:read("*a");
+    if not captured then return nil, "Error reading the output of command '" .. command .. "':" .. err end
+
+    executed:close()
+    return captured
+end
+
 -- Returns if specified file or directory exists
 function exists(path)
     assert(type(path) == "string", "sys.exists: Argument 'path' is not a string.")
