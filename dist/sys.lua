@@ -8,7 +8,7 @@ local lfs = require "lfs"
 
 -- TODO test functionality of this module on Windows
 
--- Returns quoted string argument.
+-- Return quoted string argument.
 function quote(argument)
     assert(type(argument) == "string", "sys.quote: Argument 'argument' is not a string.")
 
@@ -20,7 +20,7 @@ end
 
 -- Run the system command (in current directory).
 -- Return true on success, nil on fail and log string.
--- When optional 'force_verbose' parameter is true, then the output will be show
+-- When optional 'force_verbose' parameter is true, then the output will be shown
 -- even when not in debug or verbose mode.
 function exec(command, force_verbose)
     force_verbose = force_verbose or false
@@ -44,7 +44,7 @@ function exec(command, force_verbose)
     end
 end
 
--- Executes the 'command' and returns its output as a string.
+-- Execute the 'command' and returns its output as a string.
 function capture_output(command)
     assert(type(command) == "string", "sys.exec: Argument 'command' is not a string.")
 
@@ -59,7 +59,7 @@ function capture_output(command)
     return captured
 end
 
--- Returns if specified file or directory exists
+-- Return if specified file or directory exists
 function exists(path)
     assert(type(path) == "string", "sys.exists: Argument 'path' is not a string.")
 

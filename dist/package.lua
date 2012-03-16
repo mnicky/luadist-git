@@ -264,7 +264,7 @@ end
 -- Return if the operation was successful and a table of paths to the directories on success or an error message on error.
 function fetch_pkgs(packages, download_dir)
     download_dir = download_dir or sys.current_dir()
-    assert(type(packages) == "table", "package.fetch_pkgs: Argument 'pkg' is not a table.")
+    assert(type(packages) == "table", "package.fetch_pkgs: Argument 'packages' is not a table.")
     assert(type(download_dir) == "string", "package.fetch_pkgs: Argument 'download_dir' is not a string.")
     download_dir = sys.abs_path(download_dir)
 
