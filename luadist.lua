@@ -343,6 +343,8 @@ The -d option makes LuaDist to search also in the description of modules.
                 os.exit(1)
             end
 
+            -- XXX: search and print only package names, not descriptions
+
             available = depends.filter_packages_by_strings(available, strings, search_in_desc)
             available = depends.filter_packages_by_arch_and_type(available, cfg.arch, cfg.type)
             available = depends.sort_by_names(available)
@@ -393,6 +395,9 @@ specified.
             else
                 modules = depends.find_packages(modules, manifest)
             end
+
+            -- XXX: download info from needed packages
+            --      display warning above some number of packages
 
             modules = depends.sort_by_names(modules)
             local deployed = dist.get_deployed(deploy_dir)

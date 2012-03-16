@@ -77,6 +77,8 @@ function install(package_names, deploy_dir, variables, simulate)
     -- get manifest
     local manifest = mf.get_manifest()
 
+    -- XXX: check versions, retrieve info about packages & their deps
+
     -- resolve dependencies
     local dependencies, err = depends.get_depends(package_names, installed, manifest)
     if err then return nil, err end
@@ -147,6 +149,8 @@ function fetch(pkg_names, fetch_dir)
     fetch_dir = sys.abs_path(fetch_dir)
 
     local manifest = mf.get_manifest()
+    -- XXX: retrieve and check versions of packages
+
     local pkgs_to_fetch = {}
 
     for _, pkg_name in pairs(pkg_names) do

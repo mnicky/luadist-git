@@ -236,6 +236,7 @@ function fetch_pkg(pkg, download_dir)
 
     local pkg_full_name = pkg.name .. "-" .. pkg.version
     local repo_url = git.get_repo_url(pkg.path)
+    -- XXX: do not use pkg.arch + pkg.type and rename the directory after the package was fetched?
     local clone_dir = sys.abs_path(sys.make_path(download_dir, pkg_full_name .. "-" .. pkg.arch .. "-" .. pkg.type))
 
     -- clone pkg's repository
