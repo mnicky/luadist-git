@@ -255,7 +255,7 @@ function fetch_pkg(pkg, download_dir)
     end
 
     -- delete '.git' directory
-    sys.delete(sys.make_path(clone_dir, ".git"))
+    if not cfg.debug then sys.delete(sys.make_path(clone_dir, ".git")) end
 
     return ok, clone_dir
 end
