@@ -329,3 +329,28 @@ function retrieve_versions(package)
 
     return packages
 end
+
+-- Return table with information from package's dist.info
+function retrieve_pkg_info(package)
+    assert(type(package) == "table", "package.retrieve_pkg_info: Argument 'package' is not a table.")
+
+    local tmp_dir = sys.abs_path(sys.make_path(cfg.root_dir, cfg.temp_dir))
+
+    -- download the package
+    local pkg_dir, err = fetch_pkg(package, tmp_dir)
+    if not pkg_dir then return nil, "Error when retrieving the info about '" .. package.name .. "':" .. err end
+
+    -- load information from 'dist.info'
+    local info, err = mf.load_distinfo(sys.make_path(pkg_dir, "dist.info"))
+    if not info then return nil, err end
+
+    -- set default arch/type if not explicitly stated and package is of source type
+    if sys.exists(sys.make_path(pkg_dir, "CMakeLists.txt")) then
+        pkg.arch = info.arch or "Universal"
+        pkg.type = info.type or "source"
+    elseif not (pkg.arch and pkg.type) then
+        return nil, pkg_dir .. ": binary package missing arch or type in 'dist.info'."
+    end
+
+    return info
+end
