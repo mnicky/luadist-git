@@ -308,7 +308,7 @@ specified.
     -- Search for modules in repositories.
     ["search"] = {
         help = [[
-Usage: luadist [DEPLOYMENT_DIRECTORY] search [-d] [STRINGS...] [-VARIABLES...]
+Usage: luadist [DEPLOYMENT_DIRECTORY] search [STRINGS...] [-VARIABLES...]
 
 The 'search' command will list all modules from repositories, which contain
 one or more STRINGS. This command also shows whether modules are installed
@@ -320,8 +320,6 @@ used. Only modules suitable for the platform LuaDist is running on are showed.
 
 Optional LuaDist configuration VARIABLES (e.g. -variable=value) can be
 specified.
-
-The -d option makes LuaDist to search also in the description of modules.
         ]],
 
         run = function (deploy_dir, strings)
@@ -331,30 +329,20 @@ The -d option makes LuaDist to search also in the description of modules.
             assert(type(strings) == "table", "luadist.search: Argument 'strings' is not a table.")
             deploy_dir = sys.abs_path(deploy_dir)
 
-            local search_in_desc = false
-            if strings[1] == "-d" then
-                search_in_desc = true
-                table.remove(strings, 1)
-            end
-
             local available, err = mf.get_manifest()
             if not available then
                 print(err)
                 os.exit(1)
             end
 
-            -- XXX: search and print only package names, not descriptions
-
-            available = depends.filter_packages_by_strings(available, strings, search_in_desc)
-            available = depends.filter_packages_by_arch_and_type(available, cfg.arch, cfg.type)
+            available = depends.filter_packages_by_strings(available, strings)
             available = depends.sort_by_names(available)
             local deployed = dist.get_deployed(deploy_dir)
 
             print("\nModules found:")
             print("==============\n")
             for _, pkg in pairs(available) do
-                local installed = (depends.is_installed(pkg.name, deployed, pkg.version))
-                print("  " .. (installed and "i " or "  ") .. pkg.name .. "-" .. pkg.version .. (pkg.desc and "\t\t" .. pkg.desc or ""))
+                print("  " .. pkg.name)
             end
             print()
             return 0
