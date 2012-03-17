@@ -69,14 +69,14 @@ function download_manifest(dest_dir, repository_urls)
         for k, repo in pairs(repository_urls) do
             local clone_dir = sys.make_path(temp_dir, "repository_" .. tostring(k))
 
-            -- clone the repo and add its 'dist.manifest' file to the manifest table
+            -- clone the repo and add its '.gitmodules' file to the manifest table
             ok, err = git.clone(repo, clone_dir, 1)
             if not ok then
                 err = "Error when downloading the manifest from repository with url: '" .. repo .. "': " .. err
                 sys.delete(clone_dir)
                 break
             else
-                for _, pkg in pairs(load_manifest(sys.make_path(clone_dir, "dist.manifest"))) do
+                for _, pkg in pairs(load_manifest(sys.make_path(clone_dir, ".gitmodules"))) do
                     table.insert(manifest, pkg)
                 end
             end
@@ -112,16 +112,22 @@ function load_manifest(manifest_file)
 
     if sys.exists(manifest_file) then
         -- load the manifest file
-        local manifest, err = loadfile(manifest_file)
-        if not manifest then return nil, err end
+        local file, err = io.open(manifest_file, "r")
+        if not file then return nil, "Error opening the manifest file '" .. manifest_file .. "':" .. err end
 
-        -- set clear environment for the manifest file execution
-        local manifest_env = {}
-        setfenv(manifest, manifest_env)
+        local mf_text = file:read("*a")
+        file:close()
+        if not mf_text then return nil, "Error reading the manifest file '" .. manifest_file .. "':" .. err end
 
-        return manifest()
+        manifest = {}
+        for url in mf_text:gmatch("git://%S+.git") do
+            pkg = {name = url:match("git:/.+/.+/(.*).git$") ,version = "scm", path = url}
+            table.insert(manifest, pkg)
+        end
+
+        return manifest
     else
-        return nil, "Error when loading the manifest from file: " .. manifest_file
+        return nil, "Error when loading the manifest: file '" .. manifest_file .. "' doesn't exist."
     end
 end
 
