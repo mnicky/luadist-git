@@ -46,6 +46,9 @@ end
 function get_repo_url(git_url)
     assert(type(git_url) == "string", "git.get_repo_path: Argument 'git_url' is not a string.")
 
+    -- if it already is git repo url, just return it
+    if git_url:sub(-4,-1) == ".git" then return git_url end
+
     local repo_start, repo_end = git_url:find("github.com/[^/]*/[^/]*")
 
     if repo_start ~= nil then
