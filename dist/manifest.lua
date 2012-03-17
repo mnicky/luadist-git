@@ -185,10 +185,6 @@ function load_distinfo(distinfo_file)
         setfenv(distinfo, distinfo_env)
         distinfo()
 
-        -- set default arch & type if not explicitly stated
-        distinfo_env.arch = distinfo_env.arch or "Universal"
-        distinfo_env.type = distinfo_env.type or "source"
-
         return distinfo_env
     else
         return nil, "Error when loading the package info from file: " .. distinfo_file
