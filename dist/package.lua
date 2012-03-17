@@ -226,8 +226,8 @@ function deploy_pkg(pkg_dir, deploy_dir, simulate)
     return true, "Package '" .. pkg_name .. "' successfully deployed to '" .. deploy_dir .. "'."
 end
 
--- Fetch package (table 'pkg') to download_dir. Return whether the operation
--- was successful and a path to the directory on success or an error message on error.
+-- Fetch package (table 'pkg') to download_dir. Return path to the directory of
+-- downloaded package on success or an error message on error.
 function fetch_pkg(pkg, download_dir)
     download_dir = download_dir or sys.current_dir()
     assert(type(pkg) == "table", "package.fetch_pkg: Argument 'pkg' is not a table.")
@@ -273,11 +273,11 @@ function fetch_pkg(pkg, download_dir)
     ok, err = sys.rename(clone_dir, new_dir)
     if not ok then return nil, "Error renaming the directory of fetched package '" .. pkg_full_name .. "': " .. err .. " (package left at '" .. clone_dir .. "')" end
 
-    return ok, clone_dir
+    return new_dir
 end
 
--- Fetch packages (table 'packages') to 'download_dir'
--- Return if the operation was successful and a table of paths to the directories on success or an error message on error.
+-- Fetch packages (table 'packages') to 'download_dir'. Return table of paths
+-- to the directories on success or an error message on error.
 function fetch_pkgs(packages, download_dir)
     download_dir = download_dir or sys.current_dir()
     assert(type(packages) == "table", "package.fetch_pkgs: Argument 'packages' is not a table.")
@@ -285,18 +285,18 @@ function fetch_pkgs(packages, download_dir)
     download_dir = sys.abs_path(download_dir)
 
     local fetched_dirs = {}
-    local ok, dir_or_err
+    local dir, err
 
     for _, pkg in pairs(packages) do
-        ok, dir_or_err = fetch_pkg(pkg, download_dir)
-        if not ok then
-            return nil, dir_or_err
+        dir, err = fetch_pkg(pkg, download_dir)
+        if not dir then
+            return nil, err
         else
-            table.insert(fetched_dirs, dir_or_err)
+            table.insert(fetched_dirs, dir)
         end
     end
 
-    return ok, fetched_dirs
+    return fetched_dirs
 end
 
 -- Return table with information about available versions of 'package'.
@@ -314,7 +314,6 @@ function retrieve_versions(package)
 
     -- create package information
     for _, version in pairs(versions) do
-        print(version)
         pkg = {}
         pkg.name = package.name
         pkg.version = version
