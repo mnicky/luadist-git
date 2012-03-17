@@ -228,16 +228,25 @@ function make_dir(dir_name)
     end
 end
 
--- Move file or directory to the destination directory
-function move(file_or_dir, dest_dir)
-    assert(type(file_or_dir) == "string", "sys.move: Argument 'file_or_dir' is not a string.")
-    assert(type(dest_dir) == "string", "sys.move: Argument 'dest_dir' is not a string.")
-    assert(is_dir(dest_dir), "sys.move: destination '" .. dest_dir .."' is not a directory.")
+-- Move file (or directory) to the destination directory
+function move_to(file_or_dir, dest_dir)
+    assert(type(file_or_dir) == "string", "sys.move_to: Argument 'file_or_dir' is not a string.")
+    assert(type(dest_dir) == "string", "sys.move_to: Argument 'dest_dir' is not a string.")
+    assert(is_dir(dest_dir), "sys.move_to: destination '" .. dest_dir .."' is not a directory.")
 
     -- Extract file/dir name from its path
     local file_or_dir_name = extract_name(file_or_dir)
 
     return os.rename(file_or_dir, make_path(dest_dir, file_or_dir_name))
+end
+
+-- rename file (or directory) to the new name.
+function rename(file, new_name)
+    assert(type(file) == "string", "sys.rename: Argument 'file' is not a string.")
+    assert(type(new_name) == "string", "sys.rename: Argument 'new_name' is not a string.")
+    assert(not exists(new_name), "sys.rename: desired filename already exists.")
+
+    return os.rename(file, new_name)
 end
 
 -- Copy 'source' to the destination directory 'dest_dir'.
