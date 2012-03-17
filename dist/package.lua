@@ -232,12 +232,14 @@ function fetch_pkg(pkg, download_dir)
     download_dir = download_dir or sys.current_dir()
     assert(type(pkg) == "table", "package.fetch_pkg: Argument 'pkg' is not a table.")
     assert(type(download_dir) == "string", "package.fetch_pkg: Argument 'download_dir' is not a string.")
+    assert(type(pkg.name) == "string", "package.fetch_pkg: Argument 'pkg.name' is not a string.")
+    assert(type(pkg.version) == "string", "package.fetch_pkg: Argument 'pkg.version' is not a string.")
+    assert(type(pkg.path) == "string", "package.fetch_pkg: Argument 'pkg.path' is not a string.")
     download_dir = sys.abs_path(download_dir)
 
     local pkg_full_name = pkg.name .. "-" .. pkg.version
     local repo_url = git.get_repo_url(pkg.path)
-    -- XXX: do not use pkg.arch + pkg.type and rename the directory after the package was fetched?
-    local clone_dir = sys.abs_path(sys.make_path(download_dir, pkg_full_name .. "-" .. pkg.arch .. "-" .. pkg.type))
+    local clone_dir = sys.abs_path(sys.make_path(download_dir, pkg_full_name))
 
     -- clone pkg's repository
     print("Getting " .. pkg_full_name .. "...")
@@ -256,6 +258,20 @@ function fetch_pkg(pkg, download_dir)
 
     -- delete '.git' directory
     if not cfg.debug then sys.delete(sys.make_path(clone_dir, ".git")) end
+
+    -- load 'arch' and 'type' from 'dist.info' if not present in the table
+    if not (pkg.arch and pkg.type) then
+        local info, err = mf.load_distinfo(sys.make_path(clone_dir, "dist.info"))
+        if not info then return nil, err end
+        pkg.arch = info.arch or "Universal"
+        pkg.type = info.type or "source"
+    end
+
+    -- rename directory to contain also 'arch' and 'type'
+    local new_dir =  clone_dir .. "-" .. pkg.arch .. "-" .. pkg.type
+    if sys.exists(new_dir) then return nil, "Error moving package '" .. pkg_full_name .. "' to directory '" .. new_dir .. "': This directory already exists. Package left at '" .. clone_dir .. "'" end
+    ok, err = sys.rename(clone_dir, new_dir)
+    if not ok then return nil, "Error renaming the directory of fetched package '" .. pkg_full_name .. "': " .. err .. " (package left at '" .. clone_dir .. "')" end
 
     return ok, clone_dir
 end
@@ -283,7 +299,7 @@ function fetch_pkgs(packages, download_dir)
     return ok, fetched_dirs
 end
 
--- Returns table of informations about available versions of 'package'.
+-- Return table with information about available versions of 'package'.
 function retrieve_versions(package)
     assert(type(package) == "table", "package.retrieve_versions: Argument 'package' is not a table.")
 
