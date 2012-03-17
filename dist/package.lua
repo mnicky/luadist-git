@@ -263,8 +263,14 @@ function fetch_pkg(pkg, download_dir)
     if not (pkg.arch and pkg.type) then
         local info, err = mf.load_distinfo(sys.make_path(clone_dir, "dist.info"))
         if not info then return nil, err end
-        pkg.arch = info.arch or "Universal"
-        pkg.type = info.type or "source"
+
+        -- set default arch/type if not explicitly stated and package is of source type
+        if sys.exists(sys.make_path(clone_dir, "CMakeLists.txt")) then
+            pkg.arch = info.arch or "Universal"
+            pkg.type = info.type or "source"
+        elseif not (pkg.arch and pkg.type) then
+            return nil, clone_dir .. ": binary package missing arch or type in 'dist.info'."
+        end
     end
 
     -- rename directory to contain also 'arch' and 'type'
