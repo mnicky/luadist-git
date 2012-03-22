@@ -91,6 +91,9 @@ function install(package_names, deploy_dir, variables, simulate)
         ok, err = package.install_pkg(dir, deploy_dir, variables, false, simulate)
         if not ok then return nil, err end
     end
+
+    -- XXX: delete directories created in dependency checks that weren't used in installation (?)
+
     return true
 end
 

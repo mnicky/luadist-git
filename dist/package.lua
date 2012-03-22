@@ -242,6 +242,7 @@ function fetch_pkg(pkg, download_dir)
     local clone_dir = sys.abs_path(sys.make_path(download_dir, pkg_full_name))
 
     -- check if download_dir already exists, assuming the package was already downloaded
+    -- XXX: use caching with timeout
     if sys.exists(sys.make_path(clone_dir, "dist.info")) then return clone_dir end
 
     -- clone pkg's repository
