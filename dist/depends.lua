@@ -7,6 +7,7 @@ local mf = require "dist.manifest"
 local sys = require "dist.sys"
 local const = require "dist.constraints"
 local utils = require "dist.utils"
+local package = require "dist.package"
 
 -- Return all packages with specified names from manifest.
 -- Names can also contain version constraint (e.g. 'copas>=1.2.3', 'saci-1.0' etc.).
@@ -496,4 +497,53 @@ function compare_versions(version_a, version_b)
     assert(type(version_a) == "string", "depends.compare_versions: Argument 'version_a' is not a string.")
     assert(type(version_b) == "string", "depends.compare_versions: Argument 'version_b' is not a string.")
     return const.compareVersions(version_a, version_b)
+end
+
+-- Return manifest, augmented with info about all available versions
+-- of package 'pkg'.
+function get_versions_info(pkg, manifest)
+    assert(type(pkg) == "string", "depends.get_versions_info: Argument 'pkg' is not a string.")
+    assert(type(manifest) == "table", "depends.get_versions_info: Argument 'manifest' is not a table.")
+
+    local tmp_manifest = utils.deepcopy(manifest)
+    local pkg_name = split_name_constraint(pkg)
+    local packages = find_packages(pkg_name, tmp_manifest)
+
+    -- find all available versions of package
+    local versions, err = package.retrieve_versions(packages[1])
+    if not versions then return nil, err end
+
+    -- collect info about all these versions
+    local infos = {}
+    for _, version in pairs(versions) do
+        local info, err = package.retrieve_pkg_info(version)
+        if not info then return nil, err end
+        table.insert(infos, info)
+    end
+
+    -- add implicit 'scm' version
+    local scm_info, err = package.retrieve_pkg_info({name = pkg_name, version = "scm", path = packages[1].path})
+    if not scm_info then return nil, err end
+    scm_info.version = "scm"
+    table.insert(infos, scm_info)
+
+    -- add collected info to the temp. manifest, replacing existing tables
+    for _, info in pairs(infos) do
+        local already_in_manifest = false
+        -- find if this version is already in manifest
+        for idx, pkg in ipairs(tmp_manifest) do
+            -- if yes, replace it
+            if pkg.name == info.name and pkg.version == info.version then
+                tmp_manifest[idx] = info
+                already_in_manifest = true
+                break
+            end
+        end
+        -- if not, just normally add to the manifest
+        if not already_in_manifest then
+            table.insert(tmp_manifest, info)
+        end
+    end
+
+    return tmp_manifest
 end
