@@ -241,6 +241,9 @@ function fetch_pkg(pkg, download_dir)
     local repo_url = git.get_repo_url(pkg.path)
     local clone_dir = sys.abs_path(sys.make_path(download_dir, pkg_full_name))
 
+    -- check if download_dir already exists, assuming the package was already downloaded
+    if sys.exists(sys.make_path(clone_dir, "dist.info")) then return clone_dir end
+
     -- clone pkg's repository
     print("Getting " .. pkg_full_name .. "...")
     local ok, err = git.clone(repo_url, clone_dir, 1)
@@ -259,27 +262,7 @@ function fetch_pkg(pkg, download_dir)
     -- delete '.git' directory
     if not cfg.debug then sys.delete(sys.make_path(clone_dir, ".git")) end
 
-    -- load 'arch' and 'type' from 'dist.info' if not present in the table
-    if not (pkg.arch and pkg.type) then
-        local info, err = mf.load_distinfo(sys.make_path(clone_dir, "dist.info"))
-        if not info then return nil, err end
-
-        -- set default arch/type if not explicitly stated and package is of source type
-        if sys.exists(sys.make_path(clone_dir, "CMakeLists.txt")) then
-            pkg.arch = info.arch or "Universal"
-            pkg.type = info.type or "source"
-        elseif not (pkg.arch and pkg.type) then
-            return nil, clone_dir .. ": binary package missing arch or type in 'dist.info'."
-        end
-    end
-
-    -- rename directory to contain also 'arch' and 'type'
-    local new_dir =  clone_dir .. "-" .. pkg.arch .. "-" .. pkg.type
-    if sys.exists(new_dir) then return nil, "Error moving package '" .. pkg_full_name .. "' to directory '" .. new_dir .. "': This directory already exists. Package left at '" .. clone_dir .. "'" end
-    ok, err = sys.rename(clone_dir, new_dir)
-    if not ok then return nil, "Error renaming the directory of fetched package '" .. pkg_full_name .. "': " .. err .. " (package left at '" .. clone_dir .. "')" end
-
-    return new_dir
+    return clone_dir
 end
 
 -- Fetch packages (table 'packages') to 'download_dir'. Return table of paths
@@ -343,6 +326,9 @@ function retrieve_pkg_info(package)
     -- load information from 'dist.info'
     local info, err = mf.load_distinfo(sys.make_path(pkg_dir, "dist.info"))
     if not info then return nil, err end
+
+    -- add 'path' attribute
+    if package.path then info.path = package.path end
 
     -- set default arch/type if not explicitly stated and package is of source type
     if sys.exists(sys.make_path(pkg_dir, "CMakeLists.txt")) then
