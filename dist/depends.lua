@@ -524,6 +524,10 @@ function get_versions_info(pkg, manifest)
     local pkg_name = split_name_constraint(pkg)
     local packages = find_packages(pkg_name, tmp_manifest)
 
+    if #packages == 0 then
+        return nil, "No suitable candidate for package '" .. pkg .. "' found."
+    end
+
     -- find all available versions of package
     local versions, err = package.retrieve_versions(packages[1])
     if not versions then return nil, err end
