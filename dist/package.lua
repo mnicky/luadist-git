@@ -346,9 +346,9 @@ function retrieve_pkg_info(package)
 
     -- set default arch/type if not explicitly stated and package is of source type
     if sys.exists(sys.make_path(pkg_dir, "CMakeLists.txt")) then
-        pkg.arch = info.arch or "Universal"
-        pkg.type = info.type or "source"
-    elseif not (pkg.arch and pkg.type) then
+        info.arch = info.arch or "Universal"
+        info.type = info.type or "source"
+    elseif not (info.arch and info.type) then
         return nil, pkg_dir .. ": binary package missing arch or type in 'dist.info'."
     end
 
