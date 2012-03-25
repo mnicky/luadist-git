@@ -149,11 +149,18 @@ function fetch(pkg_names, fetch_dir)
     fetch_dir = sys.abs_path(fetch_dir)
 
     local manifest = mf.get_manifest()
-    -- XXX: retrieve and check versions of packages
 
     local pkgs_to_fetch = {}
 
     for _, pkg_name in pairs(pkg_names) do
+
+        -- retrieve available versions
+        local versions, err = package.retrieve_versions(pkg_name, manifest)
+        if not versions then return nil, err end
+        for _, version in pairs(versions) do
+            table.insert(manifest, version)
+        end
+
         local packages = depends.find_packages(pkg_name, manifest)
         if #packages == 0 then return nil, "No packages found for '" .. pkg_name .. "'." end
 
