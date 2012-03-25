@@ -520,16 +520,8 @@ function get_versions_info(pkg, manifest)
     assert(type(pkg) == "string", "depends.get_versions_info: Argument 'pkg' is not a string.")
     assert(type(manifest) == "table", "depends.get_versions_info: Argument 'manifest' is not a table.")
 
-    local tmp_manifest = utils.deepcopy(manifest)
-    local pkg_name = split_name_constraint(pkg)
-    local packages = find_packages(pkg_name, tmp_manifest)
-
-    if #packages == 0 then
-        return nil, "No suitable candidate for package '" .. pkg .. "' found."
-    end
-
     -- find all available versions of package
-    local versions, err = package.retrieve_versions(packages[1])
+    local versions, err = package.retrieve_versions(pkg, manifest)
     if not versions then return nil, err end
 
     -- collect info about all these versions
@@ -541,10 +533,12 @@ function get_versions_info(pkg, manifest)
     end
 
     -- add implicit 'scm' version
-    local scm_info, err = package.retrieve_pkg_info({name = pkg_name, version = "scm", path = packages[1].path})
+    local scm_info, err = package.retrieve_pkg_info({name = pkg, version = "scm", path = infos[1].path})
     if not scm_info then return nil, err end
     scm_info.version = "scm"
     table.insert(infos, scm_info)
+
+    local tmp_manifest = utils.deepcopy(manifest)
 
     -- add collected info to the temp. manifest, replacing existing tables
     for _, info in pairs(infos) do

@@ -7,6 +7,7 @@ local git = require "dist.git"
 local sys = require "dist.sys"
 local mf = require "dist.manifest"
 local utils = require "dist.utils"
+local depends = require "dist.depends"
 
 -- Remove package from 'pkg_dir' of 'deploy_dir'.
 function remove_pkg(pkg_distinfo_dir, deploy_dir)
@@ -290,8 +291,19 @@ function fetch_pkgs(packages, download_dir)
 end
 
 -- Return table with information about available versions of 'package'.
-function retrieve_versions(package)
-    assert(type(package) == "table", "package.retrieve_versions: Argument 'package' is not a table.")
+function retrieve_versions(package, manifest)
+    assert(type(package) == "string", "package.retrieve_versions: Argument 'string' is not a string.")
+    assert(type(manifest) == "table", "package.retrieve_versions: Argument 'manifest' is not a table.")
+
+    -- get package table
+    local pkg_name = depends.split_name_constraint(package)
+    local tmp_packages = depends.find_packages(pkg_name, manifest)
+
+    if #tmp_packages == 0 then
+        return nil, "No suitable candidate for package '" .. package .. "' found."
+    else
+        package = tmp_packages[1]
+    end
 
     -- get available versions
     local tags, err = git.get_remote_tags(package.path)
