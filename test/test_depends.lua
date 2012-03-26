@@ -1034,7 +1034,7 @@ tests.arch_type_checks_1 = function()
     manifest.b = {name="b", arch="notUniversal", type="all", version="0.9",}
 
     local pkgs, err = depends.get_depends({'a', 'b'}, installed, manifest, true);
-    assert(describe_packages(pkgs) == nil and err:find("No suitable candidate"), pkgs_fail_msg(pkgs, err))
+    assert(describe_packages(pkgs) == nil and err:find("arch and type"), pkgs_fail_msg(pkgs, err))
 end
 
 -- no package of required type
@@ -1044,7 +1044,7 @@ tests.arch_type_checks_2 = function()
     manifest.b = {name="b", arch="Universal", type="not_all", version="0.9",}
 
     local pkgs, err = depends.get_depends({'a', 'b'}, installed, manifest, true);
-    assert(describe_packages(pkgs) == nil and err:find("No suitable candidate"), pkgs_fail_msg(pkgs, err))
+    assert(describe_packages(pkgs) == nil and err:find("arch and type"), pkgs_fail_msg(pkgs, err))
 end
 
 -- only some packages have required arch

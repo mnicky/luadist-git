@@ -305,6 +305,8 @@ function retrieve_versions(package, manifest)
         package = tmp_packages[1]
     end
 
+    print("Finding out available versions of " .. package.name .. "...")
+
     -- get available versions
     local tags, err = git.get_remote_tags(package.path)
     if not tags then return nil, "Error when retrieving versions of package '" .. package.name .. "':" .. err end

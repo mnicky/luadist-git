@@ -156,15 +156,13 @@ local function packages_conflicts(pkg, installed_pkg)
     return false
 end
 
--- Return all packages needed in order to install 'package'
+-- Return all packages needed in order to install package 'pkg'
 -- and with specified 'installed' packages in the system using 'manifest'.
--- 'package' can also contain version constraint (e.g. 'copas>=1.2.3', 'saci-1.0' etc.).
---
--- All returned packages (and their provides) are also inserted into the table 'installed'
+-- 'pkg' can also contain version constraint (e.g. 'copas>=1.2.3', 'saci-1.0' etc.).
 --
 -- When optional 'force_no_download' parameter is set to true, then information
 -- about packages won't be downloaded during dependency resolving, assuming that
--- entries in manifest are complete.
+-- entries in the provided manifest are already complete.
 --
 -- 'dependency_parents' is table of all packages encountered so far when resolving dependencies
 -- and is used to detect and deal with circular dependencies. Leave it 'nil'
@@ -175,7 +173,7 @@ end
 -- in installed packages between the recursive calls of this function.
 --
 -- TODO: refactor this spaghetti code!
-local function get_packages_to_install(package, installed, manifest, force_no_download, dependency_parents, tmp_installed)
+local function get_packages_to_install(pkg, installed, manifest, force_no_download, dependency_parents, tmp_installed)
     manifest = manifest or mf.get_manifest()
     force_no_download = force_no_download or false
     dependency_parents = dependency_parents or {}
@@ -183,7 +181,7 @@ local function get_packages_to_install(package, installed, manifest, force_no_do
     -- set helper table 'tmp_installed'
     tmp_installed = tmp_installed or utils.deepcopy(installed)
 
-    assert(type(package) == "string", "depends.get_packages_to_install: Argument 'package' is not a string.")
+    assert(type(pkg) == "string", "depends.get_packages_to_install: Argument 'pkg' is not a string.")
     assert(type(installed) == "table", "depends.get_packages_to_install: Argument 'installed' is not a table.")
     assert(type(manifest) == "table", "depends.get_packages_to_install: Argument 'manifest' is not a table.")
     assert(type(force_no_download) == "boolean", "depends.get_packages_to_install: Argument 'force_no_download' is not a boolean.")
@@ -191,7 +189,7 @@ local function get_packages_to_install(package, installed, manifest, force_no_do
     assert(type(tmp_installed) == "table", "depends.get_packages_to_install: Argument 'tmp_installed' is not a table.")
 
     -- check if package is already installed
-    local pkg_name, pkg_constraint = split_name_constraint(package)
+    local pkg_name, pkg_constraint = split_name_constraint(pkg)
     local pkg_is_installed, err = is_installed(pkg_name, tmp_installed, pkg_constraint)
     if pkg_is_installed then return {} end
     if err then return nil, err end
@@ -199,20 +197,24 @@ local function get_packages_to_install(package, installed, manifest, force_no_do
     -- table of packages needed to be installed (will be returned)
     local to_install = {}
 
-    -- retrieve information about all versions of 'package'
-    if not force_no_download then manifest = get_versions_info(package, manifest) end
+    -- find out available versions of 'pkg'
+    if not force_no_download then
+        local versions, err = package.retrieve_versions(pkg, manifest)
+        if not versions then return nil, err end
+        for _, version in pairs(versions) do
+            table.insert(manifest, version)
+        end
+    end
 
-    -- find candidates & filter them
-    local candidates_to_install = find_packages(package, manifest)
-    candidates_to_install = filter_packages_by_arch_and_type(candidates_to_install, cfg.arch, cfg.type)
-
+    -- find candidates
+    local candidates_to_install = find_packages(pkg, manifest)
     if #candidates_to_install == 0 then
-        return nil, "No suitable candidate for package '" .. package .. "' found."
+        return nil, "No suitable candidate for package '" .. pkg .. "' found."
     end
 
     candidates_to_install = sort_by_versions(candidates_to_install)
 
-    for k, pkg in pairs(candidates_to_install) do
+    for _, pkg in pairs(candidates_to_install) do
 
         -- clear the state from previous candidate
         pkg_is_installed, err = false, nil
@@ -220,6 +222,18 @@ local function get_packages_to_install(package, installed, manifest, force_no_do
         -- check whether this package has already been added to 'tmp_installed' by another of its candidates
         pkg_is_installed, err = is_installed(pkg.name, tmp_installed, pkg_constraint)
         if pkg_is_installed then break end
+
+        -- download info about the package
+        if not force_no_download then
+            pkg, err = package.retrieve_pkg_info(pkg)
+            if not pkg then return nil, err end
+        end
+
+        -- check arch & type
+        if not (pkg.arch == "Universal" or pkg.arch == cfg.arch) or
+           not (pkg.type == "all" or pkg.type == "source" or pkg.type == cfg.type) then
+            err = "Package '" .. pkg_full_name(pkg.name, pkg.version) .. "' doesn't have required arch and type."
+        end
 
         -- checks for conflicts with other installed (or previously selected) packages
         if not err then
@@ -230,7 +244,7 @@ local function get_packages_to_install(package, installed, manifest, force_no_do
         end
 
         -- if pkg passed all of the above tests and isn't already installed
-        if not err and not pkg_is_installed then
+        if not err then
 
             -- check if pkg's dependencies are satisfied
             if pkg.depends then
@@ -532,8 +546,11 @@ function get_versions_info(pkg, manifest)
         table.insert(infos, info)
     end
 
-    -- add implicit 'scm' version
-    local scm_info, err = package.retrieve_pkg_info({name = pkg, version = "scm", path = infos[1].path})
+    -- found and add an implicit 'scm' version
+    local pkg_name = split_name_constraint(pkg)
+    local found = find_packages(pkg_name, manifest)
+    if #found == 0 then return nil, "No suitable candidate for package '" .. pkg .. "' found." end
+    local scm_info, err = package.retrieve_pkg_info({name = pkg, version = "scm", path = found[1].path})
     if not scm_info then return nil, err end
     scm_info.version = "scm"
     table.insert(infos, scm_info)
