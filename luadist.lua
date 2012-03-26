@@ -378,34 +378,54 @@ specified.
                 os.exit(1)
             end
 
+            -- if no packages specified explicitly, show just info from .gitmodules for all packages available
             if #modules == 0 then
+
                 modules = manifest
+                modules = depends.sort_by_names(modules)
+                local deployed = dist.get_deployed(deploy_dir)
+
+                print("")
+                for _, pkg in pairs(modules) do
+                    print("  " .. pkg.name)
+                    print("  Repository url: " .. (pkg.path or "N/A"))
+                    print()
+                end
+                return 0
+
+            -- if some packages explicitly specified, retrieve and show detailed info about them
             else
+
+                if #modules > 5 then
+                    print("NOTE: More than 5 modules specified - operation may take a longer time.")
+                end
+
+                for _, module in pairs(modules) do
+                    manifest = depends.get_versions_info(module, manifest)
+                end
+
                 modules = depends.find_packages(modules, manifest)
+                modules = depends.sort_by_names(modules)
+                local deployed = dist.get_deployed(deploy_dir)
+
+                print("")
+                for _, pkg in pairs(modules) do
+                    print("  " .. pkg.name .. "-" .. pkg.version .. "  (" .. pkg.arch .. "-" .. pkg.type ..")")
+                    print("  Description: " .. (pkg.desc or "N/A"))
+                    print("  Author: " .. (pkg.author or "N/A"))
+                    print("  Homepage: " .. (pkg.url or "N/A"))
+                    print("  License: " .. (pkg.license or "N/A"))
+                    print("  Repository url: " .. (pkg.path or "N/A"))
+                    print("  Maintainer: " .. (pkg.maintainer or "N/A"))
+                    if pkg.provides then print("  Provides: " .. utils.table_tostring(pkg.provides)) end
+                    if pkg.depends then print("  Depends: " .. utils.table_tostring(pkg.depends)) end
+                    if pkg.conflicts then print("  Conflicts: " .. utils.table_tostring(pkg.conflicts)) end
+                    print("  State: " .. (depends.is_installed(pkg.name, deployed, pkg.version) and "installed" or "not installed"))
+                    print()
+                end
+                return 0
             end
 
-            -- XXX: download info from needed packages
-            --      display warning above some number of packages
-
-            modules = depends.sort_by_names(modules)
-            local deployed = dist.get_deployed(deploy_dir)
-
-            print("")
-            for _, pkg in pairs(modules) do
-                print("  " .. pkg.name .. "-" .. pkg.version .. "  (" .. pkg.arch .. "-" .. pkg.type ..")")
-                print("  Description: " .. (pkg.desc or "N/A"))
-                print("  Author: " .. (pkg.author or "N/A"))
-                print("  Homepage: " .. (pkg.url or "N/A"))
-                print("  License: " .. (pkg.license or "N/A"))
-                print("  Repository url: " .. (pkg.path or "N/A"))
-                print("  Maintainer: " .. (pkg.maintainer or "N/A"))
-                if pkg.provides then print("  Provides: " .. utils.table_tostring(pkg.provides)) end
-                if pkg.depends then print("  Depends: " .. utils.table_tostring(pkg.depends)) end
-                if pkg.conflicts then print("  Conflicts: " .. utils.table_tostring(pkg.conflicts)) end
-                print("  State: " .. (depends.is_installed(pkg.name, deployed, pkg.version) and "installed" or "not installed"))
-                print()
-            end
-            return 0
         end
     },
 
