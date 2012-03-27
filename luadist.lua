@@ -401,7 +401,11 @@ specified.
                 end
 
                 for _, module in pairs(modules) do
-                    manifest = depends.get_versions_info(module, manifest)
+                    manifest, err = depends.get_versions_info(module, manifest)
+                    if not manifest then
+                        print(err)
+                        os.exit(1)
+                    end
                 end
 
                 modules = depends.find_packages(modules, manifest)
