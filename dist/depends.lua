@@ -206,13 +206,15 @@ local function get_packages_to_install(pkg, installed, manifest, force_no_downlo
         end
     end
 
-    -- find candidates
+    -- find candidates & sort them
     local candidates_to_install = find_packages(pkg, manifest)
     if #candidates_to_install == 0 then
         return nil, "No suitable candidate for package '" .. pkg .. "' found."
     end
-
     candidates_to_install = sort_by_versions(candidates_to_install)
+
+    -- path to last downloaded package - used to delete unused but downloaded packages
+    local path_to_last_package = nil
 
     for _, pkg in pairs(candidates_to_install) do
 
@@ -223,11 +225,21 @@ local function get_packages_to_install(pkg, installed, manifest, force_no_downlo
         pkg_is_installed, err = is_installed(pkg.name, tmp_installed, pkg_constraint)
         if pkg_is_installed then break end
 
+        -- delete package of the previous candidate if downloaded
+        if path_to_last_package then
+            sys.delete(path_to_last_package)
+            path_to_last_package = nil
+        end
+
         -- download info about the package
         if not force_no_download then
             local path_or_err
             pkg, path_or_err = package.retrieve_pkg_info(pkg)
-            if not pkg then return nil, path_or_err end
+            if not pkg then
+                return nil, path_or_err
+            else
+                path_to_last_package = path_or_err
+            end
         end
 
         -- check arch & type
