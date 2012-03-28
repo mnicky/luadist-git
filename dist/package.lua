@@ -243,8 +243,9 @@ function fetch_pkg(pkg, download_dir)
     local clone_dir = sys.abs_path(sys.make_path(download_dir, pkg_full_name))
 
     -- check if download_dir already exists, assuming the package was already downloaded
-    if sys.exists(sys.make_path(clone_dir, "dist.info")) and not utils.cache_timeout_expired(cfg.cache_timeout, clone_dir)
-    then return clone_dir end
+    if sys.exists(sys.make_path(clone_dir, "dist.info")) and not utils.cache_timeout_expired(cfg.cache_timeout, clone_dir) then
+        return clone_dir
+    end
 
     -- clone pkg's repository
     print("Getting " .. pkg_full_name .. "...")
@@ -328,7 +329,8 @@ function retrieve_versions(package, manifest)
     return packages
 end
 
--- Return table with information from package's dist.info
+-- Return table with information from package's dist.info and path to downloaded
+-- package.
 function retrieve_pkg_info(package)
     assert(type(package) == "table", "package.retrieve_pkg_info: Argument 'package' is not a table.")
 
@@ -353,5 +355,5 @@ function retrieve_pkg_info(package)
         return nil, pkg_dir .. ": binary package missing arch or type in 'dist.info'."
     end
 
-    return info
+    return info, pkg_dir
 end

@@ -225,8 +225,9 @@ local function get_packages_to_install(pkg, installed, manifest, force_no_downlo
 
         -- download info about the package
         if not force_no_download then
-            pkg, err = package.retrieve_pkg_info(pkg)
-            if not pkg then return nil, err end
+            local path_or_err
+            pkg, path_or_err = package.retrieve_pkg_info(pkg)
+            if not pkg then return nil, path_or_err end
         end
 
         -- check arch & type
@@ -541,8 +542,8 @@ function get_versions_info(pkg, manifest)
     -- collect info about all these versions
     local infos = {}
     for _, version in pairs(versions) do
-        local info, err = package.retrieve_pkg_info(version)
-        if not info then return nil, err end
+        local info, path_or_err = package.retrieve_pkg_info(version)
+        if not info then return nil, path_or_err end
         table.insert(infos, info)
     end
 
@@ -550,8 +551,8 @@ function get_versions_info(pkg, manifest)
     local pkg_name = split_name_constraint(pkg)
     local found = find_packages(pkg_name, manifest)
     if #found == 0 then return nil, "No suitable candidate for package '" .. pkg .. "' found." end
-    local scm_info, err = package.retrieve_pkg_info({name = pkg, version = "scm", path = found[1].path})
-    if not scm_info then return nil, err end
+    local scm_info, path_or_err = package.retrieve_pkg_info({name = pkg, version = "scm", path = found[1].path})
+    if not scm_info then return nil, path_or_err end
     scm_info.version = "scm"
     table.insert(infos, scm_info)
 
