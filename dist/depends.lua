@@ -213,9 +213,6 @@ local function get_packages_to_install(pkg, installed, manifest, force_no_downlo
     end
     candidates_to_install = sort_by_versions(candidates_to_install)
 
-    -- path to last downloaded package - used to delete unused but downloaded packages
-    local path_to_last_package = nil
-
     for _, pkg in pairs(candidates_to_install) do
 
         -- clear the state from previous candidate
@@ -225,11 +222,8 @@ local function get_packages_to_install(pkg, installed, manifest, force_no_downlo
         pkg_is_installed, err = is_installed(pkg.name, tmp_installed, pkg_constraint)
         if pkg_is_installed then break end
 
-        -- delete package of the previous candidate if downloaded
-        if path_to_last_package then
-            sys.delete(path_to_last_package)
-            path_to_last_package = nil
-        end
+        -- path to downloaded package - used to delete unused but downloaded packages
+        local path_to_package = nil
 
         -- download info about the package
         if not force_no_download then
@@ -238,7 +232,7 @@ local function get_packages_to_install(pkg, installed, manifest, force_no_downlo
             if not pkg then
                 return nil, path_or_err
             else
-                path_to_last_package = path_or_err
+                path_to_package = path_or_err
             end
         end
 
@@ -256,7 +250,7 @@ local function get_packages_to_install(pkg, installed, manifest, force_no_downlo
             end
         end
 
-        -- if pkg passed all of the above tests and isn't already installed
+        -- if pkg passed all of the above tests
         if not err then
 
             -- check if pkg's dependencies are satisfied
@@ -346,6 +340,9 @@ local function get_packages_to_install(pkg, installed, manifest, force_no_downlo
                 to_install = {}
                 tmp_installed = utils.deepcopy(installed)
 
+                -- delete the downloaded package
+                if path_to_package then sys.delete(path_to_package) end
+
                 -- add provided packages to installed ones
                 for _, installed_pkg in pairs(tmp_installed) do
                     for _, pkg in pairs(get_provides(installed_pkg)) do
@@ -354,9 +351,13 @@ local function get_packages_to_install(pkg, installed, manifest, force_no_downlo
                 end
             end
 
-        -- if pkg is already installed, skip checking its other candidates
-        elseif pkg_is_installed then
-            break
+        -- if error occured
+        else
+            -- delete the downloaded package
+            if path_to_package then sys.delete(path_to_package) end
+
+            -- if pkg is already installed, skip checking its other candidates
+            if pkg_is_installed then break end
         end
     end
 
