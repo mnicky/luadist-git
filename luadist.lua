@@ -5,6 +5,7 @@
 local dist = require "dist"
 local utils = require "dist.utils"
 local depends = require "dist.depends"
+local package = require "dist.package"
 local mf = require "dist.manifest"
 local cfg = require "dist.config"
 local sys = require "dist.sys"
@@ -401,7 +402,7 @@ specified.
                 end
 
                 for _, module in pairs(modules) do
-                    manifest, err = depends.get_versions_info(module, manifest)
+                    manifest, err = package.get_versions_info(module, manifest)
                     if not manifest then
                         print(err)
                         os.exit(1)

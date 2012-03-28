@@ -357,3 +357,55 @@ function retrieve_pkg_info(package)
 
     return info, pkg_dir
 end
+
+-- Return manifest, augmented with info about all available versions
+-- of package 'pkg'.
+function get_versions_info(pkg, manifest)
+    assert(type(pkg) == "string", "package.get_versions_info: Argument 'pkg' is not a string.")
+    assert(type(manifest) == "table", "package.get_versions_info: Argument 'manifest' is not a table.")
+
+    -- find all available versions of package
+    local versions, err = retrieve_versions(pkg, manifest)
+    if not versions then return nil, err end
+
+    -- collect info about all these versions
+    local infos = {}
+    for _, version in pairs(versions) do
+        local info, path_or_err = retrieve_pkg_info(version)
+        if not info then return nil, path_or_err end
+        sys.delete(path_or_err)
+        table.insert(infos, info)
+    end
+
+    -- found and add an implicit 'scm' version
+    local pkg_name = depends.split_name_constraint(pkg)
+    local found = depends.find_packages(pkg_name, manifest)
+    if #found == 0 then return nil, "No suitable candidate for package '" .. pkg .. "' found." end
+    local scm_info, path_or_err = retrieve_pkg_info({name = pkg, version = "scm", path = found[1].path})
+    if not scm_info then return nil, path_or_err end
+    sys.delete(path_or_err)
+    scm_info.version = "scm"
+    table.insert(infos, scm_info)
+
+    local tmp_manifest = utils.deepcopy(manifest)
+
+    -- add collected info to the temp. manifest, replacing existing tables
+    for _, info in pairs(infos) do
+        local already_in_manifest = false
+        -- find if this version is already in manifest
+        for idx, pkg in ipairs(tmp_manifest) do
+            -- if yes, replace it
+            if pkg.name == info.name and pkg.version == info.version then
+                tmp_manifest[idx] = info
+                already_in_manifest = true
+                break
+            end
+        end
+        -- if not, just normally add to the manifest
+        if not already_in_manifest then
+            table.insert(tmp_manifest, info)
+        end
+    end
+
+    return tmp_manifest
+end
