@@ -83,16 +83,18 @@ function install(package_names, deploy_dir, variables, simulate)
     if #dependencies == 0 then return nil, "No packages to install." end
 
     -- fetch the packages from repository
-    local dirs_or_err = {}
-    local ok, dirs_or_err = package.fetch_pkgs(dependencies, sys.make_path(deploy_dir, cfg.temp_dir))
-    if not ok then return nil, dirs_or_err end
+    local dirs, err = package.fetch_pkgs(dependencies, sys.make_path(deploy_dir, cfg.temp_dir))
+    if not dirs then return nil, err end
 
     -- install fetched packages
-    for _, dir in pairs(dirs_or_err) do
+    for _, dir in pairs(dirs) do
         ok, err = package.install_pkg(dir, deploy_dir, variables, false, simulate)
         if not ok then return nil, err end
     end
-    return ok
+
+    -- XXX: delete directories created in dependency checks that weren't used in installation (?)
+
+    return true
 end
 
 -- Manually deploy packages from 'package_paths' to 'deploy_dir', using optional
@@ -147,9 +149,18 @@ function fetch(pkg_names, fetch_dir)
     fetch_dir = sys.abs_path(fetch_dir)
 
     local manifest = mf.get_manifest()
+
     local pkgs_to_fetch = {}
 
     for _, pkg_name in pairs(pkg_names) do
+
+        -- retrieve available versions
+        local versions, err = package.retrieve_versions(pkg_name, manifest)
+        if not versions then return nil, err end
+        for _, version in pairs(versions) do
+            table.insert(manifest, version)
+        end
+
         local packages = depends.find_packages(pkg_name, manifest)
         if #packages == 0 then return nil, "No packages found for '" .. pkg_name .. "'." end
 

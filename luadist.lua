@@ -5,6 +5,7 @@
 local dist = require "dist"
 local utils = require "dist.utils"
 local depends = require "dist.depends"
+local package = require "dist.package"
 local mf = require "dist.manifest"
 local cfg = require "dist.config"
 local sys = require "dist.sys"
@@ -308,7 +309,7 @@ specified.
     -- Search for modules in repositories.
     ["search"] = {
         help = [[
-Usage: luadist [DEPLOYMENT_DIRECTORY] search [-d] [STRINGS...] [-VARIABLES...]
+Usage: luadist [DEPLOYMENT_DIRECTORY] search [STRINGS...] [-VARIABLES...]
 
 The 'search' command will list all modules from repositories, which contain
 one or more STRINGS. This command also shows whether modules are installed
@@ -320,8 +321,6 @@ used. Only modules suitable for the platform LuaDist is running on are showed.
 
 Optional LuaDist configuration VARIABLES (e.g. -variable=value) can be
 specified.
-
-The -d option makes LuaDist to search also in the description of modules.
         ]],
 
         run = function (deploy_dir, strings)
@@ -331,28 +330,20 @@ The -d option makes LuaDist to search also in the description of modules.
             assert(type(strings) == "table", "luadist.search: Argument 'strings' is not a table.")
             deploy_dir = sys.abs_path(deploy_dir)
 
-            local search_in_desc = false
-            if strings[1] == "-d" then
-                search_in_desc = true
-                table.remove(strings, 1)
-            end
-
             local available, err = mf.get_manifest()
             if not available then
                 print(err)
                 os.exit(1)
             end
 
-            available = depends.filter_packages_by_strings(available, strings, search_in_desc)
-            available = depends.filter_packages_by_arch_and_type(available, cfg.arch, cfg.type)
+            available = depends.filter_packages_by_strings(available, strings)
             available = depends.sort_by_names(available)
             local deployed = dist.get_deployed(deploy_dir)
 
             print("\nModules found:")
             print("==============\n")
             for _, pkg in pairs(available) do
-                local installed = (depends.is_installed(pkg.name, deployed, pkg.version))
-                print("  " .. (installed and "i " or "  ") .. pkg.name .. "-" .. pkg.version .. (pkg.desc and "\t\t" .. pkg.desc or ""))
+                print("  " .. pkg.name)
             end
             print()
             return 0
@@ -388,31 +379,58 @@ specified.
                 os.exit(1)
             end
 
+            -- if no packages specified explicitly, show just info from .gitmodules for all packages available
             if #modules == 0 then
+
                 modules = manifest
+                modules = depends.sort_by_names(modules)
+                local deployed = dist.get_deployed(deploy_dir)
+
+                print("")
+                for _, pkg in pairs(modules) do
+                    print("  " .. pkg.name)
+                    print("  Repository url: " .. (pkg.path or "N/A"))
+                    print()
+                end
+                return 0
+
+            -- if some packages explicitly specified, retrieve and show detailed info about them
             else
+
+                if #modules > 5 then
+                    print("NOTE: More than 5 modules specified - operation may take a longer time.")
+                end
+
+                for _, module in pairs(modules) do
+                    manifest, err = package.get_versions_info(module, manifest)
+                    if not manifest then
+                        print(err)
+                        os.exit(1)
+                    end
+                end
+
                 modules = depends.find_packages(modules, manifest)
+                modules = depends.sort_by_names(modules)
+                local deployed = dist.get_deployed(deploy_dir)
+
+                print("")
+                for _, pkg in pairs(modules) do
+                    print("  " .. pkg.name .. "-" .. pkg.version .. "  (" .. pkg.arch .. "-" .. pkg.type ..")")
+                    print("  Description: " .. (pkg.desc or "N/A"))
+                    print("  Author: " .. (pkg.author or "N/A"))
+                    print("  Homepage: " .. (pkg.url or "N/A"))
+                    print("  License: " .. (pkg.license or "N/A"))
+                    print("  Repository url: " .. (pkg.path or "N/A"))
+                    print("  Maintainer: " .. (pkg.maintainer or "N/A"))
+                    if pkg.provides then print("  Provides: " .. utils.table_tostring(pkg.provides)) end
+                    if pkg.depends then print("  Depends: " .. utils.table_tostring(pkg.depends)) end
+                    if pkg.conflicts then print("  Conflicts: " .. utils.table_tostring(pkg.conflicts)) end
+                    print("  State: " .. (depends.is_installed(pkg.name, deployed, pkg.version) and "installed" or "not installed"))
+                    print()
+                end
+                return 0
             end
 
-            modules = depends.sort_by_names(modules)
-            local deployed = dist.get_deployed(deploy_dir)
-
-            print("")
-            for _, pkg in pairs(modules) do
-                print("  " .. pkg.name .. "-" .. pkg.version .. "  (" .. pkg.arch .. "-" .. pkg.type ..")")
-                print("  Description: " .. (pkg.desc or "N/A"))
-                print("  Author: " .. (pkg.author or "N/A"))
-                print("  Homepage: " .. (pkg.url or "N/A"))
-                print("  License: " .. (pkg.license or "N/A"))
-                print("  Repository url: " .. (pkg.path or "N/A"))
-                print("  Maintainer: " .. (pkg.maintainer or "N/A"))
-                if pkg.provides then print("  Provides: " .. utils.table_tostring(pkg.provides)) end
-                if pkg.depends then print("  Depends: " .. utils.table_tostring(pkg.depends)) end
-                if pkg.conflicts then print("  Conflicts: " .. utils.table_tostring(pkg.conflicts)) end
-                print("  State: " .. (depends.is_installed(pkg.name, deployed, pkg.version) and "installed" or "not installed"))
-                print()
-            end
-            return 0
         end
     },
 

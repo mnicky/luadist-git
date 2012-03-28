@@ -46,6 +46,9 @@ end
 function get_repo_url(git_url)
     assert(type(git_url) == "string", "git.get_repo_path: Argument 'git_url' is not a string.")
 
+    -- if it already is git repo url, just return it
+    if git_url:sub(-4,-1) == ".git" then return git_url end
+
     local repo_start, repo_end = git_url:find("github.com/[^/]*/[^/]*")
 
     if repo_start ~= nil then
@@ -53,6 +56,21 @@ function get_repo_url(git_url)
     else
         return nil, "Error getting git repository: not a valid git url: '" .. git_url .. "'."
     end
+end
+
+-- Return table of all tags of the repository at the 'git_url'
+function get_remote_tags(git_url)
+    assert(type(git_url) == "string", "git.get_remote_tags: Argument 'git_url' is not a string.")
+
+    local tags = {}
+    local tagstrings, err = sys.capture_output("git ls-remote --tags " .. git_url)
+    if not tagstrings then return nil, "Error getting tags of repository '" .. git_url .. "': " .. err end
+
+    for tag in tagstrings:gmatch("/tags/(%S+)") do
+        table.insert(tags, tag)
+    end
+
+    return tags
 end
 
 -- Checkout specified tag in specified git_repo_dir

@@ -19,7 +19,7 @@ distinfos_dir = "share/luadist-git/dists"
 test_dir      = "share/luadist-git/test"
 
 -- Files -------------------------------------------------------------
-manifest_file = cache_dir .. "/dist.manifest"
+manifest_file = cache_dir .. "/.gitmodules"
 log_file      = temp_dir .. "/luadist.log"
 
 -- Repositories ------------------------------------------------------
@@ -28,9 +28,10 @@ repositories = {
 }
 
 -- Settings ----------------------------------------------------------
-debug        = false          -- Use debug mode.
+debug         = false         -- Use debug mode.
+verbose       = false         -- Print verbose output.
 
-cache        = true           -- Use cache.
+cache         = true          -- Use cache.
 cache_timeout = 60 * 60       -- Cache timeout in seconds.
 
 -- Available log levels are: DEBUG, INFO, WARN, ERROR, FATAL (see dist.log for more information).

@@ -8,7 +8,7 @@ local lfs = require "lfs"
 
 -- TODO test functionality of this module on Windows
 
--- Returns quoted string argument.
+-- Return quoted string argument.
 function quote(argument)
     assert(type(argument) == "string", "sys.quote: Argument 'argument' is not a string.")
 
@@ -20,10 +20,14 @@ end
 
 -- Run the system command (in current directory).
 -- Return true on success, nil on fail and log string.
-function exec(command)
+-- When optional 'force_verbose' parameter is true, then the output will be shown
+-- even when not in debug or verbose mode.
+function exec(command, force_verbose)
+    force_verbose = force_verbose or false
     assert(type(command) == "string", "sys.exec: Argument 'command' is not a string.")
+    assert(type(force_verbose) == "boolean", "sys.exec: Argument 'force_verbose' is not a boolean.")
 
-    if not cfg.debug then
+    if not (cfg.verbose or cfg.debug or force_verbose) then
         if cfg.arch == "Windows" then
             command = command .. " > NUL 2>&1"
         else
@@ -40,7 +44,21 @@ function exec(command)
     end
 end
 
--- Returns if specified file or directory exists
+-- Execute the 'command' and returns its output as a string.
+function capture_output(command)
+    assert(type(command) == "string", "sys.exec: Argument 'command' is not a string.")
+
+    local executed, err = io.popen(command, "r")
+    if not executed then return nil, "Error running the command '" .. command .. "':" .. err end
+
+    local captured, err = executed:read("*a");
+    if not captured then return nil, "Error reading the output of command '" .. command .. "':" .. err end
+
+    executed:close()
+    return captured
+end
+
+-- Return if specified file or directory exists
 function exists(path)
     assert(type(path) == "string", "sys.exists: Argument 'path' is not a string.")
 
@@ -209,16 +227,25 @@ function make_dir(dir_name)
     end
 end
 
--- Move file or directory to the destination directory
-function move(file_or_dir, dest_dir)
-    assert(type(file_or_dir) == "string", "sys.move: Argument 'file_or_dir' is not a string.")
-    assert(type(dest_dir) == "string", "sys.move: Argument 'dest_dir' is not a string.")
-    assert(is_dir(dest_dir), "sys.move: destination '" .. dest_dir .."' is not a directory.")
+-- Move file (or directory) to the destination directory
+function move_to(file_or_dir, dest_dir)
+    assert(type(file_or_dir) == "string", "sys.move_to: Argument 'file_or_dir' is not a string.")
+    assert(type(dest_dir) == "string", "sys.move_to: Argument 'dest_dir' is not a string.")
+    assert(is_dir(dest_dir), "sys.move_to: destination '" .. dest_dir .."' is not a directory.")
 
     -- Extract file/dir name from its path
     local file_or_dir_name = extract_name(file_or_dir)
 
     return os.rename(file_or_dir, make_path(dest_dir, file_or_dir_name))
+end
+
+-- rename file (or directory) to the new name.
+function rename(file, new_name)
+    assert(type(file) == "string", "sys.rename: Argument 'file' is not a string.")
+    assert(type(new_name) == "string", "sys.rename: Argument 'new_name' is not a string.")
+    assert(not exists(new_name), "sys.rename: desired filename already exists.")
+
+    return os.rename(file, new_name)
 end
 
 -- Copy 'source' to the destination directory 'dest_dir'.

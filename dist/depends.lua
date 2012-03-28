@@ -7,6 +7,7 @@ local mf = require "dist.manifest"
 local sys = require "dist.sys"
 local const = require "dist.constraints"
 local utils = require "dist.utils"
+local package = require "dist.package"
 
 -- Return all packages with specified names from manifest.
 -- Names can also contain version constraint (e.g. 'copas>=1.2.3', 'saci-1.0' etc.).
@@ -155,11 +156,13 @@ local function packages_conflicts(pkg, installed_pkg)
     return false
 end
 
--- Return all packages needed in order to install 'package'
+-- Return all packages needed in order to install package 'pkg'
 -- and with specified 'installed' packages in the system using 'manifest'.
--- 'package' can also contain version constraint (e.g. 'copas>=1.2.3', 'saci-1.0' etc.).
+-- 'pkg' can also contain version constraint (e.g. 'copas>=1.2.3', 'saci-1.0' etc.).
 --
--- All returned packages (and their provides) are also inserted into the table 'installed'
+-- When optional 'force_no_download' parameter is set to true, then information
+-- about packages won't be downloaded during dependency resolving, assuming that
+-- entries in the provided manifest are already complete.
 --
 -- 'dependency_parents' is table of all packages encountered so far when resolving dependencies
 -- and is used to detect and deal with circular dependencies. Leave it 'nil'
@@ -170,21 +173,23 @@ end
 -- in installed packages between the recursive calls of this function.
 --
 -- TODO: refactor this spaghetti code!
-local function get_packages_to_install(package, installed, manifest, dependency_parents, tmp_installed)
+local function get_packages_to_install(pkg, installed, manifest, force_no_download, dependency_parents, tmp_installed)
     manifest = manifest or mf.get_manifest()
+    force_no_download = force_no_download or false
     dependency_parents = dependency_parents or {}
 
     -- set helper table 'tmp_installed'
     tmp_installed = tmp_installed or utils.deepcopy(installed)
 
-    assert(type(package) == "string", "depends.get_packages_to_install: Argument 'package' is not a string.")
+    assert(type(pkg) == "string", "depends.get_packages_to_install: Argument 'pkg' is not a string.")
     assert(type(installed) == "table", "depends.get_packages_to_install: Argument 'installed' is not a table.")
     assert(type(manifest) == "table", "depends.get_packages_to_install: Argument 'manifest' is not a table.")
+    assert(type(force_no_download) == "boolean", "depends.get_packages_to_install: Argument 'force_no_download' is not a boolean.")
     assert(type(dependency_parents) == "table", "depends.get_packages_to_install: Argument 'dependency_parents' is not a table.")
     assert(type(tmp_installed) == "table", "depends.get_packages_to_install: Argument 'tmp_installed' is not a table.")
 
     -- check if package is already installed
-    local pkg_name, pkg_constraint = split_name_constraint(package)
+    local pkg_name, pkg_constraint = split_name_constraint(pkg)
     local pkg_is_installed, err = is_installed(pkg_name, tmp_installed, pkg_constraint)
     if pkg_is_installed then return {} end
     if err then return nil, err end
@@ -192,17 +197,23 @@ local function get_packages_to_install(package, installed, manifest, dependency_
     -- table of packages needed to be installed (will be returned)
     local to_install = {}
 
-    -- find candidates & filter them
-    local candidates_to_install = find_packages(package, manifest)
-    candidates_to_install = filter_packages_by_arch_and_type(candidates_to_install, cfg.arch, cfg.type)
-
-    if #candidates_to_install == 0 then
-        return nil, "No suitable candidate for package '" .. package .. "' found."
+    -- find out available versions of 'pkg'
+    if not force_no_download then
+        local versions, err = package.retrieve_versions(pkg, manifest)
+        if not versions then return nil, err end
+        for _, version in pairs(versions) do
+            table.insert(manifest, version)
+        end
     end
 
+    -- find candidates & sort them
+    local candidates_to_install = find_packages(pkg, manifest)
+    if #candidates_to_install == 0 then
+        return nil, "No suitable candidate for package '" .. pkg .. "' found."
+    end
     candidates_to_install = sort_by_versions(candidates_to_install)
 
-    for k, pkg in pairs(candidates_to_install) do
+    for _, pkg in pairs(candidates_to_install) do
 
         -- clear the state from previous candidate
         pkg_is_installed, err = false, nil
@@ -210,6 +221,26 @@ local function get_packages_to_install(package, installed, manifest, dependency_
         -- check whether this package has already been added to 'tmp_installed' by another of its candidates
         pkg_is_installed, err = is_installed(pkg.name, tmp_installed, pkg_constraint)
         if pkg_is_installed then break end
+
+        -- path to downloaded package - used to delete unused but downloaded packages
+        local path_to_package = nil
+
+        -- download info about the package
+        if not force_no_download then
+            local path_or_err
+            pkg, path_or_err = package.retrieve_pkg_info(pkg)
+            if not pkg then
+                return nil, path_or_err
+            else
+                path_to_package = path_or_err
+            end
+        end
+
+        -- check arch & type
+        if not (pkg.arch == "Universal" or pkg.arch == cfg.arch) or
+           not (pkg.type == "all" or pkg.type == "source" or pkg.type == cfg.type) then
+            err = "Package '" .. pkg_full_name(pkg.name, pkg.version) .. "' doesn't have required arch and type."
+        end
 
         -- checks for conflicts with other installed (or previously selected) packages
         if not err then
@@ -219,8 +250,8 @@ local function get_packages_to_install(package, installed, manifest, dependency_
             end
         end
 
-        -- if pkg passed all of the above tests and isn't already installed
-        if not err and not pkg_is_installed then
+        -- if pkg passed all of the above tests
+        if not err then
 
             -- check if pkg's dependencies are satisfied
             if pkg.depends then
@@ -262,7 +293,7 @@ local function get_packages_to_install(package, installed, manifest, dependency_
                         if not is_circular_dependency then
 
                             -- recursively call this function on the candidates of this pkg's dependency
-                            local depends_to_install, dep_err = get_packages_to_install(depend, installed, manifest, dependency_parents, tmp_installed)
+                            local depends_to_install, dep_err = get_packages_to_install(depend, installed, manifest, force_no_download, dependency_parents, tmp_installed)
 
                             -- if any suitable dependency packages were found, insert them to the 'to_install' table
                             if depends_to_install then
@@ -309,6 +340,9 @@ local function get_packages_to_install(package, installed, manifest, dependency_
                 to_install = {}
                 tmp_installed = utils.deepcopy(installed)
 
+                -- delete the downloaded package
+                if path_to_package then sys.delete(path_to_package) end
+
                 -- add provided packages to installed ones
                 for _, installed_pkg in pairs(tmp_installed) do
                     for _, pkg in pairs(get_provides(installed_pkg)) do
@@ -317,9 +351,13 @@ local function get_packages_to_install(package, installed, manifest, dependency_
                 end
             end
 
-        -- if pkg is already installed, skip checking its other candidates
-        elseif pkg_is_installed then
-            break
+        -- if error occured
+        else
+            -- delete the downloaded package
+            if path_to_package then sys.delete(path_to_package) end
+
+            -- if pkg is already installed, skip checking its other candidates
+            if pkg_is_installed then break end
         end
     end
 
@@ -333,14 +371,20 @@ end
 
 -- Resolve dependencies and return all packages needed in order to install
 -- 'packages' into the system with already 'installed' packages, using 'manifest'.
-function get_depends(packages, installed, manifest)
+--
+-- When optional 'force_no_download' parameter is set to true, then information
+-- about packages won't be downloaded during dependency resolving, assuming that
+-- entries in manifest are complete.
+function get_depends(packages, installed, manifest, force_no_download)
     if not packages then return {} end
     manifest = manifest or mf.get_manifest()
+    force_no_download = force_no_download or false
     if type(packages) == "string" then packages = {packages} end
 
     assert(type(packages) == "table", "depends.get_dependencies: Argument 'packages' is not a table or string.")
     assert(type(installed) == "table", "depends.get_dependencies: Argument 'installed' is not a table.")
     assert(type(manifest) == "table", "depends.get_dependencies: Argument 'manifest' is not a table.")
+    assert(type(force_no_download) == "boolean", "depends.get_dependencies: Argument 'force_no_download' is not a boolean.")
 
     local tmp_installed = utils.deepcopy(installed)
 
@@ -356,7 +400,7 @@ function get_depends(packages, installed, manifest)
     -- get packages needed to to satisfy dependencies
     for _, pkg in pairs(packages) do
 
-        local needed_to_install, err = get_packages_to_install(pkg, tmp_installed, manifest)
+        local needed_to_install, err = get_packages_to_install(pkg, tmp_installed, manifest, force_no_download)
 
         if needed_to_install then
             for _, needed_pkg in pairs(needed_to_install) do

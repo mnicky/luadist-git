@@ -104,3 +104,16 @@ function escape(str)
     local escaped = str:gsub('[%-%.%+%[%]%(%)%^%%%?%*%^%$]','%%%1')
     return escaped
 end
+
+-- If the table 'array' contains another table with specified key associated with
+-- specified value, then return index of that another table, else return nil.
+function find_index(array, key, value)
+    assert(type(array) == "table", "utils.contains: Argument 'array' is not a table.")
+    assert(type(key) == "string", "utils.contains: Argument 'key' is not a string.")
+
+    for idx, item in pairs(array) do
+        if type(item) == "table" and item[key] and type(item[key]) == type(value) and item[key] == value then return idx end
+    end
+
+    return nil
+end

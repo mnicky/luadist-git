@@ -6,6 +6,8 @@ local cfg = require "dist.config"
 local git = require "dist.git"
 local sys = require "dist.sys"
 local mf = require "dist.manifest"
+local utils = require "dist.utils"
+local depends = require "dist.depends"
 
 -- Remove package from 'pkg_dir' of 'deploy_dir'.
 function remove_pkg(pkg_distinfo_dir, deploy_dir)
@@ -225,17 +227,25 @@ function deploy_pkg(pkg_dir, deploy_dir, simulate)
     return true, "Package '" .. pkg_name .. "' successfully deployed to '" .. deploy_dir .. "'."
 end
 
--- Fetch package (table 'pkg') to download_dir. Return whether the operation
--- was successful and a path to the directory on success or an error message on error.
+-- Fetch package (table 'pkg') to download_dir. Return path to the directory of
+-- downloaded package on success or an error message on error.
 function fetch_pkg(pkg, download_dir)
     download_dir = download_dir or sys.current_dir()
     assert(type(pkg) == "table", "package.fetch_pkg: Argument 'pkg' is not a table.")
     assert(type(download_dir) == "string", "package.fetch_pkg: Argument 'download_dir' is not a string.")
+    assert(type(pkg.name) == "string", "package.fetch_pkg: Argument 'pkg.name' is not a string.")
+    assert(type(pkg.version) == "string", "package.fetch_pkg: Argument 'pkg.version' is not a string.")
+    assert(type(pkg.path) == "string", "package.fetch_pkg: Argument 'pkg.path' is not a string.")
     download_dir = sys.abs_path(download_dir)
 
     local pkg_full_name = pkg.name .. "-" .. pkg.version
     local repo_url = git.get_repo_url(pkg.path)
-    local clone_dir = sys.abs_path(sys.make_path(download_dir, pkg_full_name .. "-" .. pkg.arch .. "-" .. pkg.type))
+    local clone_dir = sys.abs_path(sys.make_path(download_dir, pkg_full_name))
+
+    -- check if download_dir already exists, assuming the package was already downloaded
+    if sys.exists(sys.make_path(clone_dir, "dist.info")) and not utils.cache_timeout_expired(cfg.cache_timeout, clone_dir) then
+        return clone_dir
+    end
 
     -- clone pkg's repository
     print("Getting " .. pkg_full_name .. "...")
@@ -253,30 +263,149 @@ function fetch_pkg(pkg, download_dir)
     end
 
     -- delete '.git' directory
-    sys.delete(sys.make_path(clone_dir, ".git"))
+    if not cfg.debug then sys.delete(sys.make_path(clone_dir, ".git")) end
 
-    return ok, clone_dir
+    return clone_dir
 end
 
--- Fetch packages (table 'packages') to 'download_dir'
--- Return if the operation was successful and a table of paths to the directories on success or an error message on error.
+-- Fetch packages (table 'packages') to 'download_dir'. Return table of paths
+-- to the directories on success or an error message on error.
 function fetch_pkgs(packages, download_dir)
     download_dir = download_dir or sys.current_dir()
-    assert(type(packages) == "table", "package.fetch_pkgs: Argument 'pkg' is not a table.")
+    assert(type(packages) == "table", "package.fetch_pkgs: Argument 'packages' is not a table.")
     assert(type(download_dir) == "string", "package.fetch_pkgs: Argument 'download_dir' is not a string.")
     download_dir = sys.abs_path(download_dir)
 
     local fetched_dirs = {}
-    local ok, dir_or_err
+    local dir, err
 
     for _, pkg in pairs(packages) do
-        ok, dir_or_err = fetch_pkg(pkg, download_dir)
-        if not ok then
-            return nil, dir_or_err
+        dir, err = fetch_pkg(pkg, download_dir)
+        if not dir then
+            return nil, err
         else
-            table.insert(fetched_dirs, dir_or_err)
+            table.insert(fetched_dirs, dir)
         end
     end
 
-    return ok, fetched_dirs
+    return fetched_dirs
+end
+
+-- Return table with information about available versions of 'package'.
+function retrieve_versions(package, manifest)
+    assert(type(package) == "string", "package.retrieve_versions: Argument 'string' is not a string.")
+    assert(type(manifest) == "table", "package.retrieve_versions: Argument 'manifest' is not a table.")
+
+    -- get package table
+    local pkg_name = depends.split_name_constraint(package)
+    local tmp_packages = depends.find_packages(pkg_name, manifest)
+
+    if #tmp_packages == 0 then
+        return nil, "No suitable candidate for package '" .. package .. "' found."
+    else
+        package = tmp_packages[1]
+    end
+
+    print("Finding out available versions of " .. package.name .. "...")
+
+    -- get available versions
+    local tags, err = git.get_remote_tags(package.path)
+    if not tags then return nil, "Error when retrieving versions of package '" .. package.name .. "':" .. err end
+
+    -- filter out tags of binary packages
+    local versions = utils.filter(tags, function (tag) return tag:match("^[^%-]+%-?[^%-]*$") and true end)
+
+    packages = {}
+
+    -- create package information
+    for _, version in pairs(versions) do
+        pkg = {}
+        pkg.name = package.name
+        pkg.version = version
+        pkg.path = package.path
+        table.insert(packages, pkg)
+    end
+
+    return packages
+end
+
+-- Return table with information from package's dist.info and path to downloaded
+-- package.
+function retrieve_pkg_info(package)
+    assert(type(package) == "table", "package.retrieve_pkg_info: Argument 'package' is not a table.")
+
+    local tmp_dir = sys.abs_path(sys.make_path(cfg.root_dir, cfg.temp_dir))
+
+    -- download the package
+    local pkg_dir, err = fetch_pkg(package, tmp_dir)
+    if not pkg_dir then return nil, "Error when retrieving the info about '" .. package.name .. "':" .. err end
+
+    -- load information from 'dist.info'
+    local info, err = mf.load_distinfo(sys.make_path(pkg_dir, "dist.info"))
+    if not info then return nil, err end
+
+    -- add 'path' attribute
+    if package.path then info.path = package.path end
+
+    -- set default arch/type if not explicitly stated and package is of source type
+    if sys.exists(sys.make_path(pkg_dir, "CMakeLists.txt")) then
+        info.arch = info.arch or "Universal"
+        info.type = info.type or "source"
+    elseif not (info.arch and info.type) then
+        return nil, pkg_dir .. ": binary package missing arch or type in 'dist.info'."
+    end
+
+    return info, pkg_dir
+end
+
+-- Return manifest, augmented with info about all available versions
+-- of package 'pkg'.
+function get_versions_info(pkg, manifest)
+    assert(type(pkg) == "string", "package.get_versions_info: Argument 'pkg' is not a string.")
+    assert(type(manifest) == "table", "package.get_versions_info: Argument 'manifest' is not a table.")
+
+    -- find all available versions of package
+    local versions, err = retrieve_versions(pkg, manifest)
+    if not versions then return nil, err end
+
+    -- collect info about all these versions
+    local infos = {}
+    for _, version in pairs(versions) do
+        local info, path_or_err = retrieve_pkg_info(version)
+        if not info then return nil, path_or_err end
+        sys.delete(path_or_err)
+        table.insert(infos, info)
+    end
+
+    -- found and add an implicit 'scm' version
+    local pkg_name = depends.split_name_constraint(pkg)
+    local found = depends.find_packages(pkg_name, manifest)
+    if #found == 0 then return nil, "No suitable candidate for package '" .. pkg .. "' found." end
+    local scm_info, path_or_err = retrieve_pkg_info({name = pkg, version = "scm", path = found[1].path})
+    if not scm_info then return nil, path_or_err end
+    sys.delete(path_or_err)
+    scm_info.version = "scm"
+    table.insert(infos, scm_info)
+
+    local tmp_manifest = utils.deepcopy(manifest)
+
+    -- add collected info to the temp. manifest, replacing existing tables
+    for _, info in pairs(infos) do
+        local already_in_manifest = false
+        -- find if this version is already in manifest
+        for idx, pkg in ipairs(tmp_manifest) do
+            -- if yes, replace it
+            if pkg.name == info.name and pkg.version == info.version then
+                tmp_manifest[idx] = info
+                already_in_manifest = true
+                break
+            end
+        end
+        -- if not, just normally add to the manifest
+        if not already_in_manifest then
+            table.insert(tmp_manifest, info)
+        end
+    end
+
+    return tmp_manifest
 end
