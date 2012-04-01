@@ -402,7 +402,7 @@ specified.
                 end
 
                 for _, module in pairs(modules) do
-                    manifest, err = package.get_versions_info(module, manifest)
+                    manifest, err = package.get_versions_info(module, manifest, deploy_dir)
                     if not manifest then
                         print(err)
                         os.exit(1)

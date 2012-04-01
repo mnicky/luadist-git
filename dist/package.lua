@@ -330,11 +330,15 @@ function retrieve_versions(package, manifest)
 end
 
 -- Return table with information from package's dist.info and path to downloaded
--- package.
-function retrieve_pkg_info(package)
+-- package. Optional argument 'deploy_dir' is used just as a temporary
+-- place to place the downloaded packages into.
+function retrieve_pkg_info(package, deploy_dir)
+    deploy_dir = deploy_dir or cfg.root_dir
     assert(type(package) == "table", "package.retrieve_pkg_info: Argument 'package' is not a table.")
+    assert(type(deploy_dir) == "string", "package.retrieve_pkg_info: Argument 'deploy_dir' is not a string.")
+    deploy_dir = sys.abs_path(deploy_dir)
 
-    local tmp_dir = sys.abs_path(sys.make_path(cfg.root_dir, cfg.temp_dir))
+    local tmp_dir = sys.abs_path(sys.make_path(deploy_dir, cfg.temp_dir))
 
     -- download the package
     local pkg_dir, err = fetch_pkg(package, tmp_dir)
@@ -359,10 +363,14 @@ function retrieve_pkg_info(package)
 end
 
 -- Return manifest, augmented with info about all available versions
--- of package 'pkg'.
-function get_versions_info(pkg, manifest)
+-- of package 'pkg'. Optional argument 'deploy_dir' is used just as a temporary
+-- place to place the downloaded packages into.
+function get_versions_info(pkg, manifest, deploy_dir)
+    deploy_dir = deploy_dir or cfg.root_dir
     assert(type(pkg) == "string", "package.get_versions_info: Argument 'pkg' is not a string.")
     assert(type(manifest) == "table", "package.get_versions_info: Argument 'manifest' is not a table.")
+    assert(type(deploy_dir) == "string", "package.get_versions_info: Argument 'deploy_dir' is not a string.")
+    deploy_dir = sys.abs_path(deploy_dir)
 
     -- find all available versions of package
     local versions, err = retrieve_versions(pkg, manifest)
@@ -371,7 +379,7 @@ function get_versions_info(pkg, manifest)
     -- collect info about all these versions
     local infos = {}
     for _, version in pairs(versions) do
-        local info, path_or_err = retrieve_pkg_info(version)
+        local info, path_or_err = retrieve_pkg_info(version, deploy_dir)
         if not info then return nil, path_or_err end
         sys.delete(path_or_err)
         table.insert(infos, info)
