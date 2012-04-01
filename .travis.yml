@@ -15,6 +15,7 @@ env:
 matrix:
   allow_failures:
     - env: LUA="lua-5.2"
+    - env: LUA="luajit"
       
 # We need CMake and LuaDist
 install:
@@ -34,7 +35,7 @@ script:
 # Run the test suite
 after_script:
   - _test/bin/luadist selftest                    # Run self test
-  - _test/bin/luadist _test2 install luadist-git  # Install latest verison of itself
+  - _test/bin/luadist _test2 install lua          # Install latest Lua
 
 # Only watch the master branch
 branches:
