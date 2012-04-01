@@ -78,7 +78,7 @@ function install(package_names, deploy_dir, variables, simulate)
     local manifest = mf.get_manifest()
 
     -- resolve dependencies
-    local dependencies, err = depends.get_depends(package_names, installed, manifest)
+    local dependencies, err = depends.get_depends(package_names, installed, manifest, false, deploy_dir)
     if err then return nil, err end
     if #dependencies == 0 then return nil, "No packages to install." end
 
