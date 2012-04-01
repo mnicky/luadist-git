@@ -7,9 +7,8 @@ language: erlang
 
 # Try using multiple Lua Implementations
 env:
-  - LUA_MODULE=""             # Use automatic dependencies
-#  - LUA_MODULE="lua-5.1.5"    # Force Lua-5.1.5
-#  - LUA_MODULE="luajit"       # Force latest LuaJIT
+  - LUA=""             # Use automatic dependencies
+  - LUA="luajit"       # Try with LuaJIT
 
 # We need CMake and LuaDist
 install:
@@ -19,17 +18,16 @@ install:
   - git submodule update --init
   - ./bootstrap
   - export LUADIST=$PWD/_install/bin/luadist
+  - export MODULE='basename $PWD'
   - cd $HOME
 
 # Use LuaDist to deploy the module
 script:
-  - export MODULE="luadist-git"
-  - $LUADIST _test install $LUA_MODULE $MODULE-scm -verbose=true -debug=true -test=true
+  - $LUADIST _test install $LUA $MODULE-scm -verbose=true -debug=true -test=true
 
 # Run the test suite
 after_script:
   - _test/bin/luadist selftest
-  - set
 
 # Only watch the master branch
 branches:
