@@ -27,6 +27,7 @@ script:
 # Run the test suite
 after_script:
   - _install/bin/luadist/_test/bin/luadist selftest
+  - set
 
 # Only watch the master branch
 branches:

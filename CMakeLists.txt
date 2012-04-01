@@ -47,7 +47,7 @@ install_lua_module ( dist.sys dist/sys.lua )
 install_lua_module ( dist.utils dist/utils.lua )
 
 install_data ( COPYRIGHT.TXT )
-install_data ( README.TXT )
+install_data ( README.md )
 install_test ( test/ )
 
 # Tests
