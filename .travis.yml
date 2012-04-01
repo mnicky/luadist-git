@@ -8,14 +8,15 @@ language: erlang
 # Try using multiple Lua Implementations
 env:
   - LUA_MODULE=""             # Use automatic dependencies
-  - LUA_MODULE="lua-5.1.5"    # Force Lua-5.1.5
-  - LUA_MODULE="luajit"       # Force latest LuaJIT
+#  - LUA_MODULE="lua-5.1.5"    # Force Lua-5.1.5
+#  - LUA_MODULE="luajit"       # Force latest LuaJIT
 
 # We need CMake and LuaDist
 install:
   - sudo apt-get install cmake
   - git clone git://github.com/LuaDist/bootstrap.git _luadist
   - cd _luadist
+  - git submodule update --init
   - ./bootstrap
 
 # Use LuaDist to deploy the module
