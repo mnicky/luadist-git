@@ -18,15 +18,17 @@ install:
   - cd _luadist
   - git submodule update --init
   - ./bootstrap
+  - export LUADIST=$PWD/_install/bin/luadist
+  - cd $HOME
 
 # Use LuaDist to deploy the module
 script:
   - export MODULE="luadist-git"
-  - _install/bin/luadist _test install $LUA_MODULE $MODULE-scm -verbose=true -debug=true -test=true
+  - $LUADIST _test install $LUA_MODULE $MODULE-scm -verbose=true -debug=true -test=true
 
 # Run the test suite
 after_script:
-  - _install/bin/luadist/_test/bin/luadist selftest
+  - _test/bin/luadist selftest
   - set
 
 # Only watch the master branch
