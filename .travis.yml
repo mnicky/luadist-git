@@ -8,8 +8,14 @@ language: erlang
 # Try using multiple Lua Implementations
 env:
   - LUA=""             # Use automatic dependencies
-  #- LUA="luajit"       # Try with LuaJIT
+  - LUA="luajit"       # Check with LuaJIT
+  - LUA="lua~=5.2"     # Try with Lua 5.2 also
 
+# Allow Lua 5.2 based builds to fail
+matrix:
+  allow_failures:
+    - env: LUA="lua~=5.2"
+      
 # We need CMake and LuaDist
 install:
   - export MODULE=`basename $PWD`
