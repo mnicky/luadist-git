@@ -18,7 +18,7 @@ install:
   - git submodule update --init
   - ./bootstrap
   - export LUADIST=$PWD/_install/bin/luadist
-  - export MODULE='basename $PWD'
+  - export MODULE=`basename $PWD`
   - cd $HOME
 
 # Use LuaDist to deploy the module
