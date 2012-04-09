@@ -48,13 +48,6 @@ function download_manifest(dest_dir, repository_urls)
     local manifest_filename = sys.extract_name(cfg.manifest_file)
     local manifest_file = sys.make_path(dest_dir, manifest_filename)
     local temp_dir = sys.make_path(cfg.root_dir, cfg.temp_dir)
-    local temp_manifest_file = sys.make_path(temp_dir, manifest_filename)
-
-    -- make backup and delete the old manifest file
-    if (sys.exists(manifest_file)) then
-        sys.copy(manifest_file, temp_dir)
-        sys.delete(manifest_file)
-    end
 
     -- ensure that destination directory exists
     local ok, err = sys.make_dir(dest_dir)
@@ -87,19 +80,7 @@ function download_manifest(dest_dir, repository_urls)
     -- save the new manifest table to the file
     if ok then ok, err = save_manifest(manifest, manifest_file) end
 
-    -- if error occured, restore the backup and return the error message
-    if not ok then
-        if sys.exists(temp_manifest_file) then
-            sys.copy(temp_manifest_file, dest_dir)
-            sys.delete(temp_manifest_file)
-            err = err .. "\nManifest restored to the previous state from backup."
-        else
-            err = err .. "\nManifest backup not present."
-        end
-        return nil, err
-    end
-
-    if sys.exists(temp_manifest_file) then sys.delete(temp_manifest_file) end
+    if not ok then return nil, err end
     return true
 end
 
