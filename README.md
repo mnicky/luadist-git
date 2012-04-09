@@ -1,4 +1,4 @@
-LuaDist-GIT 
+LuaDist-GIT
 ===========
 
 [![Build Status](https://secure.travis-ci.org/LuaDist/luadist-git.png?branch=master)](http://travis-ci.org/LuaDist/luadist-git)
@@ -12,9 +12,12 @@ Main Goals
  * access git repositories directly and get rid of unnecessary
    dependencies (i.e. luasocket, luasec, md5, openssl, unzip)
 
+ * use .gitmodules as a repository manifest file instead of dist.manifest,
+   thus removing the need to update the manifest after every change in modules
+
  * add functionality for uploading binary versions of modules to repositories
- 
- * Once libgit2[3] matures we will replace the CLI git commands.
+
+ * once libgit2 [3] matures we will replace the CLI git commands
 
 ____________________________________________
 [1] https://github.com/LuaDist
