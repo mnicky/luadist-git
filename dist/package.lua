@@ -145,7 +145,7 @@ function build_pkg(src_dir, build_dir, variables)
 
     -- set machine information
     info.arch = cfg.arch
-	info.type = cfg.type
+    info.type = cfg.type
 
     -- create build dirs
     local pkg_build_dir = sys.abs_path(sys.make_path(build_dir, info.name .. "-" .. info.version .. "-" .. cfg.arch .. "-" .. cfg.type))
