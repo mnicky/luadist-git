@@ -160,6 +160,10 @@ end
 -- and with specified 'installed' packages in the system using 'manifest'.
 -- 'pkg' can also contain version constraint (e.g. 'copas>=1.2.3', 'saci-1.0' etc.).
 --
+-- This function also downloads packages to get information about their dependencies.
+-- Directory where the package was downloaded is stored in 'download_dir' attribute
+-- of that package in the table of packages returned by this function.
+--
 -- When optional 'force_no_download' parameter is set to true, then information
 -- about packages won't be downloaded during dependency resolving, assuming that
 -- entries in the provided manifest are already complete.
@@ -228,9 +232,6 @@ local function get_packages_to_install(pkg, installed, manifest, force_no_downlo
         pkg_is_installed, err = is_installed(pkg.name, tmp_installed, pkg_constraint)
         if pkg_is_installed then break end
 
-        -- path to downloaded package - used to delete unused but downloaded packages
-        local path_to_package = nil
-
         -- download info about the package
         if not force_no_download then
             local path_or_err
@@ -238,7 +239,9 @@ local function get_packages_to_install(pkg, installed, manifest, force_no_downlo
             if not pkg then
                 return nil, path_or_err
             else
-                path_to_package = path_or_err
+                -- set path to downloaded package - used to delete unused but downloaded
+                -- packages and also to install packages selected to install
+                pkg.download_dir = path_or_err
             end
         end
 
@@ -342,12 +345,12 @@ local function get_packages_to_install(pkg, installed, manifest, force_no_downlo
 
             -- if some error occured
             else
+                -- delete the downloaded package
+                if pkg.download_dir then sys.delete(pkg.download_dir) end
+
                 -- set tables of 'packages to install' and 'installed packages' to their original state
                 to_install = {}
                 tmp_installed = utils.deepcopy(installed)
-
-                -- delete the downloaded package
-                if path_to_package then sys.delete(path_to_package) end
 
                 -- add provided packages to installed ones
                 for _, installed_pkg in pairs(tmp_installed) do
@@ -360,7 +363,7 @@ local function get_packages_to_install(pkg, installed, manifest, force_no_downlo
         -- if error occured
         else
             -- delete the downloaded package
-            if path_to_package then sys.delete(path_to_package) end
+            if pkg.download_dir then sys.delete(pkg.download_dir) end
 
             -- if pkg is already installed, skip checking its other candidates
             if pkg_is_installed then break end
