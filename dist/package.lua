@@ -165,12 +165,20 @@ function build_pkg(src_dir, build_dir, variables)
     src_dir = sys.abs_path(src_dir)
     print("Building " .. sys.extract_name(src_dir) .. "...")
 
+    -- set cmake cache command
+    local cache_command = cfg.cache_command
+    if cfg.debug then cache_command = cache_command .. " " .. cfg.cache_debug_options end
+
+    -- set cmake build command
+    local build_command = cfg.build_command
+    if cfg.debug then build_command = build_command .. " " .. cfg.build_debug_options end
+
     -- set the cmake cache
-    local ok = sys.exec("cd " .. sys.quote(cmake_build_dir) .. " && " .. cfg.cmake .. " -C cache.cmake " .. sys.quote(src_dir))
+    local ok = sys.exec("cd " .. sys.quote(cmake_build_dir) .. " && " .. cache_command .. " " .. sys.quote(src_dir))
     if not ok then return nil, "Error preloading the CMake cache script '" .. sys.make_path(cmake_build_dir, "cmake.cache") .. "'" end
 
     -- build with cmake
-    ok = sys.exec("cd " .. sys.quote(cmake_build_dir) .. " && " .. cfg.build_command)
+    ok = sys.exec("cd " .. sys.quote(cmake_build_dir) .. " && " .. build_command)
     if not ok then return nil, "Error building with CMake in directory '" .. cmake_build_dir .. "'" end
 
     -- add dist.info

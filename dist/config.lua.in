@@ -76,11 +76,12 @@ variables = {
 -- Building ----------------------------------------------------------
 cmake         = "cmake"
 ctest         = "ctest"
+
+cache_command = cmake .. " -C cache.cmake"
 build_command = cmake .. " --build . --target install --clean-first"
 
-if debug then
-    cmake = cmake .. " -DCMAKE_VERBOSE_MAKEFILE=true -DCMAKE_BUILD_TYPE=Debug"
-end
+cache_debug_options = "-DCMAKE_VERBOSE_MAKEFILE=true -DCMAKE_BUILD_TYPE=Debug"
+build_debug_options = ""
 
 -- Add -j option to make in case of unix makefiles to speed up builds
 if (variables.CMAKE_GENERATOR == "Unix Makefiles") then
