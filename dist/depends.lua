@@ -62,6 +62,17 @@ function get_installed(deploy_dir)
     return manifest
 end
 
+-- If 'pkg.selected' == true then returns 'selected' else 'installed'.
+-- Used in error messages.
+local function selected_or_installed(pkg)
+    assert(type(pkg) == "table", "depends.selected_or_installed: Argument 'pkg' is not a table.")
+    if pkg.selected == true then
+        return "selected"
+    else
+        return "installed"
+    end
+end
+
 -- Return whether the 'package_name' is installed according to the the manifest 'installed_pkgs'
 -- If optional 'version_wanted' constraint is specified, then installed packages must
 -- also satisfy specified version constraint.
@@ -84,7 +95,7 @@ function is_installed(package_name, installed_pkgs, version_wanted)
                 pkg_is_installed = true
                 break
             else
-                err = "Package '" .. package_name .. (version_wanted and " " .. version_wanted or "") .. "' needed, but installed at version '" .. installed_pkg.version .. "'."
+                err = "Package '" .. package_name .. (version_wanted and " " .. version_wanted or "") .. "' needed, but " .. selected_or_installed(installed_pkg) .. " at version '" .. installed_pkg.version .. "'."
                 break
             end
         end
@@ -98,17 +109,6 @@ end
 local function packages_conflicts(pkg, installed_pkg)
     assert(type(pkg) == "table", "depends.packages_conflicts: Argument 'pkg' is not a table.")
     assert(type(installed_pkg) == "table", "depends.packages_conflicts: Argument 'installed_pkg' is not a table.")
-
-    -- If 'pkg.selected' == true then returns 'selected' else 'installed'.
-    -- Used in error messages.
-    local function selected_or_installed(pkg)
-        assert(type(pkg) == "table", "depends.packages_conflicts.selected_or_installed: Argument 'pkg' is not a table.")
-        if pkg.selected == true then
-            return "selected"
-        else
-            return "installed"
-        end
-    end
 
     -- check if pkg doesn't provide an already installed_pkg
     if pkg.provides then
