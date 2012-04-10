@@ -22,7 +22,7 @@ function get_manifest(manifest_file, force_no_cache)
     -- download new manifest to the cache if not present or cache not used or cache expired
     if not sys.exists(manifest_file) or force_no_cache or not cfg.cache or utils.cache_timeout_expired(cfg.cache_timeout, manifest_file) then
         local manifest_dest = sys.parent_dir(manifest_file) or sys.current_dir()
-        local ok, err = download_manifest(manifest_dest, cfg.repositories)
+        local ok, err = download_manifest(manifest_dest, cfg.repos)
         if not ok then return nil, err end
     end
 
@@ -37,7 +37,7 @@ end
 -- and nil and error message on error.
 function download_manifest(dest_dir, repository_urls)
     dest_dir = dest_dir or sys.make_path(cfg.root_dir, cfg.cache_dir)
-    repository_urls = repository_urls or cfg.repositories
+    repository_urls = repository_urls or cfg.repos
     if type(repository_urls) == "string" then repository_urls = {repository_urls} end
 
     assert(type(dest_dir) == "string", "manifest.download_manifest: Argument 'dest_dir' is not a string.")

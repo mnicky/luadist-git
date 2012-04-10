@@ -23,7 +23,7 @@ manifest_file = cache_dir .. "/.gitmodules"
 log_file      = temp_dir .. "/luadist.log"
 
 -- Repositories ------------------------------------------------------
-repositories = {
+repos = {
     "https://github.com/LuaDist/Repository.git",
 }
 
