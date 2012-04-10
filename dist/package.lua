@@ -367,11 +367,6 @@ function retrieve_pkg_info(package, deploy_dir)
         return nil, pkg_dir .. ": binary package missing arch or type in 'dist.info'."
     end
 
-    -- if 'scm' version, overwrite version information provided by 'dist.info'
-    if package.version == "scm" then
-        info.version = "scm"
-    end
-
     return info, pkg_dir
 end
 
