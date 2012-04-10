@@ -562,7 +562,7 @@ function apply_settings(variable, value)
 
     elseif type(cfg[variable]) == "table" then
         local err
-        value, err = utils.parse_table(value)
+        value, err = utils.make_table(value, ",")
         if not value then
             print("Error when parsing the LuaDist variable '" .. variable .. "': " .. err)
             os.exit(1)

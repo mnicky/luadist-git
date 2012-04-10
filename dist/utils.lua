@@ -66,7 +66,7 @@ end
 -- Return table parsed from the string, retaining only values of number, string,
 -- boolean or table type.
 function parse_table(str)
-    assert(type(str) == "string", "luadist.parse_table: Argument 'str' is not a string.")
+    assert(type(str) == "string", "utils.parse_table: Argument 'str' is not a string.")
 
     -- Retain only number, string, boolean & table values in table 'tbl'.
     local function filter_table(tbl)
@@ -89,6 +89,22 @@ function parse_table(str)
 
     local evaled_table = eval()
     return filter_table(evaled_table)
+end
+
+-- Return table made up from values of the string, separated by separator.
+function make_table(str, separator)
+    assert(type(str) == "string", "utils.make_table: Argument 'str' is not a string.")
+    assert(type(separator) == "string", "utils.make_table: Argument 'separator' is not a string.")
+
+    local tbl = {}
+    for val in str:gmatch("(.-)" .. separator) do
+        table.insert(tbl, val)
+    end
+    local last_val = str:gsub(".-" .. separator, "")
+    if last_val and last_val ~= "" then
+        table.insert(tbl, last_val)
+    end
+    return tbl
 end
 
 -- Return whether the 'cache_timeout' for 'file' has expired.
