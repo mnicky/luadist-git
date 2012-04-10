@@ -80,7 +80,7 @@ function checkout_tag(tag, git_repo_dir)
     assert(type(git_repo_dir) == "string", "git.checkout_tag: Argument 'git_repo_dir' is not a string.")
     git_repo_dir = sys.abs_path(git_repo_dir)
 
-    local command = "git checkout " .. tag
+    local command = "git checkout " .. tag .. " -f"
     if not cfg.debug then command = command .. " -q" end
 
     local ok, err
