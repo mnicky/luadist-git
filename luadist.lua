@@ -509,6 +509,11 @@ local function run_command(deploy_dir, command, other_idx)
                 local variable, value = arg[i]:match("^%-(.-)=(.*)$")
                 apply_settings(variable, value)
 
+            -- LuaDist boolean variable with implicit 'true' value
+            elseif arg[i]:match("^%-(.-)$") then
+                local variable, value = arg[i]:match("^%-(.-)$")
+                apply_settings(variable, "true")
+
             -- not a LuaDist or CMake variable
             else
                 table.insert(items, arg[i])
