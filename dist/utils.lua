@@ -87,7 +87,7 @@ function cache_timeout_expired(cache_timeout, file)
 end
 
 -- Return the string 'str', with all magic (pattern) characters escaped.
-function escape(str)
+function escape_magic(str)
     assert(type(str) == "string", "utils.escape: Argument 'str' is not a string.")
     local escaped = str:gsub('[%-%.%+%[%]%(%)%^%%%?%*%^%$]','%%%1')
     return escaped

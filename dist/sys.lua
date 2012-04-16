@@ -121,7 +121,7 @@ function parent_dir(path)
         path = path:sub(1,-2)
     end
 
-    local dir = path:gsub(utils.escape(extract_name(path)) .. "$", "")
+    local dir = path:gsub(utils.escape_magic(extract_name(path)) .. "$", "")
     if dir == "" then
         return nil
     else
