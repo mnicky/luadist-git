@@ -429,6 +429,10 @@ function get_depends(packages, installed, manifest, force_no_download, deploy_di
                 end
             end
         else
+            -- delete already downloaded packages
+            for _, pkg in pairs(to_install) do
+                if pkg.download_dir then sys.delete(pkg.download_dir) end
+            end
             return nil, "Cannot install package '" .. pkg .. "': ".. err
         end
     end
