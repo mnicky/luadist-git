@@ -63,34 +63,6 @@ function table_tostring(tbl, label)
     return str
 end
 
--- Return table parsed from the string, retaining only values of number, string,
--- boolean or table type.
-function parse_table(str)
-    assert(type(str) == "string", "utils.parse_table: Argument 'str' is not a string.")
-
-    -- Retain only number, string, boolean & table values in table 'tbl'.
-    local function filter_table(tbl)
-        tbl = deepcopy(tbl)
-        local tmp_tbl = {}
-        for k,v in pairs(tbl) do
-            if type(v) == "table" then
-                tmp_tbl[k] = filter_table(v)
-            elseif type(v) == "number" or type(v) == "string" or type(v) == "boolean" then
-                tmp_tbl[k] = v
-            end
-        end
-        return tmp_tbl
-    end
-
-    str = "return " .. str
-
-    local eval, err = loadstring(str)
-    if not eval then return nil, err end
-
-    local evaled_table = eval()
-    return filter_table(evaled_table)
-end
-
 -- Return table made up from values of the string, separated by separator.
 function make_table(str, separator)
     assert(type(str) == "string", "utils.make_table: Argument 'str' is not a string.")
@@ -119,17 +91,4 @@ function escape(str)
     assert(type(str) == "string", "utils.escape: Argument 'str' is not a string.")
     local escaped = str:gsub('[%-%.%+%[%]%(%)%^%%%?%*%^%$]','%%%1')
     return escaped
-end
-
--- If the table 'array' contains another table with specified key associated with
--- specified value, then return index of that another table, else return nil.
-function find_index(array, key, value)
-    assert(type(array) == "table", "utils.contains: Argument 'array' is not a table.")
-    assert(type(key) == "string", "utils.contains: Argument 'key' is not a string.")
-
-    for idx, item in pairs(array) do
-        if type(item) == "table" and item[key] and type(item[key]) == type(value) and item[key] == value then return idx end
-    end
-
-    return nil
 end
