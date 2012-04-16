@@ -401,8 +401,10 @@ specified.
                     print("NOTE: More than 5 modules specified - operation may take a longer time.")
                 end
 
+                local deployed = dist.get_deployed(deploy_dir)
+
                 for _, module in pairs(modules) do
-                    manifest, err = package.get_versions_info(module, manifest, deploy_dir)
+                    manifest, err = package.get_versions_info(module, manifest, deploy_dir, deployed)
                     if not manifest then
                         print(err)
                         os.exit(1)
@@ -411,11 +413,10 @@ specified.
 
                 modules = depends.find_packages(modules, manifest)
                 modules = depends.sort_by_names(modules)
-                local deployed = dist.get_deployed(deploy_dir)
 
                 print("")
                 for _, pkg in pairs(modules) do
-                    print("  " .. pkg.name .. "-" .. pkg.version .. "  (" .. pkg.arch .. "-" .. pkg.type ..")")
+                    print("  " .. pkg.name .. "-" .. pkg.version .. "  (" .. pkg.arch .. "-" .. pkg.type ..")" .. (pkg.from_installed and "  [info taken from installed version]" or ""))
                     print("  Description: " .. (pkg.desc or "N/A"))
                     print("  Author: " .. (pkg.author or "N/A"))
                     print("  Homepage: " .. (pkg.url or "N/A"))

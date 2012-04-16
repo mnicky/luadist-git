@@ -379,7 +379,10 @@ end
 -- Return manifest, augmented with info about all available versions
 -- of package 'pkg'. Optional argument 'deploy_dir' is used just as a temporary
 -- place to place the downloaded packages into.
-function get_versions_info(pkg, manifest, deploy_dir)
+-- Optional argument 'installed' is manifest of all installed packages. When
+-- specified, info from installed packages won't be downloaded from repo,
+-- but the dist.info from installed package will be used.
+function get_versions_info(pkg, manifest, deploy_dir, installed)
     deploy_dir = deploy_dir or cfg.root_dir
     assert(type(pkg) == "string", "package.get_versions_info: Argument 'pkg' is not a string.")
     assert(type(manifest) == "table", "package.get_versions_info: Argument 'manifest' is not a table.")
@@ -390,12 +393,27 @@ function get_versions_info(pkg, manifest, deploy_dir)
     local versions, err = retrieve_versions(pkg, manifest)
     if not versions then return nil, err end
 
-    -- collect info about all these versions
+    -- collect info about all retrieved versions
     local infos = {}
     for _, version in pairs(versions) do
-        local info, path_or_err = retrieve_pkg_info(version, deploy_dir)
-        if not info then return nil, path_or_err end
-        sys.delete(path_or_err)
+
+        local info, path_or_err
+        local installed_version = {}
+
+        -- find out whether this 'version' is installed so we can use it's dist.info
+        if type(installed) == "table" then installed_version = depends.find_packages(version.name .. "-" .. version.version, installed) end
+
+        -- get info
+        if #installed_version > 0 then
+            print("Using dist.info from installed " .. version.name .. "-" .. version.version)
+            info = installed_version[1]
+            info.path = version.path
+            info.from_installed = true  -- flag that dist.info of installed package was used
+        else
+            info, path_or_err = retrieve_pkg_info(version, deploy_dir)
+            if not info then return nil, path_or_err end
+            sys.delete(path_or_err)
+        end
         table.insert(infos, info)
     end
 
