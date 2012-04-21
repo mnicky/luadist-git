@@ -24,7 +24,7 @@ function clone(repository_url, dest_dir, depth, branch)
         command = command .. " -b " .. branch
     end
 
-    command = command .. " " .. dest_dir
+    command = command .. " " .. sys.quote(dest_dir)
     if sys.exists(dest_dir) then sys.delete(dest_dir) end
     sys.make_dir(dest_dir)
 

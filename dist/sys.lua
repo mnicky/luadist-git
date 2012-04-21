@@ -12,10 +12,15 @@ local lfs = require "lfs"
 function quote(argument)
     assert(type(argument) == "string", "sys.quote: Argument 'argument' is not a string.")
 
-    argument = string.gsub(argument, "\\",  "\\\\")
-    argument = string.gsub(argument, "\'",  "'\\''")
+    -- replace '/' path separators for '\' on Windows
+    if cfg.arch == "Windows" and argument:match("^[%u%U\.]?:?[/\\].*") then
+        argument = argument:gsub("//","\\"):gsub("/","\\")
+    end
 
-    return "'" .. argument .. "'"
+    argument = string.gsub(argument, "\\",  "\\\\")
+    argument = string.gsub(argument, '"',  '\\"')
+
+    return '"' .. argument .. '"'
 end
 
 -- Run the system command (in current directory).
@@ -153,10 +158,18 @@ function abs_path(path)
     local cur_dir, err = current_dir()
     if not cur_dir then return nil, err end
 
-    if path:sub(1,1) == "/" then
-        return path
+    if cfg.arch == "Windows" then
+        if path:match("%u:[/\\].*") then
+            return path
+        else
+            return make_path(cur_dir, path)
+        end
     else
-        return make_path(cur_dir, path)
+        if path:sub(1,1) == "/" then
+            return path
+        else
+            return make_path(cur_dir, path)
+        end
     end
 end
 
@@ -258,7 +271,7 @@ function copy(source, dest_dir)
 
     if cfg.arch == "Windows" then
         if is_dir(source) then
-            mkdir(make_path(dest_dir, extract_name(source)))
+            make_dir(make_path(dest_dir, extract_name(source)))
             return exec("xcopy /E /I /Y /Q " .. quote(source) .. " " .. quote(dest_dir .. "\\" .. extract_name(source)))
         else
             return exec("copy /Y " .. quote(source) .. " " .. quote(dest_dir))
