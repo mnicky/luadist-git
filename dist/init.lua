@@ -75,7 +75,8 @@ function install(package_names, deploy_dir, variables, simulate)
     local installed = depends.get_installed(deploy_dir)
 
     -- get manifest
-    local manifest = mf.get_manifest()
+    local manifest, err = mf.get_manifest()
+    if not manifest then return nil, err end
 
     -- resolve dependencies
     local dependencies, err = depends.get_depends(package_names, installed, manifest, false, deploy_dir)
