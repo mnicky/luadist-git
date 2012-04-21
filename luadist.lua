@@ -19,23 +19,24 @@ commands = {
 LuaDist-git is Lua package manager for the LuaDist deployment system.
 Released under the MIT License. See https://github.com/luadist/luadist-git
 
-        Usage: luadist [DEPLOYMENT_DIRECTORY] <COMMAND> [ARGUMENTS...] [-VARIABLES...]
+Usage: luadist [DEPLOYMENT_DIRECTORY] <COMMAND> [ARGUMENTS...] [-VARIABLES...]
 
-        Commands:
+    Commands:
 
-            help      - print this help
-            install   - install modules
-            remove    - remove modules
-            refresh   - update information about modules in repositories
-            list      - list installed modules
-            info      - show information about modules
-            search    - search repositories for modules
-            fetch     - download modules
-            make      - manually deploy modules from local paths
-            selftest  - run the selftest of LuaDist
+        help      - print this help
+        install   - install modules
+        remove    - remove modules
+        refresh   - update information about modules in repositories
+        list      - list installed modules
+        info      - show information about modules
+        search    - search repositories for modules
+        fetch     - download modules
+        make      - manually deploy modules from local paths
+        selftest  - run the selftest of LuaDist
 
-        To get help on specific command, run:
-            luadist help <COMMAND>
+    To get help on specific command, run:
+
+        luadist help <COMMAND>
         ]],
         run = function (deploy_dir, help_item)
             deploy_dir = deploy_dir or dist.get_deploy_dir()
