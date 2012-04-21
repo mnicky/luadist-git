@@ -139,7 +139,11 @@ function make_path(...)
     if parts.n == 0 then
         path, err = current_dir()
     else
-        path, err = table.concat(parts, "/")
+        if cfg.arch == "Windows" then
+            path, err = table.concat(parts, "\\")
+        else
+            path, err = table.concat(parts, "/")
+        end
     end
     if not path then return nil, err end
 
@@ -153,10 +157,18 @@ function abs_path(path)
     local cur_dir, err = current_dir()
     if not cur_dir then return nil, err end
 
-    if path:sub(1,1) == "/" then
-        return path
+    if cfg.arch == "Windows" then
+        if path:match("%u:\\.*") then
+            return path
+        else
+            return make_path(cur_dir, path)
+        end
     else
-        return make_path(cur_dir, path)
+        if path:sub(1,1) == "/" then
+            return path
+        else
+            return make_path(cur_dir, path)
+        end
     end
 end
 
@@ -170,7 +182,14 @@ function get_file_list(dir)
         for item in get_directory(path) do
 
             local item_path = make_path(path, item)
-            local _, last = item_path:find(dir .. "/", 1, true)
+
+            local _, last
+            if cfg.arch == "Windows" then
+                _, last = item_path:find(dir .. "\\", 1, true)
+            else
+                _, last = item_path:find(dir .. "/", 1, true)
+            end
+
             local path_to_insert = item_path:sub(last + 1)
 
             if is_file(item_path) then
