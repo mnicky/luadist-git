@@ -266,7 +266,7 @@ function fetch_pkg(pkg, download_dir)
 
     if not ok then
         -- clean up
-        sys.delete(clone_dir)
+        if not cfg.debug then sys.delete(clone_dir) end
         return nil, "Error fetching package '" .. pkg_full_name .. "' from '" .. pkg.path .. "' to '" .. download_dir .. "': " .. err
     end
 
