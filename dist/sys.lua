@@ -67,6 +67,13 @@ end
 function exists(path)
     assert(type(path) == "string", "sys.exists: Argument 'path' is not a string.")
 
+    path = path:gsub("\\", "/")
+
+    -- remove the trailing '/' character
+    if (path:sub(-1) == "/") then
+        path = path:sub(1,-2)
+    end
+
     return lfs.attributes(path)
 end
 
