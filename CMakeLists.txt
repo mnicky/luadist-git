@@ -22,7 +22,7 @@ elseif ( MSVC )
 	set ( DETECTED_TYPE MSVC32 )
 endif ()
 
-set ( DIST_VERSION 1.2 )
+set ( DIST_VERSION 0.1.1 )
 set ( DIST_TYPE ${DETECTED_TYPE} CACHE STRING "Host system type. PLEASE CHECK!" FORCE )
 set ( DIST_ARCH ${DETECTED_ARCH} CACHE STRING "Host system architecture. PLEASE CHECK!" FORCE )
 
