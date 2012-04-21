@@ -18,9 +18,9 @@ function quote(argument)
     end
 
     argument = string.gsub(argument, "\\",  "\\\\")
-    argument = string.gsub(argument, "\'",  "'\\''")
+    argument = string.gsub(argument, '"',  '\\"')
 
-    return "'" .. argument .. "'"
+    return '"' .. argument .. '"'
 end
 
 -- Run the system command (in current directory).
@@ -271,7 +271,7 @@ function copy(source, dest_dir)
 
     if cfg.arch == "Windows" then
         if is_dir(source) then
-            mkdir(make_path(dest_dir, extract_name(source)))
+            make_dir(make_path(dest_dir, extract_name(source)))
             return exec("xcopy /E /I /Y /Q " .. quote(source) .. " " .. quote(dest_dir .. "\\" .. extract_name(source)))
         else
             return exec("copy /Y " .. quote(source) .. " " .. quote(dest_dir))
