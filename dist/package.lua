@@ -257,7 +257,7 @@ function fetch_pkg(pkg, download_dir)
 
     -- clone pkg's repository
     print("Getting " .. pkg_full_name .. "...")
-    local ok, err = git.clone(repo_url, clone_dir, 1)
+    local ok, err = git.clone(repo_url, clone_dir)
 
     -- checkout git tag according to the version of pkg
     if ok and pkg.version ~= "scm" then
