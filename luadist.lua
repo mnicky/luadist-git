@@ -16,7 +16,7 @@ commands = {
     -- Print help for this command line interface.
     ["help"] = {
         help = [[
-LuaDist-git is Lua package manager for the LuaDist deployment system.
+LuaDist-git ]].. cfg.version .. [[ - Lua package manager for the LuaDist deployment system.
 Released under the MIT License. See https://github.com/luadist/luadist-git
 
 Usage: luadist [DEPLOYMENT_DIRECTORY] <COMMAND> [ARGUMENTS...] [-VARIABLES...]
