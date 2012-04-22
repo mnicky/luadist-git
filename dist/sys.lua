@@ -91,7 +91,14 @@ end
 
 -- Return the current working directory
 function current_dir()
-    return lfs.currentdir()
+    local dir, err = lfs.currentdir()
+    if not dir then return nil, err end
+
+    if cfg.arch == "Windows" then
+        return dir:gsub("\\", "/")
+    else
+        return dir
+    end
 end
 
 -- Return iterator over directory dir.
