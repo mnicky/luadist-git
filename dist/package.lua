@@ -85,7 +85,7 @@ function install_pkg(pkg_dir, deploy_dir, variables, preserve_pkg_dir, simulate)
 
     local ok, err
 
-    -- if package is of source type, just deploy it
+    -- if package is of binary type, just deploy it
     if info.type ~= "source" then
         ok, err = deploy_pkg(pkg_dir, deploy_dir, simulate)
 
