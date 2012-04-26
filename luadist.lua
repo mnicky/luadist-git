@@ -313,12 +313,9 @@ specified.
 Usage: luadist [DEPLOYMENT_DIRECTORY] search [STRINGS...] [-VARIABLES...]
 
 The 'search' command will list all modules from repositories, which contain
-one or more STRINGS. This command also shows whether modules are installed
-in DEPLOYMENT_DIRECTORY.
+one or more STRINGS.
 
-If no STRINGS are specified, all available modules are listed. If
-DEPLOYMENT_DIRECTORY is not specified, the deployment directory of LuaDist is
-used. Only modules suitable for the platform LuaDist is running on are showed.
+If no STRINGS are specified, all available modules are listed.
 
 Optional LuaDist configuration VARIABLES (e.g. -variable=value) can be
 specified.
@@ -339,7 +336,6 @@ specified.
 
             available = depends.filter_packages_by_strings(available, strings)
             available = depends.sort_by_names(available)
-            local deployed = dist.get_deployed(deploy_dir)
 
             print("\nModules found:")
             print("==============\n")
