@@ -421,7 +421,7 @@ function get_versions_info(pkg, manifest, deploy_dir, installed)
     local pkg_name = depends.split_name_constraint(pkg)
     local found = depends.find_packages(pkg_name, manifest)
     if #found == 0 then return nil, "No suitable candidate for package '" .. pkg .. "' found." end
-    local scm_info, path_or_err = retrieve_pkg_info({name = pkg, version = "scm", path = found[1].path})
+    local scm_info, path_or_err = retrieve_pkg_info({name = pkg_name, version = "scm", path = found[1].path})
     if not scm_info then return nil, path_or_err end
     sys.delete(path_or_err)
     scm_info.version = "scm"
