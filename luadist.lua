@@ -118,7 +118,8 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] remove MODULES... [-VARIABLES...]
     Optional LuaDist configuration VARIABLES (e.g. -variable=value) can be
     specified.
 
-    WARNING: dependencies between modules are NOT taken into account!
+    WARNING: dependencies between modules are NOT taken into account when
+    removing modules!
         ]],
 
         run = function (deploy_dir, modules)
@@ -192,8 +193,8 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] make [-s] MODULE_PATHS... [-VARIABLES...]
     The -simulate configuration option makes LuaDist only to simulate the
     deployment of modules (no modules will be really deployed).
 
-    WARNING: this command does NOT check whether the dependencies of modules
-    are satisfied or not!
+    WARNING: this command does NOT check whether the dependencies of deployed
+    modules are satisfied or not!
         ]],
 
         run = function (deploy_dir, module_paths, cmake_variables)
