@@ -542,9 +542,9 @@ function apply_settings(variable, value)
 
     elseif type(cfg[variable]) == "boolean" then
         value = value:lower()
-        if value == "true" or value == "on" or value == "1" then
+        if value == "true" or value == "yes" or value == "on" or value == "1" then
             value = true
-        elseif value == "false" or value == "off" or value == "0" then
+        elseif value == "false" or value == "no" or value == "off" or value == "0" then
             value = false
         else
             print("Value of LuaDist option '" .. variable .. "' must be a boolean.")
