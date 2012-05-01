@@ -61,17 +61,18 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] <COMMAND> [ARGUMENTS...] [-VARIABLES...]
         help = [[
 Usage: luadist [DEPLOYMENT_DIRECTORY] install MODULES... [-VARIABLES...]
 
-The 'install' command will install specified modules to DEPLOYMENT_DIRECTORY.
-LuaDist will also automatically resolve, download and install all dependencies.
+    The 'install' command will install specified modules to
+    DEPLOYMENT_DIRECTORY. LuaDist will also automatically resolve, download
+    and install all dependencies.
 
-If DEPLOYMENT_DIRECTORY is not specified, the deployment directory of LuaDist
-is used.
+    If DEPLOYMENT_DIRECTORY is not specified, the deployment directory
+    of LuaDist is used.
 
-Optional CMake VARIABLES in -D format (e.g. -Dvariable=value) or LuaDist
-configuration VARIABLES (e.g. -variable=value) can be specified.
+    Optional CMake VARIABLES in -D format (e.g. -Dvariable=value) or LuaDist
+    configuration VARIABLES (e.g. -variable=value) can be specified.
 
-The -simulate configuration option makes LuaDist only to simulate the
-installation of modules (no modules will be really installed).
+    The -simulate configuration option makes LuaDist only to simulate the
+    installation of modules (no modules will be really installed).
         ]],
 
         run = function (deploy_dir, modules, cmake_variables)
@@ -108,15 +109,16 @@ installation of modules (no modules will be really installed).
         help = [[
 Usage: luadist [DEPLOYMENT_DIRECTORY] remove MODULES... [-VARIABLES...]
 
-The 'remove' command will remove specified modules from DEPLOYMENT_DIRECTORY.
+    The 'remove' command will remove specified modules from
+    DEPLOYMENT_DIRECTORY.
 
-If DEPLOYMENT_DIRECTORY is not specified, the deployment directory of LuaDist
-is used.
+    If DEPLOYMENT_DIRECTORY is not specified, the deployment directory
+    of LuaDist is used.
 
-Optional LuaDist configuration VARIABLES (e.g. -variable=value) can be
-specified.
+    Optional LuaDist configuration VARIABLES (e.g. -variable=value) can be
+    specified.
 
-WARNING: dependencies between modules are NOT taken into account!
+    WARNING: dependencies between modules are NOT taken into account!
         ]],
 
         run = function (deploy_dir, modules)
@@ -147,14 +149,14 @@ WARNING: dependencies between modules are NOT taken into account!
         help = [[
 Usage: luadist [DEPLOYMENT_DIRECTORY] refresh [-VARIABLES...]
 
-The 'refresh' command will update information about modules in all software
-repositories of specified DEPLOYMENT_DIRECTORY.
+    The 'refresh' command will update information about modules in all software
+    repositories of specified DEPLOYMENT_DIRECTORY.
 
-If DEPLOYMENT_DIRECTORY is not specified, the deployment directory of LuaDist
-is used.
+    If DEPLOYMENT_DIRECTORY is not specified, the deployment directory
+    of LuaDist is used.
 
-Optional LuaDist configuration VARIABLES (e.g. -variable=value) can be
-specified.
+    Optional LuaDist configuration VARIABLES (e.g. -variable=value) can be
+    specified.
         ]],
 
         run = function (deploy_dir)
@@ -178,20 +180,20 @@ specified.
         help = [[
 Usage: luadist [DEPLOYMENT_DIRECTORY] make [-s] MODULE_PATHS... [-VARIABLES...]
 
-The 'make' command will manually deploy modules from specified local
-MODULE_PATHS into the DEPLOYMENT_DIRECTORY.
+    The 'make' command will manually deploy modules from specified local
+    MODULE_PATHS into the DEPLOYMENT_DIRECTORY.
 
-The MODULE_PATHS will be preserved. If DEPLOYMENT_DIRECTORY is not specified,
-the deployment directory of LuaDist is used.
+    The MODULE_PATHS will be preserved. If DEPLOYMENT_DIRECTORY is not
+    specified, the deployment directory of LuaDist is used.
 
-Optional CMake VARIABLES in -D format (e.g. -Dvariable=value) or LuaDist
-configuration VARIABLES (e.g. -variable=value) can be specified.
+    Optional CMake VARIABLES in -D format (e.g. -Dvariable=value) or LuaDist
+    configuration VARIABLES (e.g. -variable=value) can be specified.
 
-The -simulate configuration option makes LuaDist only to simulate the
-deployment of modules (no modules will be really deployed).
+    The -simulate configuration option makes LuaDist only to simulate the
+    deployment of modules (no modules will be really deployed).
 
-WARNING: this command does NOT check whether the dependencies of modules are
-satisfied or not!
+    WARNING: this command does NOT check whether the dependencies of modules
+    are satisfied or not!
         ]],
 
         run = function (deploy_dir, module_paths, cmake_variables)
@@ -227,15 +229,15 @@ satisfied or not!
         help = [[
 Usage: luadist [FETCH_DIRECTORY] fetch MODULES... [-VARIABLES...]
 
-The 'fetch' command will download specified MODULES to the FETCH_DIRECTORY.
+    The 'fetch' command will download specified MODULES to the FETCH_DIRECTORY.
 
-If no FETCH_DIRECTORY is specified, the temporary directory of LuaDist
-deployment directory (i.e. ']] .. cfg.temp_dir .. [[') is used.
-If the version is not specified in module name, the most recent version
-available will be downloaded.
+    If no FETCH_DIRECTORY is specified, the temporary directory of LuaDist
+    deployment directory (i.e. ']] .. cfg.temp_dir .. [[') is used.
+    If the version is not specified in module name, the most recent version
+    available will be downloaded.
 
-Optional LuaDist configuration VARIABLES (e.g. -variable=value) can be
-specified.
+    Optional LuaDist configuration VARIABLES (e.g. -variable=value) can be
+    specified.
         ]],
 
         run = function (fetch_dir, modules)
@@ -271,14 +273,15 @@ specified.
         help = [[
 Usage: luadist [DEPLOYMENT_DIRECTORY] list [STRINGS...] [-VARIABLES...]
 
-The 'list' command will list all modules installed in specified
-DEPLOYMENT_DIRECTORY, which contain one or more optional STRINGS.
+    The 'list' command will list all modules installed in specified
+    DEPLOYMENT_DIRECTORY, which contain one or more optional STRINGS.
 
-If DEPLOYMENT_DIRECTORY is not specified, the deployment directory of LuaDist
-is used. If STRINGS are not specified, all installed modules are listed.
+    If DEPLOYMENT_DIRECTORY is not specified, the deployment directory
+    of LuaDist is used. If STRINGS are not specified, all installed modules
+    are listed.
 
-Optional LuaDist configuration VARIABLES (e.g. -variable=value) can be
-specified.
+    Optional LuaDist configuration VARIABLES (e.g. -variable=value) can be
+    specified.
         ]],
 
         run = function (deploy_dir, strings)
@@ -306,13 +309,13 @@ specified.
         help = [[
 Usage: luadist [DEPLOYMENT_DIRECTORY] search [STRINGS...] [-VARIABLES...]
 
-The 'search' command will list all modules from repositories, which contain
-one or more STRINGS.
+    The 'search' command will list all modules from repositories, which contain
+    one or more STRINGS.
 
-If no STRINGS are specified, all available modules are listed.
+    If no STRINGS are specified, all available modules are listed.
 
-Optional LuaDist configuration VARIABLES (e.g. -variable=value) can be
-specified.
+    Optional LuaDist configuration VARIABLES (e.g. -variable=value) can be
+    specified.
         ]],
 
         run = function (deploy_dir, strings)
@@ -346,15 +349,16 @@ specified.
         help = [[
 Usage: luadist [DEPLOYMENT_DIRECTORY] info [MODULES...] [-VARIABLES...]
 
-The 'info' command shows information about specified modules from repositories.
-This command also shows whether modules are installed in DEPLOYMENT_DIRECTORY.
+    The 'info' command shows information about specified modules from
+    repositories. This command also shows whether modules are installed
+    in DEPLOYMENT_DIRECTORY.
 
-If no MODULES are specified, all available modules are showed.
-If DEPLOYMENT_DIRECTORY is not specified, the deployment directory of LuaDist
-is used.
+    If no MODULES are specified, all available modules are showed.
+    If DEPLOYMENT_DIRECTORY is not specified, the deployment directory
+    of LuaDist is used.
 
-Optional LuaDist configuration VARIABLES (e.g. -variable=value) can be
-specified.
+    Optional LuaDist configuration VARIABLES (e.g. -variable=value) can be
+    specified.
         ]],
 
         run = function (deploy_dir, modules)
@@ -431,14 +435,14 @@ specified.
         help = [[
 Usage: luadist [TEST_DIRECTORY] selftest [-VARIABLES...]
 
-The 'selftest' command runs tests of LuaDist, located in TEST_DIRECTORY and
-displays the results.
+    The 'selftest' command runs tests of LuaDist, located in TEST_DIRECTORY and
+    displays the results.
 
-If no TEST_DIRECTORY is specified, the default test directory of LuaDist
-deployment directory (i.e. ']] .. cfg.test_dir .. [[') is used.
+    If no TEST_DIRECTORY is specified, the default test directory of LuaDist
+    deployment directory (i.e. ']] .. cfg.test_dir .. [[') is used.
 
-Optional LuaDist configuration VARIABLES (e.g. -variable=value) can be
-specified.
+    Optional LuaDist configuration VARIABLES (e.g. -variable=value) can be
+    specified.
         ]],
 
         run = function (test_dir)
