@@ -179,7 +179,7 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] refresh [-VARIABLES...]
     -- Manually deploy modules.
     ["make"] = {
         help = [[
-Usage: luadist [DEPLOYMENT_DIRECTORY] make [-s] MODULE_PATHS... [-VARIABLES...]
+Usage: luadist [DEPLOYMENT_DIRECTORY] make MODULE_PATHS... [-VARIABLES...]
 
     The 'make' command will manually deploy modules from specified local
     MODULE_PATHS into the DEPLOYMENT_DIRECTORY.
