@@ -58,17 +58,13 @@ function update_manifest(deploy_dir)
 end
 
 -- Install 'package_names' to 'deploy_dir', using optional CMake 'variables'.
--- If optional 'simulate' argument is true, the installation of packages will
--- be only simulated.
-function install(package_names, deploy_dir, variables, simulate)
+function install(package_names, deploy_dir, variables)
     if not package_names then return true end
     deploy_dir = deploy_dir or cfg.root_dir
-    simulate = simulate or false
     if type(package_names) == "string" then package_names = {package_names} end
 
     assert(type(package_names) == "table", "dist.install: Argument 'package_names' is not a table or string.")
     assert(type(deploy_dir) == "string", "dist.install: Argument 'deploy_dir' is not a string.")
-    assert(type(simulate) == "boolean", "dist.install: Argument 'simulate' is not a boolean.")
     deploy_dir = sys.abs_path(deploy_dir)
 
     -- find installed packages
@@ -89,7 +85,7 @@ function install(package_names, deploy_dir, variables, simulate)
 
     -- install fetched packages
     for _, dir in pairs(dirs) do
-        ok, err = package.install_pkg(dir, deploy_dir, variables, false, simulate)
+        ok, err = package.install_pkg(dir, deploy_dir, variables, false)
         if not ok then return nil, err end
     end
 
@@ -98,21 +94,17 @@ end
 
 -- Manually deploy packages from 'package_paths' to 'deploy_dir', using optional
 -- CMake 'variables'. The 'package_paths' are preserved (will not be deleted).
--- If optional 'simulate' argument is true, the deployment of packages will
--- be only simulated.
-function make(deploy_dir, package_paths, variables, simulate)
+function make(deploy_dir, package_paths, variables)
     deploy_dir = deploy_dir or cfg.root_dir
     package_paths = package_paths or {}
-    simulate = simulate or false
 
     assert(type(deploy_dir) == "string", "dist.make: Argument 'deploy_dir' is not a string.")
     assert(type(package_paths) == "table", "dist.make: Argument 'package_paths' is not a table.")
-    assert(type(simulate) == "boolean", "dist.install: Argument 'simulate' is not a boolean.")
     deploy_dir = sys.abs_path(deploy_dir)
 
     local ok, err
     for _, path in pairs(package_paths) do
-        ok, err = package.install_pkg(sys.abs_path(path), deploy_dir, variables, true, simulate)
+        ok, err = package.install_pkg(sys.abs_path(path), deploy_dir, variables, true)
         if not ok then return nil, err end
     end
     return ok

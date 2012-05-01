@@ -59,7 +59,7 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] <COMMAND> [ARGUMENTS...] [-VARIABLES...]
     -- Install modules.
     ["install"] = {
         help = [[
-Usage: luadist [DEPLOYMENT_DIRECTORY] install [-s] MODULES... [-VARIABLES...]
+Usage: luadist [DEPLOYMENT_DIRECTORY] install MODULES... [-VARIABLES...]
 
 The 'install' command will install specified modules to DEPLOYMENT_DIRECTORY.
 LuaDist will also automatically resolve, download and install all dependencies.
@@ -70,8 +70,8 @@ is used.
 Optional CMake VARIABLES in -D format (e.g. -Dvariable=value) or LuaDist
 configuration VARIABLES (e.g. -variable=value) can be specified.
 
-The -s option makes LuaDist only to simulate the installation of modules
-(no modules will be really installed).
+The -simulate configuration option makes LuaDist only to simulate the
+installation of modules (no modules will be really installed).
         ]],
 
         run = function (deploy_dir, modules, cmake_variables)
@@ -83,10 +83,7 @@ The -s option makes LuaDist only to simulate the installation of modules
             assert(type(cmake_variables) == "table", "luadist.install: Argument 'cmake_variables' is not a table.")
             deploy_dir = sys.abs_path(deploy_dir)
 
-            local simulate_only = false
-            if modules[1] == "-s" then
-                simulate_only = true
-                table.remove(modules, 1)
+            if cfg.simulate then
                 print("NOTE: this is just simulation.")
             end
 
@@ -95,12 +92,12 @@ The -s option makes LuaDist only to simulate the installation of modules
                 return 0
             end
 
-            local ok, err = dist.install(modules, deploy_dir, cmake_variables, simulate_only)
+            local ok, err = dist.install(modules, deploy_dir, cmake_variables)
             if not ok then
                 print(err)
                 os.exit(1)
             else
-               print((simulate_only and "Simulated installation" or "Installation") .. " successful.")
+               print((cfg.simulate and "Simulated installation" or "Installation") .. " successful.")
                return 0
             end
         end
@@ -190,8 +187,8 @@ the deployment directory of LuaDist is used.
 Optional CMake VARIABLES in -D format (e.g. -Dvariable=value) or LuaDist
 configuration VARIABLES (e.g. -variable=value) can be specified.
 
-The -s option makes LuaDist only to simulate the deployment of modules
-(no modules will be really deployed).
+The -simulate configuration option makes LuaDist only to simulate the
+deployment of modules (no modules will be really deployed).
 
 WARNING: this command does NOT check whether the dependencies of modules are
 satisfied or not!
@@ -206,10 +203,7 @@ satisfied or not!
             assert(type(cmake_variables) == "table", "luadist.make: Argument 'cmake_variables' is not a table.")
             deploy_dir = sys.abs_path(deploy_dir)
 
-            local simulate_only = false
-            if module_paths[1] == "-s" then
-                simulate_only = true
-                table.remove(module_paths, 1)
+            if cfg.simulate then
                 print("NOTE: this is just simulation.")
             end
 
@@ -218,12 +212,12 @@ satisfied or not!
                 return 0
             end
 
-            local ok, err = dist.make(deploy_dir, module_paths, cmake_variables, simulate_only)
+            local ok, err = dist.make(deploy_dir, module_paths, cmake_variables)
             if not ok then
                 print(err)
                 os.exit(1)
             end
-            print((simulate_only and "Simulated deployment" or "Deployment") .. " successful.")
+            print((cfg.simulate and "Simulated deployment" or "Deployment") .. " successful.")
             return 0
         end
     },

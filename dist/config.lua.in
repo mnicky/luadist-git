@@ -30,6 +30,7 @@ repos = {
 -- Settings ----------------------------------------------------------
 debug         = false         -- Use debug mode.
 verbose       = false         -- Print verbose output.
+simulate      = false         -- Only simulate installation of packages.
 
 cache         = true          -- Use cache.
 cache_timeout = 60 * 60       -- Cache timeout in seconds.
