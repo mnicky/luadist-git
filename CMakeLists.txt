@@ -5,7 +5,7 @@
 # Please note that the package source code is licensed under its own license.
 
 # C type needed for correct library suffix and prefix detection
-project ( luadist-git C )
+project ( luadist-git NONE )
 cmake_minimum_required ( VERSION 2.6 )
 include ( cmake/dist.cmake )
 include ( lua )
@@ -25,12 +25,6 @@ endif ()
 
 set ( DIST_TYPE ${DETECTED_TYPE} CACHE STRING "Host system type. PLEASE CHECK!" FORCE )
 set ( DIST_ARCH ${DETECTED_ARCH} CACHE STRING "Host system architecture. PLEASE CHECK!" FORCE )
-
-set ( DIST_LUA_LIBRARY "/${INSTALL_LIB}/${CMAKE_SHARED_LIBRARY_PREFIX}lua${CMAKE_SHARED_LIBRARY_SUFFIX}" )
-if ( WIN32 OR CYGWIN )
-	# On Windows use the import library
-	set ( DIST_LUA_LIBRARY "/${INSTALL_LIB}/${CMAKE_IMPORT_LIBRARY_PREFIX}lua${CMAKE_IMPORT_LIBRARY_SUFFIX}" )
-endif ()
 
 configure_file ( dist/config.lua.in ${CMAKE_CURRENT_BINARY_DIR}/dist/config.lua @ONLY )
 

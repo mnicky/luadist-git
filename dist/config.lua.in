@@ -69,10 +69,6 @@ variables = {
 
   -- OSX specific
   CMAKE_OSX_ARCHITECTURES            = "@CMAKE_OSX_ARCHITECTURES@",
-
-  -- Fixes and overrides
-  LUA_LIBRARY                        = root_dir .. "/@DIST_LUA_LIBRARY@",
-
 }
 
 -- Building ----------------------------------------------------------
