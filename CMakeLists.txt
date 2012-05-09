@@ -7,7 +7,8 @@
 # C type needed for correct library suffix and prefix detection
 project ( luadist-git C )
 cmake_minimum_required ( VERSION 2.6 )
-include ( dist.cmake )
+include ( cmake/dist.cmake )
+include ( lua )
 
 ## LuaDist settings
 # Host specific setup
@@ -22,7 +23,6 @@ elseif ( MSVC )
 	set ( DETECTED_TYPE MSVC32 )
 endif ()
 
-set ( DIST_VERSION 0.1.2 )
 set ( DIST_TYPE ${DETECTED_TYPE} CACHE STRING "Host system type. PLEASE CHECK!" FORCE )
 set ( DIST_ARCH ${DETECTED_ARCH} CACHE STRING "Host system architecture. PLEASE CHECK!" FORCE )
 
