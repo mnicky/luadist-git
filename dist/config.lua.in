@@ -31,6 +31,7 @@ repos = {
 debug         = false         -- Use debug mode.
 verbose       = false         -- Print verbose output.
 simulate      = false         -- Only simulate installation of packages.
+test          = true          -- Run CTest before install
 
 cache         = true          -- Use cache.
 cache_timeout = 60 * 60       -- Cache timeout in seconds.
@@ -80,6 +81,7 @@ ctest         = "ctest"
 
 cache_command = cmake .. " -C cache.cmake"
 build_command = cmake .. " --build . --target install --clean-first"
+test_command = ctest .. " -V ."
 
 cache_debug_options = "-DCMAKE_VERBOSE_MAKEFILE=true -DCMAKE_BUILD_TYPE=Debug"
 build_debug_options = ""

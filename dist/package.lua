@@ -159,7 +159,7 @@ function build_pkg(src_dir, build_dir, variables)
     cache_file:close()
 
     src_dir = sys.abs_path(src_dir)
-    print("Building " .. sys.extract_name(src_dir) .. "...")
+    print("Building " .. sys.extract_name(src_dir) .. " ...")
 
     -- set cmake cache command
     local cache_command = cfg.cache_command
@@ -177,6 +177,13 @@ function build_pkg(src_dir, build_dir, variables)
     ok = sys.exec("cd " .. sys.quote(cmake_build_dir) .. " && " .. build_command)
     if not ok then return nil, "Error building with CMake in directory '" .. cmake_build_dir .. "'" end
 
+    -- test with ctest
+    if cfg.test then
+      print("Testing " .. sys.extract_name(src_dir) .. " ...")
+      ok = sys.exec("cd " .. sys.quote(cmake_build_dir) .. " && " .. cfg.test_command)
+      if not ok then return nil, "Error testing with CTest in directory '" .. cmake_build_dir .. "'" end      
+    end
+    
     -- add dist.info
     ok, err = mf.save_distinfo(info, sys.make_path(pkg_build_dir, "dist.info"))
     if not ok then return nil, err end
