@@ -31,7 +31,7 @@ repos = {
 debug         = false         -- Use debug mode.
 verbose       = false         -- Print verbose output.
 simulate      = false         -- Only simulate installation of packages.
-test          = true          -- Run CTest before install
+test          = false         -- Run CTest before install
 
 cache         = true          -- Use cache.
 cache_timeout = 60 * 60       -- Cache timeout in seconds.
