@@ -9,9 +9,11 @@ license = "MIT/X11"
 url = "http://www.luadist.org"
 maintainer = "Marek Srank"
 
+-- At the moment lua-5.2 is not supported (blocked by luafilesystem compatibility)
 depends = {
   "lua ~> 5.1",
   "luafilesystem >= 1.4.1",
+  "srlua ~> 5.1",
 }
 
 conflicts = {
