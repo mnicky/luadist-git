@@ -13,7 +13,7 @@ function quote(argument)
     assert(type(argument) == "string", "sys.quote: Argument 'argument' is not a string.")
 
     -- replace '/' path separators for '\' on Windows
-    if cfg.arch == "Windows" and argument:match("^[%u%U\.]?:?[/\\].*") then
+    if cfg.arch == "Windows" and argument:match("^[%u%U.]?:?[/\\].*") then
         argument = argument:gsub("//","\\"):gsub("/","\\")
     end
 
