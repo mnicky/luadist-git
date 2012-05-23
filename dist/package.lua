@@ -177,13 +177,19 @@ function build_pkg(src_dir, build_dir, variables)
     ok = sys.exec("cd " .. sys.quote(cmake_build_dir) .. " && " .. build_command)
     if not ok then return nil, "Error building with CMake in directory '" .. cmake_build_dir .. "'" end
 
+    -- install the components
+    for _, component in ipairs(cfg.components) do
+      local ok = sys.exec("cd " .. sys.quote(cmake_build_dir) .. " && " .. cfg.install_component_command .. component)
+      if not ok then return nil, "Error when installing the component '" .. component .. "' with CMake in directory '" .. cmake_build_dir .. "'" end
+    end
+
     -- test with ctest
     if cfg.test then
       print("Testing " .. sys.extract_name(src_dir) .. " ...")
       ok = sys.exec("cd " .. sys.quote(cmake_build_dir) .. " && " .. cfg.test_command)
-      if not ok then return nil, "Error testing with CTest in directory '" .. cmake_build_dir .. "'" end      
+      if not ok then return nil, "Error testing with CTest in directory '" .. cmake_build_dir .. "'" end
     end
-    
+
     -- add dist.info
     ok, err = mf.save_distinfo(info, sys.make_path(pkg_build_dir, "dist.info"))
     if not ok then return nil, err end
