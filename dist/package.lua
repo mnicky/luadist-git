@@ -197,13 +197,6 @@ function build_pkg(src_dir, deploy_dir, variables)
     ok = sys.exec("cd " .. sys.quote(cmake_build_dir) .. " && " .. build_command)
     if not ok then return nil, "Error building with CMake in directory '" .. cmake_build_dir .. "'" end
 
-    -- test with ctest
-    if cfg.test then
-        print("Testing " .. sys.extract_name(src_dir) .. " ...")
-        ok = sys.exec("cd " .. sys.quote(cmake_build_dir) .. " && " .. cfg.test_command)
-        if not ok then return nil, "Error testing with CTest in directory '" .. cmake_build_dir .. "'" end
-    end
-
     -- if this is only simulation, exit sucessfully, skipping the next actions
     if cfg.simulate then
         return true, "Simulated build and deployment of package '" .. pkg_name .. "' sucessfull."
@@ -233,6 +226,13 @@ function build_pkg(src_dir, deploy_dir, variables)
 
         -- add list of component files to the 'dist.info'
         info.files[component] = component_files;
+    end
+
+    -- test with ctest
+    if cfg.test then
+        print("Testing " .. sys.extract_name(src_dir) .. " ...")
+        ok = sys.exec("cd " .. sys.quote(deploy_dir) .. " && " .. cfg.test_command)
+        if not ok then return nil, "Error when testing the module '" .. pkg_name .. "' with CTest." end
     end
 
     -- save modified 'dist.info' file
