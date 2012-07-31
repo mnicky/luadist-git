@@ -18,28 +18,54 @@ function remove_pkg(pkg_distinfo_dir, deploy_dir)
 
     local abs_pkg_distinfo_dir = sys.make_path(deploy_dir, pkg_distinfo_dir)
 
-    -- check for dist.info
+    -- check for 'dist.info'
     local info, err = mf.load_distinfo(sys.make_path(abs_pkg_distinfo_dir, "dist.info"))
     if not info then return nil, "Error removing package from '" .. pkg_distinfo_dir .. "' - it doesn't contain valid 'dist.info' file." end
     if not info.files then return nil, "File '" .. sys.make_path(pkg_distinfo_dir, "dist.info") .."' doesn't contain list of installed files." end
 
-    -- remove installed files
-    for i = #info.files, 1, -1 do
-        local f = sys.make_path(deploy_dir, info.files[i])
-        if sys.is_file(f) then
-            sys.delete(f)
-        elseif sys.is_dir(f) then
-            local dir_files = sys.get_file_list(f)
-
-            if #dir_files == 0 then
-                sys.delete(f)
+    -- remove files installed as components of this package
+    for _, component in ipairs(cfg.components) do
+        if info.files[component] then
+            for i = #info.files[component], 1, -1 do
+                local f = info.files[component][i]
+                if sys.is_file(f) then
+                    sys.delete(f)
+                elseif sys.is_dir(f) then
+                    local dir_files = sys.get_file_list(f)
+                    if #dir_files == 0 then sys.delete(f) end
+                end
+                -- delete also all parent directories if empty
+                local parents = sys.parents_up_to(f, deploy_dir .. sys.path_separator())
+                for _, parent in ipairs(parents) do
+                    if sys.is_dir(parent) then
+                        local dir_files = sys.get_file_list(parent)
+                        if #dir_files == 0 then
+                            sys.delete(parent)
+                        end
+                    end
+                end
             end
         end
     end
 
-    -- delete package info from deploy_dir
+    -- remove removed components also from 'dist.info'
+    for _, component in ipairs(cfg.components) do
+        info.files[component] = nil
+    end
+
+    -- delete the package information from deploy_dir
     local ok = sys.delete(abs_pkg_distinfo_dir)
     if not ok then return nil, "Error removing package in '" .. abs_pkg_distinfo_dir .. "'." end
+
+    -- if the package was not completely removed (e.g. some components remain),
+    -- save the new version of its 'dist.info'
+    local comp_num = 0
+    for _, _ in pairs(info.files) do comp_num  = comp_num + 1 end
+    if comp_num ~= 0 then
+        sys.make_dir(abs_pkg_distinfo_dir)
+        local ok, err = mf.save_distinfo(info, sys.make_path(abs_pkg_distinfo_dir, "dist.info"))
+        if not ok then return nil, "Error resaving the 'dist.info': " .. err end
+    end
 
     return ok
 end
@@ -104,14 +130,9 @@ function install_pkg(pkg_dir, deploy_dir, variables, preserve_pkg_dir)
         cmake_variables.CMAKE_LIBRARY_PATH = table.concat({cmake_variables.CMAKE_LIBRARY_PATH or "", sys.make_path(deploy_dir, "lib"), sys.make_path(deploy_dir, "bin")}, ";")
         cmake_variables.CMAKE_PROGRAM_PATH = table.concat({cmake_variables.CMAKE_PROGRAM_PATH or "", sys.make_path(deploy_dir, "bin")}, ";")
 
-        -- build the package
-        local build_dir, temp_dir = nil, sys.make_path(deploy_dir, cfg.temp_dir)
-        build_dir, err = build_pkg(pkg_dir, temp_dir, cmake_variables)
-        if not build_dir then return nil, err end
-
-        -- and deploy it
-        ok, err = deploy_pkg(build_dir, deploy_dir)
-        if not cfg.debug then sys.delete(build_dir) end
+        -- build the package and deploy it
+        ok, err = build_pkg(pkg_dir, deploy_dir, cmake_variables)
+        if not ok then return nil, err end
 
     end
 
@@ -121,36 +142,35 @@ function install_pkg(pkg_dir, deploy_dir, variables, preserve_pkg_dir)
     return ok, err
 end
 
--- Build package from 'src_dir' to 'build_dir' using 'variables'.
+-- Build and deploy package from 'src_dir' to 'deploy_dir' using 'variables'.
 -- Return directory to which the package was built or nil on error.
 -- 'variables' is table of optional CMake variables.
-function build_pkg(src_dir, build_dir, variables)
-    build_dir = build_dir or sys.current_dir()
+function build_pkg(src_dir, deploy_dir, variables)
+    deploy_dir = deploy_dir or cfg.root_dir
     variables = variables or {}
 
     assert(type(src_dir) == "string", "package.build_pkg: Argument 'src_dir' is not a string.")
-    assert(type(build_dir) == "string", "package.build_pkg: Argument 'build_dir' is not a string.")
+    assert(type(deploy_dir) == "string", "package.build_pkg: Argument 'deploy_dir' is not a string.")
     assert(type(variables) == "table", "package.build_pkg: Argument 'variables' is not a table.")
 
     src_dir = sys.abs_path(src_dir)
-    build_dir = sys.abs_path(build_dir)
+    deploy_dir = sys.abs_path(deploy_dir)
 
     -- check for dist.info
     local info, err = mf.load_distinfo(sys.make_path(src_dir, "dist.info"))
     if not info then return nil, "Error building package from '" .. src_dir .. "': it doesn't contain valid 'dist.info' file." end
+    local pkg_name = info.name .. "-" .. info.version
 
     -- set machine information
     info.arch = cfg.arch
     info.type = cfg.type
 
-    -- create build dirs
-    local pkg_build_dir = sys.abs_path(sys.make_path(build_dir, info.name .. "-" .. info.version .. "-" .. cfg.arch .. "-" .. cfg.type))
-    local cmake_build_dir = sys.abs_path(sys.make_path(build_dir, info.name .. "-" .. info.version .. "-CMake-build"))
-    sys.make_dir(pkg_build_dir)
+    -- create CMake build dir
+    local cmake_build_dir = sys.abs_path(sys.make_path(deploy_dir, cfg.temp_dir, pkg_name .. "-CMake-build"))
     sys.make_dir(cmake_build_dir)
 
     -- create cmake cache
-    variables["CMAKE_INSTALL_PREFIX"] = pkg_build_dir
+    variables["CMAKE_INSTALL_PREFIX"] = deploy_dir
     local cache_file = io.open(sys.make_path(cmake_build_dir, "cache.cmake"), "w")
     if not cache_file then return nil, "Error creating CMake cache file in '" .. cmake_build_dir .. "'" end
     for k,v in pairs(variables) do
@@ -177,15 +197,48 @@ function build_pkg(src_dir, build_dir, variables)
     ok = sys.exec("cd " .. sys.quote(cmake_build_dir) .. " && " .. build_command)
     if not ok then return nil, "Error building with CMake in directory '" .. cmake_build_dir .. "'" end
 
+    -- if this is only simulation, exit sucessfully, skipping the next actions
+    if cfg.simulate then
+        return true, "Simulated build and deployment of package '" .. pkg_name .. "' sucessfull."
+    end
+
+    -- table to collect files installed in the components
+    info.files = {}
+
+    -- install the components
+    for _, component in ipairs(cfg.components) do
+        local ok = sys.exec("cd " .. sys.quote(cmake_build_dir) .. " && " .. cfg.install_component_command .. component)
+        if not ok then return nil, "Error when installing the component '" .. component .. "' with CMake in directory '" .. cmake_build_dir .. "'" end
+
+        local install_mf = sys.make_path(cmake_build_dir, "install_manifest.txt");
+        local mf, err
+        local component_files = {}
+
+        -- collect files installed in this component
+        if sys.exists(install_mf) then
+            mf, err = io.open(install_mf, "r")
+            if not mf then return nil, "Error when opening the CMake installation manifest '" .. install_mf .. "': " .. err end
+            for line in mf:lines() do table.insert(component_files, line) end
+            mf:close()
+        else
+            return nil, "Error: CMake installation manifest does not exist in '" .. install_mf .. "'."
+        end
+
+        -- add list of component files to the 'dist.info'
+        info.files[component] = component_files;
+    end
+
     -- test with ctest
     if cfg.test then
-      print("Testing " .. sys.extract_name(src_dir) .. " ...")
-      ok = sys.exec("cd " .. sys.quote(cmake_build_dir) .. " && " .. cfg.test_command)
-      if not ok then return nil, "Error testing with CTest in directory '" .. cmake_build_dir .. "'" end      
+        print("Testing " .. sys.extract_name(src_dir) .. " ...")
+        ok = sys.exec("cd " .. sys.quote(deploy_dir) .. " && " .. cfg.test_command)
+        if not ok then return nil, "Error when testing the module '" .. pkg_name .. "' with CTest." end
     end
-    
-    -- add dist.info
-    ok, err = mf.save_distinfo(info, sys.make_path(pkg_build_dir, "dist.info"))
+
+    -- save modified 'dist.info' file
+    local pkg_distinfo_dir = sys.make_path(deploy_dir, cfg.distinfos_dir, pkg_name)
+    sys.make_dir(pkg_distinfo_dir)
+    ok, err = mf.save_distinfo(info, sys.make_path(pkg_distinfo_dir, "dist.info"))
     if not ok then return nil, err end
 
     -- clean up
@@ -193,9 +246,10 @@ function build_pkg(src_dir, build_dir, variables)
         sys.delete(cmake_build_dir)
     end
 
-    return pkg_build_dir
+    return true, "Package '" .. pkg_name .. "' successfully builded and deployed to '" .. deploy_dir .. "'."
 end
 
+-- TODO: implement component deployment of binary modules
 -- Deploy package from 'pkg_dir' to 'deploy_dir' by copying.
 function deploy_pkg(pkg_dir, deploy_dir)
     deploy_dir = deploy_dir or cfg.root_dir
@@ -208,8 +262,8 @@ function deploy_pkg(pkg_dir, deploy_dir)
 
     -- check for dist.info
     local info, err = mf.load_distinfo(sys.make_path(pkg_dir, "dist.info"))
-    local pkg_name = info.name .. "-" .. info.version
     if not info then return nil, "Error deploying package from '" .. pkg_dir .. "': it doesn't contain valid 'dist.info' file." end
+    local pkg_name = info.name .. "-" .. info.version
 
     -- delete the 'dist.info' file
     sys.delete(sys.make_path(pkg_dir, "dist.info"))

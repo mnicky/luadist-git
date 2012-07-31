@@ -36,7 +36,12 @@ test          = false         -- Run CTest before install
 cache         = true          -- Use cache.
 cache_timeout = 60 * 60       -- Cache timeout in seconds.
 
--- Available log levels are: DEBUG, INFO, WARN, ERROR, FATAL (see dist.log for more information).
+-- Components (of modules) that will be installed.
+components    = {
+  "Runtime", "Library", "Header", "Data", "Documentation", "Example", "Other"
+}
+
+-- Available log levels are: DEBUG, INFO, WARN, ERROR, FATAL (see dist.logger for more information).
 print_log_level = "WARN"      -- Minimum level for log messages to be printed (nil to disable).
 write_log_level = "INFO"      -- Minimum level for log messages to be logged (nil to disable).
 
@@ -76,7 +81,8 @@ cmake         = "cmake"
 ctest         = "ctest"
 
 cache_command = cmake .. " -C cache.cmake"
-build_command = cmake .. " --build . --target install --clean-first"
+build_command = cmake .. " --build . --clean-first"
+install_component_command = cmake .. " -P cmake_install.cmake -DCOMPONENT="
 test_command = ctest .. " -V ."
 
 cache_debug_options = "-DCMAKE_VERBOSE_MAKEFILE=true -DCMAKE_BUILD_TYPE=Debug"
