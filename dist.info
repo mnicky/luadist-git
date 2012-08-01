@@ -13,7 +13,7 @@ maintainer = "Marek Srank"
 depends = {
   "lua ~> 5.1",
   "luafilesystem >= 1.4.1",
-  "srlua >= 5.1",
+  "srlua ~> 5.1",
 }
 
 conflicts = {
