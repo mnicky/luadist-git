@@ -8,6 +8,15 @@ local lfs = require "lfs"
 
 -- TODO test functionality of this module on Windows
 
+-- Return the path separator according to the platform.
+function path_separator()
+    if cfg.arch == "Windows" then
+        return "\\"
+    else
+        return "/"
+    end
+end
+
 -- Return quoted string argument.
 function quote(argument)
     assert(type(argument) == "string", "sys.quote: Argument 'argument' is not a string.")
@@ -146,6 +155,27 @@ function parent_dir(path)
     else
         return dir
     end
+end
+
+-- Returns table of all parent directories of 'path' up to the directory
+-- specified by 'boundary_path' (exclusive).
+-- NOTE: 'boundary_path' must end with '/' or '\' (e.g. "/home/username/").
+function parents_up_to(path, boundary_path)
+    assert(type(path) == "string", "sys.parents_up_to: Argument 'path' is not a string.")
+    assert(type(boundary_path) == "string", "sys.parents_up_to: Argument 'boundary_path' is not a string.")
+
+    -- helper function to recursively collect the parent directories
+    local function collect_parents(_path, _parents)
+        local _parent = parent_dir(_path)
+        if _parent and _parent ~= boundary_path then
+            table.insert(_parents, _parent)
+            return collect_parents(_parent, _parents)
+        else
+            return _parents
+        end
+    end
+
+    return collect_parents(path, {})
 end
 
 -- Compose path composed from specified parts or current
