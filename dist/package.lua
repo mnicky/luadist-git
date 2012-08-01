@@ -28,6 +28,7 @@ function remove_pkg(pkg_distinfo_dir, deploy_dir)
         if info.files[component] then
             for i = #info.files[component], 1, -1 do
                 local f = info.files[component][i]
+                f = sys.make_path(deploy_dir,f)
                 if sys.is_file(f) then
                     sys.delete(f)
                 elseif sys.is_dir(f) then
@@ -205,12 +206,14 @@ function build_pkg(src_dir, deploy_dir, variables)
     -- table to collect files installed in the components
     info.files = {}
 
+    local build_dir = sys.quote(cmake_build_dir)
     -- install the components
     for _, component in ipairs(cfg.components) do
-        local ok = sys.exec("cd " .. sys.quote(cmake_build_dir) .. " && " .. cfg.install_component_command .. component)
+        local ok = sys.exec("cd " .. build_dir .. " && " .. cfg.install_component_command:gsub("#COMPONENT#", component) )
+        
         if not ok then return nil, "Error when installing the component '" .. component .. "' with CMake in directory '" .. cmake_build_dir .. "'" end
 
-        local install_mf = sys.make_path(cmake_build_dir, "install_manifest.txt");
+        local install_mf = sys.make_path(cmake_build_dir, "install_manifest_" .. component .. ".txt");
         local mf, err
         local component_files = {}
 
@@ -218,15 +221,17 @@ function build_pkg(src_dir, deploy_dir, variables)
         if sys.exists(install_mf) then
             mf, err = io.open(install_mf, "r")
             if not mf then return nil, "Error when opening the CMake installation manifest '" .. install_mf .. "': " .. err end
-            for line in mf:lines() do table.insert(component_files, line) end
+            for line in mf:lines() do
+              local file = line:gsub(deploy_dir.."/", "")
+              table.insert(component_files, file)
+            end
             mf:close()
-        else
-            return nil, "Error: CMake installation manifest does not exist in '" .. install_mf .. "'."
-        end
 
-        -- add list of component files to the 'dist.info'
-        info.files[component] = component_files;
+            -- add list of component files to the 'dist.info'
+            if ( #component_files > 0 ) then info.files[component] = component_files end
+        end
     end
+--    if bookmark == 0 then return nil, "Package did not install any files!" end
 
     -- test with ctest
     if cfg.test then
