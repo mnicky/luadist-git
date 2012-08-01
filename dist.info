@@ -9,9 +9,10 @@ license = "MIT/X11"
 url = "http://www.luadist.org"
 maintainer = "Marek Srank"
 
+-- At the moment only Lua 5.1.x is supported
 depends = {
+  "lua ~> 5.1",
   "luafilesystem >= 1.4.1",
-  "lua >= 5.1",
   "srlua >= 5.1",
 }
 
