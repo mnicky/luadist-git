@@ -1,7 +1,7 @@
 --- This file is part of LuaDist project
 
 name = "luadist-git"
-version = "0.1.7"
+version = "0.1.8"
 
 desc = "Git based deployment of LuaDist modules."
 author = "Marek Srank, Peter Drahoš"
@@ -13,7 +13,7 @@ maintainer = "Marek Srank"
 depends = {
   "lua ~> 5.1",
   "luafilesystem >= 1.4.1",
-  "srlua ~> 5.1",
+  "srlua >= 5.1",
 }
 
 conflicts = {
