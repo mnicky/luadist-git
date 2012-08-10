@@ -6,7 +6,7 @@
 
 # C type needed for correct library suffix and prefix detection
 project ( luadist-git NONE )
-cmake_minimum_required ( VERSION 2.6 )
+cmake_minimum_required ( VERSION 2.8 )
 include ( cmake/dist.cmake )
 include ( lua )
 
@@ -16,15 +16,16 @@ set ( DETECTED_TYPE ${CMAKE_SYSTEM_PROCESSOR} )
 set ( DETECTED_ARCH ${CMAKE_SYSTEM_NAME} )
 
 if ( CYGWIN )
-	# Make sure Cygwin uses correct arch and type.
-	set ( DETECTED_TYPE x86 )
-	set ( DETECTED_ARCH Cygwin )
+  # Make sure Cygwin uses correct arch and type.
+  set ( DETECTED_TYPE x86 )
+  set ( DETECTED_ARCH Cygwin )
 elseif ( MSVC )
-	set ( DETECTED_TYPE MSVC32 )
-endif ()
+set ( DETECTED_TYPE MSVC32 )
+endif ( )
 
 set ( DIST_TYPE ${DETECTED_TYPE} CACHE STRING "Host system type. PLEASE CHECK!" FORCE )
-set ( DIST_ARCH ${DETECTED_ARCH} CACHE STRING "Host system architecture. PLEASE CHECK!" FORCE )
+set ( DIST_ARCH ${DETECTED_ARCH} CACHE STRING "Host system architecture. PLEASE CHECK!" 
+  FORCE )
 
 configure_file ( dist/config.lua.in ${CMAKE_CURRENT_BINARY_DIR}/dist/config.lua @ONLY )
 

@@ -1,15 +1,15 @@
 --- This file is part of LuaDist project
 
 name = "luadist-git"
-version = "0.1.5"
+version = "0.1.7"
 
 desc = "Git based deployment of LuaDist modules."
-author = "Marek Srank"
+author = "Marek Srank, Peter Drahoš"
 license = "MIT/X11"
 url = "http://www.luadist.org"
 maintainer = "Marek Srank"
 
--- At the moment lua-5.2 is not supported (blocked by luafilesystem compatibility)
+-- At the moment only Lua 5.1.x is supported
 depends = {
   "lua ~> 5.1",
   "luafilesystem >= 1.4.1",
