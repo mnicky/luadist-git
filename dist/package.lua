@@ -210,7 +210,7 @@ function build_pkg(src_dir, deploy_dir, variables)
     -- install the components
     for _, component in ipairs(cfg.components) do
         local ok = sys.exec("cd " .. build_dir .. " && " .. cfg.install_component_command:gsub("#COMPONENT#", component) )
-        
+
         if not ok then return nil, "Error when installing the component '" .. component .. "' with CMake in directory '" .. cmake_build_dir .. "'" end
 
         local install_mf = sys.make_path(cmake_build_dir, "install_manifest_" .. component .. ".txt");

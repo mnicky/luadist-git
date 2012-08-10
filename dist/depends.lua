@@ -229,8 +229,12 @@ local function get_packages_to_install(pkg, installed, manifest, force_no_downlo
         pkg_is_installed, err = false, nil
 
         -- check whether this package has already been added to 'tmp_installed' by another of its candidates
+        --TODO: is the use of pkg_constraint correct?
         pkg_is_installed, err = is_installed(pkg.name, tmp_installed, pkg_constraint)
         if pkg_is_installed then break end
+
+        --TODO: shouldn't this line be uncommented?
+        --if err then return nil, err end
 
         -- download info about the package
         if not force_no_download then
@@ -308,6 +312,7 @@ local function get_packages_to_install(pkg, installed, manifest, force_no_downlo
                             if depends_to_install then
                                 for _, depend_to_install in pairs(depends_to_install) do
                                     table.insert(to_install, depend_to_install)
+                                    table.insert(installed, depend_to_install)
                                 end
                             else
                                 err = "Error getting dependency of '" .. pkg_full_name(pkg.name, pkg.version) .. "': " .. dep_err
@@ -331,7 +336,7 @@ local function get_packages_to_install(pkg, installed, manifest, force_no_downlo
             if not err then
                 -- add pkg and it's provides to the fake table of installed packages, with
                 -- property 'selected' set, indicating that the package isn't
-                -- really installed in the system, just selected to be installed (used e.g. in error messages)
+                -- really installed in the system, just selected to be installed (this is used e.g. in error messages)
                 pkg.selected = true
                 table.insert(tmp_installed, pkg)
                 if pkg.provides then

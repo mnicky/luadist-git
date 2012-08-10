@@ -859,6 +859,20 @@ tests.version_of_depends_3 = function()
     local pkgs, err = depends.get_depends({'a'}, installed, manifest, true);
     assert(describe_packages(pkgs) == "c-2.1.0 b-1.3 a-1.0", pkgs_fail_msg(pkgs, err))
 end
+
+tests.version_of_depends_4 = function()
+    local manifest, installed = {}, {}
+    manifest.a1 = {name="a", arch="Universal", type="all", version="1.0"}
+    manifest.a2 = {name="a", arch="Universal", type="all", version="2.0"}
+
+    manifest.b1 = {name="b", arch="Universal", type="all", version="1.0", depends={"a>=1.0"}}
+    manifest.b2 = {name="b", arch="Universal", type="all", version="2.0", depends={"a>=2.0"}}
+
+    manifest.c = {name="c", arch="Universal", type="all", version="1.0", depends={"a~>1.0","b>=1.0"}}
+
+    local pkgs, err = depends.get_depends({'c'}, installed, manifest, true);
+    assert(describe_packages(pkgs) == "a-1.0 b-1.0 c-1.0", pkgs_fail_msg(pkgs, err))
+end
 --]]
 
 --- check if the installed package is in needed version
