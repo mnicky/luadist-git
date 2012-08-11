@@ -66,14 +66,14 @@ function download_manifest(dest_dir, repository_urls)
             ok, err = git.clone(repo, clone_dir, 1)
             if not ok then
                 err = "Error when downloading the manifest from repository with url: '" .. repo .. "': " .. err
-                sys.delete(clone_dir)
+                if not cfg.debug then sys.delete(clone_dir) end
                 break
             else
                 for _, pkg in pairs(load_manifest(sys.make_path(clone_dir, ".gitmodules"))) do
                     table.insert(manifest, pkg)
                 end
             end
-            sys.delete(clone_dir)
+            if not cfg.debug then sys.delete(clone_dir) end
         end
     end
 

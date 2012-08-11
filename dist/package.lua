@@ -247,9 +247,7 @@ function build_pkg(src_dir, deploy_dir, variables)
     if not ok then return nil, err end
 
     -- clean up
-    if not cfg.debug then
-        sys.delete(cmake_build_dir)
-    end
+    if not cfg.debug then sys.delete(cmake_build_dir) end
 
     return true, "Package '" .. pkg_name .. "' successfully builded and deployed to '" .. deploy_dir .. "'."
 end

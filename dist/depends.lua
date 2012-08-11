@@ -351,7 +351,7 @@ local function get_packages_to_install(pkg, installed, manifest, force_no_downlo
             -- if some error occured
             else
                 -- delete the downloaded package
-                if pkg.download_dir then sys.delete(pkg.download_dir) end
+                if pkg.download_dir and not cfg.debug then sys.delete(pkg.download_dir) end
 
                 -- set tables of 'packages to install' and 'installed packages' to their original state
                 to_install = {}
@@ -368,7 +368,7 @@ local function get_packages_to_install(pkg, installed, manifest, force_no_downlo
         -- if error occured
         else
             -- delete the downloaded package
-            if pkg.download_dir then sys.delete(pkg.download_dir) end
+            if pkg.download_dir and not cfg.debug then sys.delete(pkg.download_dir) end
 
             -- if pkg is already installed, skip checking its other candidates
             if pkg_is_installed then break end
@@ -436,7 +436,7 @@ function get_depends(packages, installed, manifest, force_no_download, deploy_di
         else
             -- delete already downloaded packages
             for _, pkg in pairs(to_install) do
-                if pkg.download_dir then sys.delete(pkg.download_dir) end
+                if pkg.download_dir and not cfg.debug then sys.delete(pkg.download_dir) end
             end
             return nil, "Cannot install package '" .. pkg .. "': ".. err
         end
