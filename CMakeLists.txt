@@ -20,7 +20,7 @@ if ( CYGWIN )
   set ( DETECTED_TYPE x86 )
   set ( DETECTED_ARCH Cygwin )
 elseif ( MSVC )
-set ( DETECTED_TYPE MSVC32 )
+  set ( DETECTED_TYPE MSVC32 )
 endif ( )
 
 set ( DIST_TYPE ${DETECTED_TYPE} CACHE STRING "Host system type. PLEASE CHECK!" FORCE )
