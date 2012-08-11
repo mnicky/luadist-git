@@ -9,7 +9,7 @@ local mf = require "dist.manifest"
 local utils = require "dist.utils"
 local depends = require "dist.depends"
 
--- Remove package from 'pkg_dir' of 'deploy_dir'.
+-- Remove package from 'pkg_distinfo_dir' of 'deploy_dir'.
 function remove_pkg(pkg_distinfo_dir, deploy_dir)
     deploy_dir = deploy_dir or cfg.root_dir
     assert(type(pkg_distinfo_dir) == "string", "package.remove_pkg: Argument 'pkg_distinfo_dir' is not a string.")
@@ -32,14 +32,16 @@ function remove_pkg(pkg_distinfo_dir, deploy_dir)
                 if sys.is_file(f) then
                     sys.delete(f)
                 elseif sys.is_dir(f) then
-                    local dir_files = sys.get_file_list(f)
+                    local dir_files, err = sys.get_file_list(f)
+                    if not dir_files then return nil, "Error removing package in '" .. abs_pkg_distinfo_dir .. "': " .. err end
                     if #dir_files == 0 then sys.delete(f) end
                 end
                 -- delete also all parent directories if empty
                 local parents = sys.parents_up_to(f, deploy_dir .. sys.path_separator())
                 for _, parent in ipairs(parents) do
                     if sys.is_dir(parent) then
-                        local dir_files = sys.get_file_list(parent)
+                        local dir_files, err = sys.get_file_list(parent)
+                        if not dir_files then return nil, "Error removing package in '" .. abs_pkg_distinfo_dir .. "': " .. err end
                         if #dir_files == 0 then
                             sys.delete(parent)
                         end
@@ -180,7 +182,7 @@ function build_pkg(src_dir, deploy_dir, variables)
     cache_file:close()
 
     src_dir = sys.abs_path(src_dir)
-    print("Building " .. sys.extract_name(src_dir) .. " ...")
+    print("Building " .. sys.extract_name(src_dir) .. "...")
 
     -- set cmake cache command
     local cache_command = cfg.cache_command

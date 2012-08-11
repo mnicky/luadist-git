@@ -23,12 +23,12 @@ function get_manifest(manifest_file, force_no_cache)
     if not sys.exists(manifest_file) or force_no_cache or not cfg.cache or utils.cache_timeout_expired(cfg.cache_timeout, manifest_file) then
         local manifest_dest = sys.parent_dir(manifest_file) or sys.current_dir()
         local ok, err = download_manifest(manifest_dest, cfg.repos)
-        if not ok then return nil, err end
+        if not ok then return nil, "Error downloading manifest: " .. err end
     end
 
     -- load manifest from cache
     local manifest, err = load_manifest(manifest_file)
-    if not manifest then return nil, err end
+    if not manifest then return nil, "Error loading manifest: " .. err end
 
     return manifest
 end
@@ -51,36 +51,35 @@ function download_manifest(dest_dir, repository_urls)
 
     -- ensure that destination directory exists
     local ok, err = sys.make_dir(dest_dir)
+    if not ok then return nil, err end
 
     -- retrieve manifests from repositories and collect them into one manifest table
     local manifest = {}
-    if ok then
-        if #repository_urls == 0 then
-            return nil, "No repository url specified."
-        end
-        print("Downloading repository information...")
-        for k, repo in pairs(repository_urls) do
-            local clone_dir = sys.make_path(temp_dir, "repository_" .. tostring(k))
 
-            -- clone the repo and add its '.gitmodules' file to the manifest table
-            ok, err = git.clone(repo, clone_dir, 1)
-            if not ok then
-                err = "Error when downloading the manifest from repository with url: '" .. repo .. "': " .. err
-                if not cfg.debug then sys.delete(clone_dir) end
-                break
-            else
-                for _, pkg in pairs(load_manifest(sys.make_path(clone_dir, ".gitmodules"))) do
-                    table.insert(manifest, pkg)
-                end
-            end
+    if #repository_urls == 0 then return nil, "No repository url specified." end
+
+    print("Downloading repository information...")
+    for k, repo in pairs(repository_urls) do
+        local clone_dir = sys.make_path(temp_dir, "repository_" .. tostring(k))
+
+        -- clone the repo and add its '.gitmodules' file to the manifest table
+        ok, err = git.clone(repo, clone_dir, 1)
+        if not ok then
+            err = "Error when downloading the manifest from repository with url: '" .. repo .. "': " .. err
             if not cfg.debug then sys.delete(clone_dir) end
+            return nil, err end
+        else
+            for _, pkg in pairs(load_manifest(sys.make_path(clone_dir, ".gitmodules"))) do
+                table.insert(manifest, pkg)
+            end
         end
+        if not cfg.debug then sys.delete(clone_dir) end
     end
 
     -- save the new manifest table to the file
-    if ok then ok, err = save_manifest(manifest, manifest_file) end
-
+    ok, err = save_manifest(manifest, manifest_file) end
     if not ok then return nil, err end
+
     return true
 end
 

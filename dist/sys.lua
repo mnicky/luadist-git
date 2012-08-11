@@ -79,7 +79,7 @@ function exists(path)
     path = path:gsub("\\", "/")
 
     -- remove the trailing '/' character
-    if (path:sub(-1) == "/") then
+    if (path:sub(-1) == "/") and not path:match("^.:/$") then
         path = path:sub(1,-2)
     end
 
@@ -163,6 +163,10 @@ end
 function parents_up_to(path, boundary_path)
     assert(type(path) == "string", "sys.parents_up_to: Argument 'path' is not a string.")
     assert(type(boundary_path) == "string", "sys.parents_up_to: Argument 'boundary_path' is not a string.")
+
+    -- normalize paths
+    path = path:gsub("\\", "/")
+    boundary_path = boundary_path:gsub("\\", "/")
 
     -- helper function to recursively collect the parent directories
     local function collect_parents(_path, _parents)
