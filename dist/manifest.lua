@@ -67,7 +67,7 @@ function download_manifest(dest_dir, repository_urls)
         if not ok then
             err = "Error when downloading the manifest from repository with url: '" .. repo .. "': " .. err
             if not cfg.debug then sys.delete(clone_dir) end
-            return nil, err end
+            return nil, err
         else
             for _, pkg in pairs(load_manifest(sys.make_path(clone_dir, ".gitmodules"))) do
                 table.insert(manifest, pkg)
@@ -77,7 +77,7 @@ function download_manifest(dest_dir, repository_urls)
     end
 
     -- save the new manifest table to the file
-    ok, err = save_manifest(manifest, manifest_file) end
+    ok, err = save_manifest(manifest, manifest_file)
     if not ok then return nil, err end
 
     return true
