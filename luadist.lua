@@ -142,12 +142,12 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] remove MODULES... [-VARIABLES...]
                 return 0
             end
 
-            local ok, err = dist.remove(modules, deploy_dir)
-            if not ok then
+            local num, err = dist.remove(modules, deploy_dir)
+            if not num then
                 print(err)
                 os.exit(1)
             else
-               print("Removal successful.")
+               print("Removed packages: " .. num)
                return 0
             end
         end

@@ -110,7 +110,8 @@ function make(deploy_dir, package_paths, variables)
     return ok
 end
 
--- Remove 'package_names' from 'deploy_dir'
+-- Remove 'package_names' from 'deploy_dir' and return the number of removed
+-- packages.
 function remove(package_names, deploy_dir)
     deploy_dir = deploy_dir or cfg.root_dir
     if type(package_names) == "string" then package_names = {package_names} end
@@ -129,7 +130,7 @@ function remove(package_names, deploy_dir)
         if not ok then return nil, err end
     end
 
-    return true
+    return #pkgs_to_remove
 end
 
 -- Download 'pkg_names' to 'fetch_dir'.
