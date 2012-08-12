@@ -21,8 +21,9 @@ function find_packages(package_names, manifest)
     -- find matching packages in manifest
     for _, pkg_to_find in pairs(package_names) do
         local pkg_name, pkg_constraint = split_name_constraint(pkg_to_find)
+        pkg_name = utils.escape_magic(pkg_name):gsub("%%%*",".*")
         for _, repo_pkg in pairs(manifest) do
-            if repo_pkg.name == pkg_name and (not pkg_constraint or satisfies_constraint(repo_pkg.version, pkg_constraint)) then
+            if string.match(repo_pkg.name, "^" .. pkg_name .. "$") and (not pkg_constraint or satisfies_constraint(repo_pkg.version, pkg_constraint)) then
                 table.insert(packages_found, repo_pkg)
             end
         end

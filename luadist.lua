@@ -61,12 +61,16 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] <COMMAND> [ARGUMENTS...] [-VARIABLES...]
         help = [[
 Usage: luadist [DEPLOYMENT_DIRECTORY] install MODULES... [-VARIABLES...]
 
-    The 'install' command will install specified modules to
+    The 'install' command will install specified MODULES to
     DEPLOYMENT_DIRECTORY. LuaDist will also automatically resolve, download
     and install all dependencies.
 
     If DEPLOYMENT_DIRECTORY is not specified, the deployment directory
     of LuaDist is used.
+
+    You can use * (an asterisk sign) in the name of the module as a wildcard
+    with the meaning 'any symbols' (in most shells, the module name then must
+    be quoted to prevent the expansion of asterisk by the shell itself).
 
     Optional CMake VARIABLES in -D format (e.g. -Dvariable=value) or LuaDist
     configuration VARIABLES (e.g. -variable=value) can be specified.
@@ -109,11 +113,15 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] install MODULES... [-VARIABLES...]
         help = [[
 Usage: luadist [DEPLOYMENT_DIRECTORY] remove MODULES... [-VARIABLES...]
 
-    The 'remove' command will remove specified modules from
+    The 'remove' command will remove specified MODULES from
     DEPLOYMENT_DIRECTORY.
 
     If DEPLOYMENT_DIRECTORY is not specified, the deployment directory
     of LuaDist is used.
+
+    You can use * (an asterisk sign) in the name of the module as a wildcard
+    with the meaning 'any symbols' (in most shells, the module name then must
+    be quoted to prevent the expansion of asterisk by the shell itself).
 
     Optional LuaDist configuration VARIABLES (e.g. -variable=value) can be
     specified.
