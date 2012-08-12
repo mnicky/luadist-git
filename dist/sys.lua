@@ -65,7 +65,7 @@ function capture_output(command)
     local executed, err = io.popen(command, "r")
     if not executed then return nil, "Error running the command '" .. command .. "':" .. err end
 
-    local captured, err = executed:read("*a");
+    local captured, err = executed:read("*a")
     if not captured then return nil, "Error reading the output of command '" .. command .. "':" .. err end
 
     executed:close()
