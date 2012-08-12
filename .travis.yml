@@ -13,10 +13,12 @@ env:
   - TOOL="x86_64-w64-mingw32"   # 64bit MinGW
   - TOOL="arm-linux-gnueabihf"  # ARM hard-float (hf), linux
 
-allow_failures:
-  - TOOL="i686-w64-mingw32"
-  - TOOL="x86_64-w64-mingw32"
-  - TOOL="arm-linux-gnueabihf"
+# Crosscompile builds may fail
+matrix:
+  allow_failures:
+    - TOOL="i686-w64-mingw32"
+    - TOOL="x86_64-w64-mingw32"
+    - TOOL="arm-linux-gnueabihf"
   
 # Install dependencies
 install:
