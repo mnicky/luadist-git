@@ -21,6 +21,7 @@ test_dir      = "share/luadist-git/test"
 -- Files -------------------------------------------------------------
 manifest_file = cache_dir .. "/.gitmodules"
 log_file      = temp_dir .. "/luadist.log"
+cache_file    = ""
 
 -- Repositories ------------------------------------------------------
 repos = {

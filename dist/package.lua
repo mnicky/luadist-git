@@ -176,9 +176,20 @@ function build_pkg(src_dir, deploy_dir, variables)
     variables["CMAKE_INSTALL_PREFIX"] = deploy_dir
     local cache_file = io.open(sys.make_path(cmake_build_dir, "cache.cmake"), "w")
     if not cache_file then return nil, "Error creating CMake cache file in '" .. cmake_build_dir .. "'" end
+	
+	-- Fill in cache variables
     for k,v in pairs(variables) do
         cache_file:write("SET(" .. k .. " \"" .. v .. "\"" .. " CACHE STRING \"\" FORCE)\n")
     end
+	
+	-- If user cache file is provided then append it
+	if cfg.cache_file ~= "" then
+		local user_cache = io.open(sys.abs_path(cfg.cache_file), "r")
+		if user_cache then 
+			cache_file:write(user_cache:read("*all").."\n")
+			user_cache:close()
+		end
+	end
     cache_file:close()
 
     src_dir = sys.abs_path(src_dir)
