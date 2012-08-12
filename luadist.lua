@@ -117,7 +117,8 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] remove MODULES... [-VARIABLES...]
     DEPLOYMENT_DIRECTORY.
 
     If DEPLOYMENT_DIRECTORY is not specified, the deployment directory
-    of LuaDist is used.
+    of LuaDist is used. If no MODULES are specified, all installed modules
+    will be removed.
 
     You can use * (an asterisk sign) in the name of the module as a wildcard
     with the meaning 'any symbols' (in most shells, the module name then must
@@ -136,11 +137,6 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] remove MODULES... [-VARIABLES...]
             assert(type(deploy_dir) == "string", "luadist.remove: Argument 'deploy_dir' is not a string.")
             assert(type(modules) == "table", "luadist.remove: Argument 'modules' is not a string or table.")
             deploy_dir = sys.abs_path(deploy_dir)
-
-            if #modules == 0 then
-                print("No modules to remove specified.")
-                return 0
-            end
 
             local num, err = dist.remove(modules, deploy_dir)
             if not num then

@@ -120,8 +120,15 @@ function remove(package_names, deploy_dir)
     assert(type(deploy_dir) == "string", "dist.remove: Argument 'deploy_dir' is not a string.")
     deploy_dir = sys.abs_path(deploy_dir)
 
+    local pkgs_to_remove = {}
+    local installed = depends.get_installed(deploy_dir)
+
     -- find packages to remove
-    local pkgs_to_remove = depends.find_packages(package_names, depends.get_installed(deploy_dir))
+    if #package_names == 0 then
+        pkgs_to_remove = installed
+    else
+        pkgs_to_remove = depends.find_packages(package_names, installed)
+    end
 
     -- remove them
     for _, pkg in pairs(pkgs_to_remove) do
