@@ -199,6 +199,12 @@ local function get_packages_to_install(pkg, installed, manifest, force_no_downlo
     assert(type(deploy_dir) == "string", "depends.get_packages_to_install: Argument 'deploy_dir' is not a string.")
     deploy_dir = sys.abs_path(deploy_dir)
 
+    --[[ for future debugging:
+    print('resolving: '.. pkg)
+    print('    installed: ', utils.table_tostring(installed))
+    print('    tmp_installed: ', utils.table_tostring(tmp_installed))
+    --]]
+
     -- check if package is already installed
     local pkg_name, pkg_constraint = split_name_constraint(pkg)
     local pkg_is_installed, err = is_installed(pkg_name, tmp_installed, pkg_constraint)
@@ -226,12 +232,21 @@ local function get_packages_to_install(pkg, installed, manifest, force_no_downlo
 
     for _, pkg in pairs(candidates_to_install) do
 
+        --[[ for future debugging:
+        print('  candidate: '.. pkg.name..'-'..pkg.version)
+        print('      installed: ', utils.table_tostring(installed))
+        print('      tmp_installed: ', utils.table_tostring(tmp_installed))
+        print('      to_install: ', utils.table_tostring(to_install))
+        print('  -is installed: ', is_installed(pkg.name, tmp_installed, pkg_constraint))
+        --]]
+
         -- clear the state from previous candidate
         pkg_is_installed, err = false, nil
 
         -- check whether this package has already been added to 'tmp_installed' by another of its candidates
         --TODO: is the use of pkg_constraint correct?
         pkg_is_installed, err = is_installed(pkg.name, tmp_installed, pkg_constraint)
+
         if pkg_is_installed then break end
 
         --TODO: shouldn't this line be uncommented?
@@ -313,6 +328,7 @@ local function get_packages_to_install(pkg, installed, manifest, force_no_downlo
                             if depends_to_install then
                                 for _, depend_to_install in pairs(depends_to_install) do
                                     table.insert(to_install, depend_to_install)
+                                    table.insert(tmp_installed, depend_to_install)
                                     table.insert(installed, depend_to_install)
                                 end
                             else

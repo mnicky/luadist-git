@@ -873,6 +873,55 @@ tests.version_of_depends_4 = function()
     local pkgs, err = depends.get_depends({'c'}, installed, manifest, true)
     assert(describe_packages(pkgs) == "a-1.0 b-1.0 c-1.0", pkgs_fail_msg(pkgs, err))
 end
+
+tests.version_of_depends_5 = function()
+    local manifest, installed = {}, {}
+    manifest.a1 = {name="a", arch="Universal", type="all", version="1.0"}
+    manifest.a2 = {name="a", arch="Universal", type="all", version="2.0", depends={"x"}}
+
+    manifest.b = {name="b", arch="Universal", type="all", version="1.0", depends={"a==1.0"}}
+
+    manifest.c = {name="c", arch="Universal", type="all", version="1.0", depends={"a>=1.0","b>=1.0"}}
+
+    local pkgs, err = depends.get_depends({'c'}, installed, manifest, true)
+    assert(describe_packages(pkgs) == "a-1.0 b-1.0 c-1.0", pkgs_fail_msg(pkgs, err))
+end
+
+-- TODO: Without trying all possible permutations of packages to install
+-- LuaDist probably can't find a solution to this.
+--[[
+tests.version_of_depends_6 = function()
+    local manifest, installed = {}, {}
+    manifest.a1 = {name="a", arch="Universal", type="all", version="1.0"}
+    manifest.a2 = {name="a", arch="Universal", type="all", version="2.0"}
+
+    manifest.b = {name="b", arch="Universal", type="all", version="1.0", depends={"a==1.0"}}
+
+    manifest.c = {name="c", arch="Universal", type="all", version="1.0", depends={"a>=1.0","b>=1.0"}}
+
+    local pkgs, err = depends.get_depends({'c'}, installed, manifest, true)
+    assert(describe_packages(pkgs) == "a-1.0 b-1.0 c-1.0", pkgs_fail_msg(pkgs, err))
+end
+--]]
+
+-- TODO: Without trying all possible permutations of packages to install
+-- LuaDist probably can't find a solution to this.
+--[[
+tests.version_of_depends_7 = function()
+    local manifest, installed = {}, {}
+    manifest.a1 = {name="a", arch="Universal", type="all", version="1.0"}
+    manifest.a2 = {name="a", arch="Universal", type="all", version="2.0", depends={"d==1.0"}}
+
+    manifest.d1 = {name="d", arch="Universal", type="all", version="1.0"}
+    manifest.d2 = {name="d", arch="Universal", type="all", version="2.0"}
+
+    manifest.b = {name="b", arch="Universal", type="all", version="1.0", depends={"a==1.0"}}
+
+    manifest.c = {name="c", arch="Universal", type="all", version="1.0", depends={"a>=1.0","b>=1.0"}}
+
+    local pkgs, err = depends.get_depends({'c'}, installed, manifest, true)
+    assert(describe_packages(pkgs) == "a-1.0 b-1.0 c-1.0", pkgs_fail_msg(pkgs, err))
+end
 --]]
 
 --- check if the installed package is in needed version
