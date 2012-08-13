@@ -244,13 +244,8 @@ local function get_packages_to_install(pkg, installed, manifest, force_no_downlo
         pkg_is_installed, err = false, nil
 
         -- check whether this package has already been added to 'tmp_installed' by another of its candidates
-        --TODO: is the use of pkg_constraint correct?
         pkg_is_installed, err = is_installed(pkg.name, tmp_installed, pkg_constraint)
-
         if pkg_is_installed then break end
-
-        --TODO: shouldn't this line be uncommented?
-        --if err then return nil, err end
 
         -- download info about the package
         if not force_no_download then
