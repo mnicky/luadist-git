@@ -39,7 +39,7 @@ cache_timeout = 60 * 60       -- Cache timeout in seconds.
 
 -- Components (of modules) that will be installed.
 components    = {
-  "Runtime", "Library", "Header", "Data", "Documentation", "Example", "Test", "Other"
+  "Runtime", "Library", "Header", "Data", "Documentation", "Example", "Test", "Other", "Unspecified"
 }
 
 -- Available log levels are: DEBUG, INFO, WARN, ERROR, FATAL (see dist.logger for more information).
