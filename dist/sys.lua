@@ -72,6 +72,16 @@ function capture_output(command)
     return captured
 end
 
+-- Return whether the path is a root.
+function is_root(path)
+    assert(type(path) == "string", "sys.is_root: Argument 'path' is not a string.")
+    if cfg.arch == "Windows" then
+        return utils.to_boolean(path:find("^[%u%U.]?:?[/\\]$"))
+    else
+        return utils.to_boolean(path:find("^/$"))
+    end
+end
+
 -- Return whether the specified file or directory exists. Return the same as
 -- lfs.attributes(path), but do some preprocessing of the path before.
 function exists(path)
@@ -80,7 +90,7 @@ function exists(path)
     path = path:gsub("\\", "/")
 
     -- remove the trailing '/' character if not a root
-    if (path:sub(-1) == "/") and not (path:match("^.:/$") or path == "/") then
+    if (path:sub(-1) == "/") and not is_root(path) then
         path = path:sub(1,-2)
     end
 
@@ -111,8 +121,8 @@ function current_dir()
     end
 end
 
--- Return iterator over directory dir.
--- If dir does not exist or is not a directory, return nil and error message.
+-- Return an iterator over the directory 'dir'.
+-- If 'dir' doesn't exist or is not a directory, return nil and error message.
 function get_directory(dir)
     dir = dir or current_dir()
     assert(type(dir) == "string", "sys.get_directory: Argument 'dir' is not a string.")
@@ -123,11 +133,12 @@ function get_directory(dir)
     end
 end
 
--- Extract file or directory name from its path
+-- Extract file or directory name from its path.
 function extract_name(path)
     assert(type(path) == "string", "sys.extract_name: Argument 'path' is not a string.")
 
     path = path:gsub("\\", "/")
+    if is_root(path) then return path end
 
     -- remove the trailing '/' character
     if (path:sub(-1) == "/") then

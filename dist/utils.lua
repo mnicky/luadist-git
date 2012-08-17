@@ -92,3 +92,8 @@ function escape_magic(str)
     local escaped = str:gsub('[%-%.%+%[%]%(%)%^%%%?%*%^%$]','%%%1')
     return escaped
 end
+
+-- Return the boolean representation of an 'arg'.
+function to_boolean(arg)
+    return not not arg
+end
