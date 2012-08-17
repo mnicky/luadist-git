@@ -72,14 +72,15 @@ function capture_output(command)
     return captured
 end
 
--- Return if specified file or directory exists
+-- Return whether the specified file or directory exists. Return the same as
+-- lfs.attributes(path), but do some preprocessing of the path before.
 function exists(path)
     assert(type(path) == "string", "sys.exists: Argument 'path' is not a string.")
 
     path = path:gsub("\\", "/")
 
-    -- remove the trailing '/' character
-    if (path:sub(-1) == "/") and not path:match("^.:/$") then
+    -- remove the trailing '/' character if not a root
+    if (path:sub(-1) == "/") and not (path:match("^.:/$") or path == "/") then
         path = path:sub(1,-2)
     end
 
