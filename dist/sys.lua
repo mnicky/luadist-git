@@ -17,7 +17,7 @@ function path_separator()
     end
 end
 
--- Return quoted string argument.
+-- Return string argument quoted for a command line usage.
 function quote(argument)
     assert(type(argument) == "string", "sys.quote: Argument 'argument' is not a string.")
 
