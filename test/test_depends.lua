@@ -1260,5 +1260,5 @@ tests.install_specific_version_with_conflicts_2 = function()
 end
 
 
-
+-- actually run the test suite
 run_tests(tests)

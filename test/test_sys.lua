@@ -58,6 +58,7 @@ end
 
 
 
+-- actually run the test suite
 run_tests(tests)
 
 -- set the original system architecture back (DO NOT REMOVE!)
