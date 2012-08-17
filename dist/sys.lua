@@ -87,13 +87,13 @@ function exists(path)
     return lfs.attributes(path)
 end
 
--- Return if file is a file
+-- Return whether the 'file' exists and is a file.
 function is_file(file)
     assert(type(file) == "string", "sys.is_file: Argument 'file' is not a string.")
     return lfs.attributes(file, "mode") == "file"
 end
 
--- Return if dir is a directory
+-- Return whether the 'dir' exists and is a directory.
 function is_dir(dir)
     assert(type(dir) == "string", "sys.is_dir: Argument 'dir' is not a string.")
     return lfs.attributes(dir, "mode") == "directory"
