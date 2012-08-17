@@ -150,7 +150,7 @@ function extract_name(path)
 end
 
 -- Return parent directory of the 'path' or nil if there's no parent directory.
--- If 'path' is file path, return directory the file is in.
+-- If 'path' is a path to file, return the directory the file is in.
 function parent_dir(path)
     assert(type(path) == "string", "sys.parent_dir: Argument 'path' is not a string.")
 
@@ -169,7 +169,7 @@ function parent_dir(path)
     end
 end
 
--- Returns table of all parent directories of 'path' up to the directory
+-- Returns the table of all parent directories of 'path' up to the directory
 -- specified by 'boundary_path' (exclusive).
 -- NOTE: 'boundary_path' must end with '/' or '\' (e.g. "/home/username/").
 function parents_up_to(path, boundary_path)
