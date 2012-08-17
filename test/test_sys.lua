@@ -6,11 +6,7 @@ local sys = require "dist.sys"
 
 -- Return test fail message.
 local function fail_msg(val, err)
-    if not val then
-        return "TEST FAILED!!! - Returned value was: 'nil' \n    Error was: \"" .. (err or "nil") .. "\""
-    else
-        return "TEST FAILED!!! - Returned value was: '" .. val .. "' \n    Error was: \"" .. (err or "nil") .. "\""
-    end
+    return "TEST FAILED!!! - Returned value was: '" .. tostring(val) .. "' \n    Error was: \"" .. (err or "nil") .. "\""
 end
 
 -- Run all the 'tests' and display results.
