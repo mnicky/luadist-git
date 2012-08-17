@@ -29,9 +29,9 @@ end
 -- Return test fail message.
 local function pkgs_fail_msg(pkgs, err)
     if not pkgs then
-        return "TEST FAILED!!! - Returned packages were: 'nil' \n    Error was: \"" .. (err or "nil") .. "\""
+        return "TEST FAILED!!! - Returned packages were: 'nil' \n    Error was: \"" .. (tostring(err) or "nil") .. "\""
     else
-        return "TEST FAILED!!! - Returned packages were: '" .. describe_packages(pkgs) .. "' \n    Error was: \"" .. (err or "nil") .. "\""
+        return "TEST FAILED!!! - Returned packages were: '" .. describe_packages(pkgs) .. "' \n    Error was: \"" .. (tostring(err) or "nil") .. "\""
     end
 end
 
