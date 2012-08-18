@@ -114,26 +114,14 @@ end
 
 --- exec()
 
-tests.exec_unix = function()
-    cfg.arch = "Linux"
-    local val, err = sys.exec("cd")
-    assert(val == true and err:find("Sucessfully executed"), fail_msg(val, err))
-end
-
-tests.exec_win = function()
-    cfg.arch = "Windows"
+tests.exec_os_specific = function()
+    cfg.arch = original_arch
     local val, err = sys.exec("cd")
     assert(val == true and err:find("Sucessfully executed"), fail_msg(val, err))
 end
 ---
-tests.exec_nonexistent_unix = function()
-    cfg.arch = "Linux"
-    local val, err = sys.exec("nonexistent")
-    assert(val == nil and err:find("Error when running"), fail_msg(val, err))
-end
-
-tests.exec_nonexistent_win = function()
-    cfg.arch = "Windows"
+tests.exec_nonexistent_os_specific = function()
+    cfg.arch = original_arch
     local val, err = sys.exec("nonexistent")
     assert(val == nil and err:find("Error when running"), fail_msg(val, err))
 end
