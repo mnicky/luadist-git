@@ -186,8 +186,11 @@ function make_path(...)
     end
     if not path then return nil, err end
 
+    -- squeeze repeated occurences of a file separator
     path = path:gsub(path_separator() .. "+", path_separator())
-    if (path:sub(-1) == path_separator()) and not is_root(path) then path = path:sub(1,-2) end
+
+    -- remove unnecessary trailing path separator
+    path = remove_trailing(path)
 
     return path
 end
