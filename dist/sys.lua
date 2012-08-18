@@ -213,7 +213,7 @@ function get_file_list(dir)
         for item in get_directory(path) do
 
             local item_path = make_path(path, item)
-            local _, last = item_path:find(dir .. "/", 1, true)
+            local _, last = item_path:find(dir .. path_separator(), 1, true)
             local path_to_insert = item_path:sub(last + 1)
 
             if is_file(item_path) then
