@@ -97,3 +97,9 @@ end
 function to_boolean(arg)
     return not not arg
 end
+
+-- Return pseudo-random number in range [0, 1], [1, n] or [n, m].
+function rand(...)
+    math.randomseed(os.time())
+    return math.random(...)
+end
