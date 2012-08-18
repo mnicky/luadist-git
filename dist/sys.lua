@@ -17,6 +17,13 @@ function path_separator()
     end
 end
 
+-- Returns the path with the unnecessary trailing separator removed.
+function remove_trailing(path)
+    assert(type(path) == "string", "sys.remove_trailing: Argument 'path' is not a string.")
+    if path:sub(-1) == path_separator() and not is_root(path) then path = path:sub(1,-2) end
+    return path
+end
+
 -- Return string argument quoted for a command line usage.
 function quote(argument)
     assert(type(argument) == "string", "sys.quote: Argument 'argument' is not a string.")
