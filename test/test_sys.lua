@@ -249,6 +249,7 @@ end
 tests.is_file_unix = function()
     cfg.arch = "Linux"
     local filename = os.tmpname()
+    assert(io.open(filename,"w"):close())
     local val, err = sys.is_file(filename)
     assert(val == true, fail_msg(val, err))
 end
@@ -256,6 +257,7 @@ end
 tests.is_file_win = function()
     cfg.arch = "Windows"
     local filename = os.tmpname()
+    assert(io.open(filename,"w"):close())
     local val, err = sys.is_file(filename)
     assert(val == true, fail_msg(val, err))
 end
