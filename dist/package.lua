@@ -179,7 +179,7 @@ function build_pkg(src_dir, deploy_dir, variables)
 
     -- Fill in cache variables
     for k,v in pairs(variables) do
-        cache_file:write("SET(" .. k .. " \"" .. v .. "\"" .. " CACHE STRING \"\" FORCE)\n")
+        cache_file:write("SET(" .. k .. " " .. sys.quote(v):gsub("\\+", "/") .. " CACHE STRING \"\" FORCE)\n")
     end
 
     -- If user cache file is provided then append it
@@ -235,7 +235,7 @@ function build_pkg(src_dir, deploy_dir, variables)
             mf, err = io.open(install_mf, "r")
             if not mf then return nil, "Error when opening the CMake installation manifest '" .. install_mf .. "': " .. err end
             for line in mf:lines() do
-              local file = line:gsub(deploy_dir.."/", "")
+              local file = line:gsub(deploy_dir .. sys.path_separator(), "")
               table.insert(component_files, file)
             end
             mf:close()
