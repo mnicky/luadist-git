@@ -101,7 +101,7 @@ function load_manifest(manifest_file)
 
         manifest = {}
         for url in mf_text:gmatch("git://%S+.git") do
-            pkg = {name = url:match("git:/.+/.+/(.*).git$") ,version = "scm", path = url}
+            pkg = {name = url:match("git:/.+/.+/(.*).git$"), version = "scm", path = url}
             table.insert(manifest, pkg)
         end
 
