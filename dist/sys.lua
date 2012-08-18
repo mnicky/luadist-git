@@ -6,8 +6,6 @@ local cfg = require "dist.config"
 local utils = require "dist.utils"
 local lfs = require "lfs"
 
--- TODO test functionality of this module on Windows
-
 -- Return the path separator according to the platform.
 function path_separator()
     if cfg.arch == "Windows" then
@@ -135,12 +133,7 @@ function extract_name(path)
     if is_root(path) then return path end
 
     path = remove_trailing(path)
-
-    if cfg.arch == "Windows" then
-        path = path:gsub("^.*\\", "")
-    else
-        path = path:gsub("^.*/", "")
-    end
+    path = path:gsub("^.*" .. path_separator(), "")
     return path
 end
 
@@ -189,21 +182,12 @@ function make_path(...)
     if parts.n == 0 then
         path, err = current_dir()
     else
-        if cfg.arch == "Windows" then
-            path, err = table.concat(parts, "\\")
-        else
-            path, err = table.concat(parts, "/")
-        end
+        path, err = table.concat(parts, path_separator())
     end
     if not path then return nil, err end
 
-    if cfg.arch == "Windows" then
-        path = path:gsub("\\+", "\\")
-        if (path:sub(-1) == "\\") and not is_root(path) then path = path:sub(1,-2) end
-    else
-        path = path:gsub("/+", "/")
-        if (path:sub(-1) == "/") and not is_root(path) then path = path:sub(1,-2) end
-    end
+    path = path:gsub(path_separator() .. "+", path_separator())
+    if (path:sub(-1) == path_separator()) and not is_root(path) then path = path:sub(1,-2) end
 
     return path
 end
