@@ -589,7 +589,7 @@ tests.get_file_list_os_specific = function()
 
     assert(os.remove(file1))
     assert(os.remove(file2))
-    assert(os.remove(dir))
+    assert(lfs.rmdir(dir))
     assert(val[1] == sys.extract_name(file1) and val[2] == sys.extract_name(file2) or
            val[1] == sys.extract_name(file2) and val[2] == sys.extract_name(file1) , fail_msg(val, err))
 end
@@ -602,7 +602,7 @@ tests.get_file_list__with_empty_dir_os_specific = function()
 
     assert(sys.make_dir(dir))
     local val, err = sys.get_file_list(dir)
-    assert(os.remove(dir))
+    assert(lfs.rmdir(dir))
     assert(type(val) == "table" and #val == 0 , fail_msg(val, err))
 end
 
