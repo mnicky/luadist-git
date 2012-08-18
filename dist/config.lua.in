@@ -4,14 +4,14 @@ module ("dist.config", package.seeall)
 
 local sys = require "dist.sys"
 
--- Look for _PROGDIR by default --------------------------------------
-local path    = _PROGDIR
-if path then path = sys.make_path(sys.parent_dir(path)) end
-
 -- System information ------------------------------------------------
 version       = "@DIST_VERSION@"   -- Current LuaDist version
 arch          = "@DIST_ARCH@"      -- Host architecture
 type          = "@DIST_TYPE@"      -- Host type
+
+-- Look for _PROGDIR by default --------------------------------------
+local path    = _PROGDIR
+if path then path = sys.parent_dir(path) end
 
 -- Directories -------------------------------------------------------
 root_dir      = path or os.getenv("DIST_ROOT") or sys.path_separator()
