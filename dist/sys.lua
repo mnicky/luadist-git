@@ -82,26 +82,20 @@ end
 -- Return whether the path is a root.
 function is_root(path)
     assert(type(path) == "string", "sys.is_root: Argument 'path' is not a string.")
-    if cfg.arch == "Windows" then
-        return utils.to_boolean(path:find("^[%u%U.]?:?[/\\]$"))
-    else
-        return utils.to_boolean(path:find("^/$"))
-    end
+    return utils.to_boolean(path:find("^[%u%U.]?:?[/\\]$"))
 end
 
--- Return whether the specified file or directory exists. Return the same as
--- lfs.attributes(path), but do some preprocessing of the path before.
+-- Return whether the path is absolute.
+function is_abs(path)
+    assert(type(path) == "string", "sys.is_abs: Argument 'path' is not a string.")
+    return utils.to_boolean(path:find("^[%u%U.]?:?[/\\].*$"))
+end
+
+-- Return whether the specified file or directory exists.
 function exists(path)
     assert(type(path) == "string", "sys.exists: Argument 'path' is not a string.")
-
-    path = path:gsub("\\", "/")
-
-    -- remove the trailing '/' character if not a root
-    if (path:sub(-1) == "/") and not is_root(path) then
-        path = path:sub(1,-2)
-    end
-
-    return lfs.attributes(path)
+    local attr, err = lfs.attributes(path)
+    return utils.to_boolean(attr), err
 end
 
 -- Return whether the 'file' exists and is a file.
@@ -120,12 +114,7 @@ end
 function current_dir()
     local dir, err = lfs.currentdir()
     if not dir then return nil, err end
-
-    if cfg.arch == "Windows" then
-        return dir:gsub("\\", "/")
-    else
-        return dir
-    end
+    return dir
 end
 
 -- Return an iterator over the directory 'dir'.
@@ -143,49 +132,38 @@ end
 -- Extract file or directory name from its path.
 function extract_name(path)
     assert(type(path) == "string", "sys.extract_name: Argument 'path' is not a string.")
-
-    path = path:gsub("\\", "/")
     if is_root(path) then return path end
 
-    -- remove the trailing '/' character
-    if (path:sub(-1) == "/") then
-        path = path:sub(1,-2)
-    end
+    path = remove_trailing(path)
 
-    local name = path:gsub("^.*/", "")
-    return name
+    if cfg.arch == "Windows" then
+        path = path:gsub("^.*\\", "")
+    else
+        path = path:gsub("^.*/", "")
+    end
+    return path
 end
 
 -- Return parent directory of the 'path' or nil if there's no parent directory.
 -- If 'path' is a path to file, return the directory the file is in.
 function parent_dir(path)
     assert(type(path) == "string", "sys.parent_dir: Argument 'path' is not a string.")
-
-    path = path:gsub("\\", "/")
-
-    -- remove the trailing '/' character
-    if (path:sub(-1) == "/") then
-        path = path:sub(1,-2)
-    end
+    path = remove_trailing(path)
 
     local dir = path:gsub(utils.escape_magic(extract_name(path)) .. "$", "")
     if dir == "" then
         return nil
     else
-        return dir
+        return make_path(dir)
     end
 end
 
 -- Returns the table of all parent directories of 'path' up to the directory
 -- specified by 'boundary_path' (exclusive).
--- NOTE: 'boundary_path' must end with '/' or '\' (e.g. "/home/username/").
 function parents_up_to(path, boundary_path)
     assert(type(path) == "string", "sys.parents_up_to: Argument 'path' is not a string.")
     assert(type(boundary_path) == "string", "sys.parents_up_to: Argument 'boundary_path' is not a string.")
-
-    -- normalize paths
-    path = path:gsub("\\", "/")
-    boundary_path = boundary_path:gsub("\\", "/")
+    boundary_path = remove_trailing(boundary_path)
 
     -- helper function to recursively collect the parent directories
     local function collect_parents(_path, _parents)
@@ -211,9 +189,21 @@ function make_path(...)
     if parts.n == 0 then
         path, err = current_dir()
     else
-        path, err = table.concat(parts, "/")
+        if cfg.arch == "Windows" then
+            path, err = table.concat(parts, "\\")
+        else
+            path, err = table.concat(parts, "/")
+        end
     end
     if not path then return nil, err end
+
+    if cfg.arch == "Windows" then
+        path = path:gsub("\\+", "\\")
+        if (path:sub(-1) == "\\") and not is_root(path) then path = path:sub(1,-2) end
+    else
+        path = path:gsub("/+", "/")
+        if (path:sub(-1) == "/") and not is_root(path) then path = path:sub(1,-2) end
+    end
 
     return path
 end
@@ -221,23 +211,12 @@ end
 -- Return absolute path from 'path'
 function abs_path(path)
     assert(type(path) == "string", "sys.get_abs_path: Argument 'path' is not a string.")
+    if is_abs(path) then return path end
 
     local cur_dir, err = current_dir()
     if not cur_dir then return nil, err end
 
-    if cfg.arch == "Windows" then
-        if path:match("%u:[/\\].*") then
-            return path
-        else
-            return make_path(cur_dir, path)
-        end
-    else
-        if path:sub(1,1) == "/" then
-            return path
-        else
-            return make_path(cur_dir, path)
-        end
-    end
+    return make_path(cur_dir, path)
 end
 
 -- Return table of all paths in 'dir'
