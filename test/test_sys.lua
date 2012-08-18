@@ -248,17 +248,19 @@ end
 
 tests.is_file_unix = function()
     cfg.arch = "Linux"
-    local filename = os.tmpname()
-    assert(io.open(filename,"w"):close())
+    local filename = assert(os.tmpname())
+    assert(io.open(filename, "w"):close())
     local val, err = sys.is_file(filename)
+    assert(os.remove(filename))
     assert(val == true, fail_msg(val, err))
 end
 
 tests.is_file_win = function()
     cfg.arch = "Windows"
-    local filename = os.tmpname()
-    assert(io.open(filename,"w"):close())
+    local filename = assert(os.tmpname())
+    assert(io.open(filename, "w"):close())
     local val, err = sys.is_file(filename)
+    assert(os.remove(filename))
     assert(val == true, fail_msg(val, err))
 end
 ---
@@ -577,14 +579,18 @@ end
 tests.get_file_list_os_specific = function()
     cfg.arch = original_arch
 
-    local tmpdir = sys.parent_dir(sys.make_path(os.tmpname()))
+    local tmpfile = assert(os.tmpname())
+    assert(io.open(tmpfile, "w"):close())
+    assert(os.remove(tmpfile))
+
+    local tmpdir = sys.parent_dir(tmpfile)
     local dir = sys.make_path(tmpdir, "dir-957834-" .. utils.rand(1000000))
     local file1 = sys.make_path(dir, "file1-235689-" .. utils.rand(1000000))
     local file2 = sys.make_path(dir, "file2-897452-" .. utils.rand(1000000))
 
     assert(sys.make_dir(dir))
-    assert(io.open(file1,"w"):close())
-    assert(io.open(file2,"w"):close())
+    assert(io.open(file1, "w"):close())
+    assert(io.open(file2, "w"):close())
     local val, err = sys.get_file_list(dir)
 
     assert(os.remove(file1))
@@ -597,7 +603,11 @@ end
 tests.get_file_list__with_empty_dir_os_specific = function()
     cfg.arch = original_arch
 
-    local tmpdir = sys.parent_dir(sys.make_path(os.tmpname()))
+    local tmpfile = assert(os.tmpname())
+    assert(io.open(tmpfile, "w"):close())
+    assert(os.remove(tmpfile))
+
+    local tmpdir = sys.parent_dir(tmpfile)
     local dir = sys.make_path(tmpdir, "dir-324687-" .. utils.rand(1000000))
 
     assert(sys.make_dir(dir))
