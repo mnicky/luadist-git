@@ -37,7 +37,7 @@ function remove_pkg(pkg_distinfo_dir, deploy_dir)
                     if #dir_files == 0 then sys.delete(f) end
                 end
                 -- delete also all parent directories if empty
-                local parents = sys.parents_up_to(f, deploy_dir .. sys.path_separator())
+                local parents = sys.parents_up_to(f, deploy_dir)
                 for _, parent in ipairs(parents) do
                     if sys.is_dir(parent) then
                         local dir_files, err = sys.get_file_list(parent)
@@ -235,13 +235,14 @@ function build_pkg(src_dir, deploy_dir, variables)
             mf, err = io.open(install_mf, "r")
             if not mf then return nil, "Error when opening the CMake installation manifest '" .. install_mf .. "': " .. err end
             for line in mf:lines() do
-              local file = line:gsub(deploy_dir .. sys.path_separator(), "")
-              table.insert(component_files, file)
+                line = sys.check_separators(line)
+                local file = line:gsub(utils.escape_magic(deploy_dir .. sys.path_separator()), "")
+                table.insert(component_files, file)
             end
             mf:close()
 
             -- add list of component files to the 'dist.info'
-            if ( #component_files > 0 ) then info.files[component] = component_files end
+            if #component_files > 0 then info.files[component] = component_files end
         end
     end
 --    if bookmark == 0 then return nil, "Package did not install any files!" end
