@@ -54,6 +54,32 @@ tests.path_separator_win = function()
     assert(val == "\\", fail_msg(val, err))
 end
 
+--- check_separators()
+
+tests.check_separators_unix_1 = function()
+    cfg.arch = "Linux"
+    local val, err = sys.check_separators("/dir1/dir2/file")
+    assert(val == "/dir1/dir2/file", fail_msg(val, err))
+end
+
+tests.check_separators_unix_2 = function()
+    cfg.arch = "Linux"
+    local val, err = sys.check_separators("\\very\\long\\filename")
+    assert(val == "\\very\\long\\filename", fail_msg(val, err))
+end
+
+tests.check_separators_win_1 = function()
+    cfg.arch = "Windows"
+    local val, err = sys.check_separators("C:/dir1/dir2/file.ext")
+    assert(val == "C:\\dir1\\dir2\\file.ext", fail_msg(val, err))
+end
+
+tests.check_separators_win_2 = function()
+    cfg.arch = "Windows"
+    local val, err = sys.check_separators("C:\\dir1\\dir2\\file.ext")
+    assert(val == "C:\\dir1\\dir2\\file.ext", fail_msg(val, err))
+end
+
 --- remove_trailing()
 
 tests.remove_trailing_unix = function()

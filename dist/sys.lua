@@ -15,7 +15,17 @@ function path_separator()
     end
 end
 
--- Returns the path with the unnecessary trailing separator removed.
+-- Return path with wrong separators replaced with the right.
+function check_separators(path)
+    assert(type(path) == "string", "sys.check_separators: Argument 'path' is not a string.")
+    if cfg.arch == "Windows" then
+        return path:gsub("/", "\\")
+    else
+        return path
+    end
+end
+
+-- Return the path with the unnecessary trailing separator removed.
 function remove_trailing(path)
     assert(type(path) == "string", "sys.remove_trailing: Argument 'path' is not a string.")
     if path:sub(-1) == path_separator() and not is_root(path) then path = path:sub(1,-2) end
