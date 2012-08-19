@@ -333,7 +333,13 @@ function delete(path)
     assert(type(path) == "string", "sys.delete: Argument 'path' is not a string.")
 
     if cfg.arch == "Windows" then
-        return exec("rd /S /Q " .. quote(path))
+        if not exists(path) then
+            return true
+        elseif is_file(path) then
+            return os.remove(path)
+        else
+            return exec("rd /S /Q " .. quote(path))
+        end
     else
         return exec("rm -rf " .. quote(path))
     end
