@@ -41,8 +41,16 @@ function quote(argument)
         argument = argument:gsub("//","\\"):gsub("/","\\")
     end
 
-    argument = string.gsub(argument, "\\",  "\\\\")
-    argument = string.gsub(argument, '"',  '\\"')
+    -- Windows doesn't recognize paths starting with two slashes or backslashes
+    -- so we double every backslash except for the first one
+    if cfg.arch == "Windows" and argument:match("^[/\\].*") then
+        local prefix = argument:sub(1,1)
+        argument = argument:sub(2):gsub("\\",  "\\\\")
+        argument = prefix .. argument
+    else
+        argument = argument:gsub("\\",  "\\\\")
+    end
+    argument = argument:gsub('"',  '\\"')
 
     return '"' .. argument .. '"'
 end
