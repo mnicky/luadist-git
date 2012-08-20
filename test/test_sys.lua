@@ -677,6 +677,7 @@ tests.change_dir_os_specific = function()
 end
 
 --- make_dir()
+
 tests.make_dir_os_specific = function()
     cfg.arch = original_arch
 
@@ -698,6 +699,7 @@ tests.make_dir_os_specific = function()
 end
 
 --- move_to()
+
 tests.move_to_with_file_os_specific = function()
     cfg.arch = original_arch
 
@@ -761,6 +763,7 @@ tests.move_to_with_dir_os_specific = function()
 end
 
 --- rename()
+
 tests.rename_with_file_os_specific = function()
     cfg.arch = original_arch
 
@@ -814,6 +817,7 @@ tests.rename_with_dir_os_specific = function()
 end
 
 --- copy()
+
 tests.copy_with_file_os_specific = function()
     cfg.arch = original_arch
 
@@ -880,6 +884,7 @@ tests.copy_with_dir_os_specific = function()
 end
 
 --- delete()
+
 tests.delete_with_file_os_specific = function()
     cfg.arch = original_arch
 
@@ -893,8 +898,7 @@ tests.delete_with_file_os_specific = function()
     -- verify
     assert(val == true and not sys.exists(file) , fail_msg(val, err))
 end
-
---- delete()
+---
 tests.delete_with_empty_dir_os_specific = function()
     cfg.arch = original_arch
 
@@ -914,8 +918,7 @@ tests.delete_with_empty_dir_os_specific = function()
     -- verify
     assert(val == true and not sys.exists(dir) , fail_msg(val, err))
 end
-
---- delete()
+---
 tests.delete_with_nonempty_dir_os_specific = function()
     cfg.arch = original_arch
 
@@ -939,8 +942,7 @@ tests.delete_with_nonempty_dir_os_specific = function()
     -- verify
     assert(val == true and not sys.exists(file) and not sys.exists(dir) , fail_msg(val, err))
 end
-
---- delete()
+---
 tests.delete_with_nonexistent_path_os_specific = function()
     cfg.arch = original_arch
 
@@ -960,8 +962,7 @@ tests.delete_with_nonexistent_path_os_specific = function()
     -- verify
     assert(val == true , fail_msg(val, err))
 end
-
---- delete()
+---
 tests.delete_with_non_absolute_path_os_specific = function()
     cfg.arch = original_arch
 
@@ -980,6 +981,7 @@ tests.delete_with_non_absolute_path_os_specific = function()
     -- verify
     assert(val == false and err:find("not an absolute path") , fail_msg(val, err))
 end
+
 
 -- actually run the test suite
 run_tests(tests)
