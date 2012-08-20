@@ -331,6 +331,7 @@ end
 -- Delete the specified file or directory
 function delete(path)
     assert(type(path) == "string", "sys.delete: Argument 'path' is not a string.")
+    assert(is_abs(path), "sys.delete: Argument 'path' is not an absolute path.")
 
     if cfg.arch == "Windows" then
         if not exists(path) then
