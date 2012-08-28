@@ -67,7 +67,7 @@ function get_remote_tags(git_url)
     if not tagstrings then return nil, "Error getting tags of repository '" .. git_url .. "': " .. err end
 
     for tag in tagstrings:gmatch("/tags/(%S+)") do
-        table.insert(tags, tag)
+        if not tag:match("%^{}") then table.insert(tags, tag) end
     end
 
     return tags
