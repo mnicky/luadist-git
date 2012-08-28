@@ -455,6 +455,54 @@ tests.parent_dir_with_root_win = function()
     local val, err = sys.parent_dir("C:\\")
     assert(val == nil, fail_msg(val, err))
 end
+---
+tests.parent_dir_with_comma_unix = function()
+    cfg.arch = "Linux"
+    local val, err = sys.parent_dir("/dir1/dir2/dir3/.")
+    assert(val == "/dir1/dir2", fail_msg(val, err))
+end
+
+tests.parent_dir_with_comma_win_1 = function()
+    cfg.arch = "Windows"
+    local val, err = sys.parent_dir("C:\\dir1\\dir2\\dir3\\.")
+    assert(val == "C:\\dir1\\dir2", fail_msg(val, err))
+end
+
+tests.parent_dir_with_comma_win_2 = function()
+    cfg.arch = "Windows"
+    local val, err = sys.parent_dir("\\dir1\\dir2\\dir3\\.")
+    assert(val == "\\dir1\\dir2", fail_msg(val, err))
+end
+---
+tests.parent_dir_with_comma_repeat_unix = function()
+    cfg.arch = "Linux"
+    local val, err = sys.parent_dir("/dir1/./dir2/dir3/././.")
+    assert(val == "/dir1/dir2", fail_msg(val, err))
+end
+
+tests.parent_dir_with_comma_repeat_win_1 = function()
+    cfg.arch = "Windows"
+    local val, err = sys.parent_dir("C:\\dir1\\.\\dir2\\dir3\\.\\.\\.")
+    assert(val == "C:\\dir1\\dir2", fail_msg(val, err))
+end
+
+tests.parent_dir_with_comma_repeat_win_2 = function()
+    cfg.arch = "Windows"
+    local val, err = sys.parent_dir("\\dir1\\.\\dir2\\dir3\\.\\.\\.")
+    assert(val == "\\dir1\\dir2", fail_msg(val, err))
+end
+---
+tests.parent_dir_with_preceding_comma_unix = function()
+    cfg.arch = "Linux"
+    local val, err = sys.parent_dir("./dir1/dir2/dir3/")
+    assert(val == "./dir1/dir2", fail_msg(val, err))
+end
+
+tests.parent_dir_with_preceding_comma_win = function()
+    cfg.arch = "Windows"
+    local val, err = sys.parent_dir(".\\dir1\\dir2\\dir3\\")
+    assert(val == ".\\dir1\\dir2", fail_msg(val, err))
+end
 
 --- parents_up_to()
 
@@ -515,6 +563,18 @@ end
 tests.parents_up_to_with_dir_and_root_boundary_win = function()
     cfg.arch = "Windows"
     local val, err = sys.parents_up_to("C:\\dir1\\dir2\\dir3\\","C:\\")
+    assert(val[1] == "C:\\dir1\\dir2" and val[2] == "C:\\dir1" and val[3] == nil, fail_msg(val, err))
+end
+---
+tests.parents_up_to_with_comma_unix = function()
+    cfg.arch = "Linux"
+    local val, err = sys.parents_up_to("/dir1/dir2/./dir3/","/")
+    assert(val[1] == "/dir1/dir2" and val[2] == "/dir1" and val[3] == nil, fail_msg(val, err))
+end
+
+tests.parents_up_to_with_comma_win = function()
+    cfg.arch = "Windows"
+    local val, err = sys.parents_up_to("C:\\dir1\\dir2\\.\\dir3\\","C:\\")
     assert(val[1] == "C:\\dir1\\dir2" and val[2] == "C:\\dir1" and val[3] == nil, fail_msg(val, err))
 end
 

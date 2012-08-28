@@ -32,6 +32,16 @@ function remove_trailing(path)
     return path
 end
 
+-- Return the path with the all occurences of '/.' or '\.' (representing the current directory) removed.
+function remove_curr_dir_dots(path)
+    assert(type(path) == "string", "sys.remove_curr_dir_dots: Argument 'path' is not a string.")
+    if cfg.arch == "Windows" then
+        return path:gsub("\\%.", "")
+    else
+        return path:gsub("/%.", "")
+    end
+end
+
 -- Return string argument quoted for a command line usage.
 function quote(argument)
     assert(type(argument) == "string", "sys.quote: Argument 'argument' is not a string.")
@@ -159,6 +169,7 @@ end
 -- If 'path' is a path to file, return the directory the file is in.
 function parent_dir(path)
     assert(type(path) == "string", "sys.parent_dir: Argument 'path' is not a string.")
+    path = remove_curr_dir_dots(path)
     path = remove_trailing(path)
 
     local dir = path:gsub(utils.escape_magic(extract_name(path)) .. "$", "")
