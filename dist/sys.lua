@@ -15,7 +15,7 @@ function path_separator()
     end
 end
 
--- Return path with wrong separators replaced with the right.
+-- Return path with wrong separators replaced with the right ones.
 function check_separators(path)
     assert(type(path) == "string", "sys.check_separators: Argument 'path' is not a string.")
     if cfg.arch == "Windows" then
@@ -30,6 +30,16 @@ function remove_trailing(path)
     assert(type(path) == "string", "sys.remove_trailing: Argument 'path' is not a string.")
     if path:sub(-1) == path_separator() and not is_root(path) then path = path:sub(1,-2) end
     return path
+end
+
+-- Return the path with the all occurences of '/.' or '\.' (representing
+-- the current directory) removed.
+function remove_curr_dir_dots(path)
+    assert(type(path) == "string", "sys.remove_curr_dir_dots: Argument 'path' is not a string.")
+    while path:match(path_separator() .. "%." .. path_separator()) do                       -- match("/%./")
+        path = path:gsub(path_separator() .. "%." .. path_separator(), path_separator())    -- gsub("/%./", "/")
+    end
+    return path:gsub(path_separator() .. "%.$", "")                                         -- gsub("/%.$", "")
 end
 
 -- Return string argument quoted for a command line usage.
@@ -159,6 +169,7 @@ end
 -- If 'path' is a path to file, return the directory the file is in.
 function parent_dir(path)
     assert(type(path) == "string", "sys.parent_dir: Argument 'path' is not a string.")
+    path = remove_curr_dir_dots(path)
     path = remove_trailing(path)
 
     local dir = path:gsub(utils.escape_magic(extract_name(path)) .. "$", "")
