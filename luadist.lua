@@ -16,9 +16,6 @@ commands = {
     -- Print help for this command line interface.
     ["help"] = {
         help = [[
-LuaDist-git ]].. cfg.version .. [[ - Lua package manager for the LuaDist deployment system.
-Released under the MIT License. See https://github.com/luadist/luadist-git
-
 Usage: luadist [DEPLOYMENT_DIRECTORY] <COMMAND> [ARGUMENTS...] [-VARIABLES...]
 
     Commands:
@@ -51,6 +48,7 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] <COMMAND> [ARGUMENTS...] [-VARIABLES...]
                 help_item = help_item[1]
             end
 
+            print_info()
             print(commands[help_item].help)
             return 0
         end
@@ -526,6 +524,14 @@ local function run_command(deploy_dir, command, other_idx)
     return commands[command].run(sys.abs_path(deploy_dir), items, cmake_variables)
 end
 
+function print_info()
+    print([[
+LuaDist-git ]].. cfg.version .. [[ - Lua package manager for the LuaDist deployment system.
+Released under the MIT License. See https://github.com/luadist/luadist-git
+          ]])
+    return 0
+end
+
 function print_help()
     return run_command(nil, "help")
 end
@@ -573,6 +579,31 @@ function apply_settings(variable, value)
     -- set the LuaDist variable
     cfg[variable] = value
 
+end
+
+-- Perform check of system dependencies, which aren't provided in the LuaDist
+-- installation itself. If they are missing, print instructions how to install
+-- them. Returns whether the dependencies are ok.
+function check_system_depends()
+    local ok = true
+
+    if not sys.exec("git --version") then
+        ok = false
+        print("Error: command 'git' not found. See installation instructions\nat https://github.com/LuaDist/Repository/wiki/install#git\n")
+    end
+    if not sys.exec("cmake --version") then
+        ok = false
+        print("Error: command 'cmake' not found. See installation instructions\nat https://github.com/LuaDist/Repository/wiki/install#cmake\n")
+    end
+
+    return ok
+end
+
+-- Check system dependencies.
+if not check_system_depends() then
+    print("------------")
+    print_info()
+    os.exit(1)
 end
 
 -- Parse command line input and run the required command.
