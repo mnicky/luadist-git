@@ -10,6 +10,9 @@ local mf = require "dist.manifest"
 local cfg = require "dist.config"
 local sys = require "dist.sys"
 
+-- CLI commands of Luadist.
+-- Please, include call to check_system_depends() at the start of any command,
+-- which requires the presence of 'git' or 'cmake' in the system.
 local commands
 commands = {
 
@@ -78,6 +81,8 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] install MODULES... [-VARIABLES...]
         ]],
 
         run = function (deploy_dir, modules, cmake_variables)
+            check_system_depends()
+
             deploy_dir = deploy_dir or dist.get_deploy_dir()
             if type(modules) == "string" then modules = {modules} end
             cmake_variables = cmake_variables or {}
@@ -163,6 +168,8 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] refresh [-VARIABLES...]
         ]],
 
         run = function (deploy_dir)
+            check_system_depends()
+
             deploy_dir = deploy_dir or dist.get_deploy_dir()
             assert(type(deploy_dir) == "string", "luadist.refresh: Argument 'deploy_dir' is not a string.")
             deploy_dir = sys.abs_path(deploy_dir)
@@ -200,6 +207,8 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] make MODULE_PATHS... [-VARIABLES...]
         ]],
 
         run = function (deploy_dir, module_paths, cmake_variables)
+            check_system_depends()
+
             deploy_dir = deploy_dir or dist.get_deploy_dir()
             module_paths = module_paths or {}
             cmake_variables = cmake_variables or {}
@@ -244,6 +253,8 @@ Usage: luadist [FETCH_DIRECTORY] fetch MODULES... [-VARIABLES...]
         ]],
 
         run = function (fetch_dir, modules)
+            check_system_depends()
+
             fetch_dir = fetch_dir or dist.get_deploy_dir()
             modules = modules or {}
             assert(type(fetch_dir) == "string", "luadist.fetch: Argument 'fetch_dir' is not a string.")
@@ -322,6 +333,8 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] search [STRINGS...] [-VARIABLES...]
         ]],
 
         run = function (deploy_dir, strings)
+            check_system_depends()
+
             deploy_dir = deploy_dir or dist.get_deploy_dir()
             strings = strings or {}
             assert(type(deploy_dir) == "string", "luadist.search: Argument 'deploy_dir' is not a string.")
@@ -365,6 +378,8 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] info [MODULES...] [-VARIABLES...]
         ]],
 
         run = function (deploy_dir, modules)
+            check_system_depends()
+
             deploy_dir = deploy_dir or dist.get_deploy_dir()
             modules = modules or {}
             assert(type(deploy_dir) == "string", "luadist.info: Argument 'deploy_dir' is not a string.")
@@ -524,6 +539,7 @@ local function run_command(deploy_dir, command, other_idx)
     return commands[command].run(sys.abs_path(deploy_dir), items, cmake_variables)
 end
 
+-- Print information about Luadist (version, license, etc.).
 function print_info()
     print([[
 LuaDist-git ]].. cfg.version .. [[ - Lua package manager for the LuaDist deployment system.
@@ -532,6 +548,7 @@ Released under the MIT License. See https://github.com/luadist/luadist-git
     return 0
 end
 
+-- Convenience function for printing the main luadist help.
 function print_help()
     return run_command(nil, "help")
 end
@@ -582,28 +599,25 @@ function apply_settings(variable, value)
 end
 
 -- Perform check of system dependencies, which aren't provided in the LuaDist
--- installation itself. If they are missing, print instructions how to install
--- them. Returns whether the dependencies are ok.
+-- installation itself and if they are missing, print instructions how
+-- to install them.
 function check_system_depends()
     local ok = true
 
     if not sys.exec("git --version") then
         ok = false
-        print("Error: command 'git' not found. See installation instructions\nat https://github.com/LuaDist/Repository/wiki/install#git\n")
+        print("Error: command 'git' not found. See installation instructions at\nhttps://github.com/LuaDist/Repository/wiki/Installation-of-System-Dependencies\n")
     end
     if not sys.exec("cmake --version") then
         ok = false
-        print("Error: command 'cmake' not found. See installation instructions\nat https://github.com/LuaDist/Repository/wiki/install#cmake\n")
+        print("Error: command 'cmake' not found. See installation instructions at\nhttps://github.com/LuaDist/Repository/wiki/Installation-of-System-Dependencies\n")
     end
 
-    return ok
-end
-
--- Check system dependencies.
-if not check_system_depends() then
-    print("------------")
-    print_info()
-    os.exit(1)
+    if not ok then
+        print("------------")
+        print_info()
+        os.exit(1)
+    end
 end
 
 -- Parse command line input and run the required command.
