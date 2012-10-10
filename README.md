@@ -19,8 +19,11 @@ Main Goals
  * once [libgit2](https://github.com/libgit2/libgit2) matures, use it instead of the git cli command
 
 
-<br>
-Please, report [issues here](https://github.com/LuaDist/luadist-git/issues).
+Useful links
+----------
+* [Bug tracker](https://github.com/LuaDist/luadist-git/issues)
+* [LuaDist documentation](https://github.com/LuaDist/Repository/wiki)
 
 <br>
 Under the MIT License.
+
