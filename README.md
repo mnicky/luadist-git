@@ -3,7 +3,7 @@ Luadist-git
 
 [![Build Status](https://secure.travis-ci.org/LuaDist/luadist-git.png?branch=master)](http://travis-ci.org/LuaDist/luadist-git)
 
-Luadist-git is Lua module deployment utility for the [LuaDist](https://github.com/LuaDist) project. In fact it's another version of older [luadist utility](https://github.com/LuaDist/luadist), rewritten from scratch.
+Luadist-git is [Lua](http://lua.org) module deployment utility for the [LuaDist](https://github.com/LuaDist) project. In fact it's another version of older [luadist utility](https://github.com/LuaDist/luadist), rewritten from scratch.
 
 Main Goals
 ----------
