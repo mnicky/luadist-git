@@ -58,34 +58,30 @@ function get_repo_url(git_url)
     end
 end
 
--- Return table of all tags of the repository at the 'git_url'
-function get_remote_tags(git_url)
-    assert(type(git_url) == "string", "git.get_remote_tags: Argument 'git_url' is not a string.")
+-- Return table of all refs of the remote repository at the 'git_url'. Ref_type can be 'tags' or 'heads'.
+local function get_remote_refs(git_url, ref_type)
+    assert(type(git_url) == "string", "git.get_remote_refs: Argument 'git_url' is not a string.")
+    assert(type(ref_type) == "string", "git.get_remote_refs: Argument 'ref_type' is not a string.")
 
-    local tags = {}
-    local tagstrings, err = sys.capture_output("git ls-remote --tags " .. git_url)
-    if not tagstrings then return nil, "Error getting tags of repository '" .. git_url .. "': " .. err end
+    local refs = {}
+    local refstrings, err = sys.capture_output("git ls-remote --" .. ref_type .. " " .. git_url)
+    if not refstrings then return nil, "Error getting refs of the remote repository '" .. git_url .. "': " .. err end
 
-    for tag in tagstrings:gmatch("/tags/(%S+)") do
-        if not tag:match("%^{}") then table.insert(tags, tag) end
+    for ref in refstrings:gmatch("/" .. ref_type .. "/(%S+)") do
+        if not ref:match("%^{}") then table.insert(refs, ref) end
     end
 
-    return tags
+    return refs
+end
+
+-- Return table of all tags of the repository at the 'git_url'
+function get_remote_tags(git_url)
+    return get_remote_refs(git_url, "tags")
 end
 
 -- Return table of all branches of the repository at the 'git_url'
 function get_remote_branches(git_url)
-    assert(type(git_url) == "string", "git.get_remote_branches: Argument 'git_url' is not a string.")
-
-    local branches = {}
-    local headstrings, err = sys.capture_output("git ls-remote --heads " .. git_url)
-    if not headstrings then return nil, "Error getting branches of repository '" .. git_url .. "': " .. err end
-
-    for head in headstrings:gmatch("/heads/(%S+)") do
-        if not head:match("%^{}") then table.insert(branches, head) end
-    end
-
-    return branches
+    return get_remote_refs(git_url, "heads")
 end
 
 -- Checkout specified ref in specified git_repo_dir
