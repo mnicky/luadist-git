@@ -73,6 +73,21 @@ function get_remote_tags(git_url)
     return tags
 end
 
+-- Return table of all branches of the repository at the 'git_url'
+function get_remote_branches(git_url)
+    assert(type(git_url) == "string", "git.get_remote_branches: Argument 'git_url' is not a string.")
+
+    local branches = {}
+    local headstrings, err = sys.capture_output("git ls-remote --heads " .. git_url)
+    if not headstrings then return nil, "Error getting branches of repository '" .. git_url .. "': " .. err end
+
+    for head in headstrings:gmatch("/heads/(%S+)") do
+        if not head:match("%^{}") then table.insert(branches, head) end
+    end
+
+    return branches
+end
+
 -- Checkout specified ref in specified git_repo_dir
 function checkout_ref(ref, git_repo_dir, orphaned)
     git_repo_dir = git_repo_dir or sys.current_dir()
