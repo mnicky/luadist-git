@@ -73,14 +73,18 @@ function get_remote_tags(git_url)
     return tags
 end
 
--- Checkout specified tag in specified git_repo_dir
-function checkout_tag(tag, git_repo_dir)
+-- Checkout specified ref in specified git_repo_dir
+function checkout_ref(ref, git_repo_dir, orphaned)
     git_repo_dir = git_repo_dir or sys.current_dir()
-    assert(type(tag) == "string", "git.checkout_tag: Argument 'tag' is not a string.")
-    assert(type(git_repo_dir) == "string", "git.checkout_tag: Argument 'git_repo_dir' is not a string.")
+    orphaned = orphaned or false
+    assert(type(ref) == "string", "git.checkout_ref: Argument 'ref' is not a string.")
+    assert(type(git_repo_dir) == "string", "git.checkout_ref: Argument 'git_repo_dir' is not a string.")
+    assert(type(orphaned) == "boolean", "git.checkout_ref: Argument 'orphaned' is not a boolean.")
     git_repo_dir = sys.abs_path(git_repo_dir)
 
-    local command = "git checkout " .. tag .. " -f"
+    local command = "git checkout "
+    if orphaned then command = " --orphan " end
+    command = command .. " " .. ref .. " -f"
     if not cfg.debug then command = command .. " -q" end
 
     local ok, err

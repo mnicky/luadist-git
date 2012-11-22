@@ -331,7 +331,7 @@ function fetch_pkg(pkg, download_dir)
 
     -- checkout git tag according to the version of pkg
     if ok and pkg.version ~= "scm" then
-        ok, err = git.checkout_tag(pkg.version, clone_dir)
+        ok, err = git.checkout_ref(pkg.version, clone_dir)
     end
 
     if not ok then
