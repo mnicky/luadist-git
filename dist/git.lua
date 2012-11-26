@@ -208,3 +208,21 @@ function push_ref(repo_dir, ref_name, git_repo_url, delete)
 
     return ok, msg
 end
+
+-- Creates the tag 'tag_name' in given 'repo_dir', which must be
+-- in the initialized git repository
+function create_tag(repo_dir, tag_name)
+    repo_dir = repo_dir or sys.current_dir()
+    assert(type(repo_dir) == "string", "git.create_tag: Argument 'repo_dir' is not a string.")
+    assert(type(tag_name) == "string", "git.create_tag: Argument 'tag_name' is not a string.")
+    repo_dir = sys.abs_path(repo_dir)
+
+    local ok, prev_dir, msg
+    ok, prev_dir = sys.change_dir(repo_dir);
+    if not ok then return nil, err end
+
+    ok, msg = sys.exec("git tag " .. tag_name .. " -f")
+    sys.change_dir(prev_dir)
+
+    return ok, msg
+end
