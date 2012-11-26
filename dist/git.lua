@@ -182,15 +182,16 @@ function rename_branch(old_name, new_name, repo_dir)
     return ok, msg
 end
 
--- Push the branch 'branch_name' from the 'repo_dir' to the remote git
+-- Push the ref 'ref _name' from the 'repo_dir' to the remote git
 -- repository 'git_repo_url'. If 'delete' is set to 'true' then the remote
--- branch will be deleted, not pushed to.
-function push_branch(repo_dir, branch_name, git_repo_url, delete)
+-- ref will be deleted, not pushed to.
+function push_ref(repo_dir, ref_name, git_repo_url, delete)
     repo_dir = repo_dir or sys.current_dir()
     delete = delete or false
-    assert(type(git_repo_url) == "string", "git.push_branch: Argument 'git_repo_url' is not a string.")
-    assert(type(branch_name) == "string", "git.push_branch: Argument 'branch_name' is not a string.")
-    assert(type(delete) == "boolean", "git.push_branch: Argument 'delete' is not a boolean.")
+    assert(type(repo_dir) == "string", "git.push_ref: Argument 'repo_dir' is not a string.")
+    assert(type(git_repo_url) == "string", "git.push_ref: Argument 'git_repo_url' is not a string.")
+    assert(type(ref_name) == "string", "git.push_ref: Argument 'ref_name' is not a string.")
+    assert(type(delete) == "boolean", "git.push_ref: Argument 'delete' is not a boolean.")
     repo_dir = sys.abs_path(repo_dir)
 
     local ok, prev_dir, msg
@@ -199,7 +200,7 @@ function push_branch(repo_dir, branch_name, git_repo_url, delete)
 
     local command = "git push " .. git_repo_url
     if delete then command = command .. " --delete " end
-    command = command .. " " .. branch_name .. " -f"
+    command = command .. " " .. ref_name .. " -f"
     if not cfg.debug then command = command .. " -q" end
 
     ok, msg = sys.exec(command)
