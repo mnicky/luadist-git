@@ -30,6 +30,8 @@ repos = {
     "https://github.com/LuaDist/Repository.git",
 }
 
+upload_url = "git@github.com:LuaDist/"
+
 -- Settings ----------------------------------------------------------
 debug         = false         -- Use debug mode.
 verbose       = false         -- Print verbose output.
