@@ -31,6 +31,7 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] <COMMAND> [ARGUMENTS...] [-VARIABLES...]
         info      - show information about modules
         search    - search repositories for modules
         fetch     - download modules
+        upload    - upload modules
         make      - manually deploy modules from local paths
         selftest  - run the selftest of LuaDist
 
@@ -117,7 +118,8 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] install MODULES... [-VARIABLES...]
 Usage: luadist [DEPLOYMENT_DIRECTORY] remove MODULES... [-VARIABLES...]
 
     The 'remove' command will remove specified MODULES from
-    DEPLOYMENT_DIRECTORY.
+    DEPLOYMENT_DIRECTORY. If no module is specified, all modules
+    will be removed.
 
     If DEPLOYMENT_DIRECTORY is not specified, the deployment directory
     of LuaDist is used. If no MODULES are specified, all installed modules
@@ -278,6 +280,53 @@ Usage: luadist [FETCH_DIRECTORY] fetch MODULES... [-VARIABLES...]
             else
                 print("Modules successfuly downloaded to '" .. fetch_dir .. "'.")
                 return 0
+            end
+        end
+    },
+
+    -- Upload modules.
+    ["upload"] = {
+        help = [[
+Usage: luadist [DEPLOYMENT_DIRECTORY] upload MODULES... [-VARIABLES...]
+
+    The 'upload' command will upload the binary versions of specified MODULES,
+    installed on this machine, to their LuaDist repositories.
+
+    The base url of the repositories is given by the configuration variable
+    'upload_url' (by default ']] .. cfg.upload_url .. [[') which
+    you can change.
+    E.g.: Binary version of module 'lua', installed in DEPLOYMENT_DIRECTORY,
+    will now be uploaded to repository ']] .. cfg.upload_url .. [[lua.git'.
+
+    Organization of uploaded modules and their repositories is subject
+    to the conventions described in more detail in the source code
+    of the 'dist.upload_modules()' function (file 'dist/init.lua').
+
+    If DEPLOYMENT_DIRECTORY is not specified, the deployment directory
+    of LuaDist is used.
+
+    You can use * (an asterisk sign) in the name of the module as a wildcard
+    with the meaning 'any symbols' (in most shells, the module name then must
+    be quoted to prevent the expansion of asterisk by the shell itself).
+
+    Optional LuaDist configuration VARIABLES (e.g. -variable=value) can be
+    specified.
+        ]],
+
+        run = function (deploy_dir, modules)
+            deploy_dir = deploy_dir or dist.get_deploy_dir()
+            if type(modules) == "string" then modules = {modules} end
+            assert(type(deploy_dir) == "string", "luadist.upload: Argument 'deploy_dir' is not a string.")
+            assert(type(modules) == "table", "luadist.upload: Argument 'modules' is not a string or table.")
+            deploy_dir = sys.abs_path(deploy_dir)
+
+            local num, err = dist.upload_modules(deploy_dir, modules, cfg.upload_url)
+            if not num then
+                print(err)
+                os.exit(1)
+            else
+               print("Uploaded packages: " .. num)
+               return 0
             end
         end
     },
