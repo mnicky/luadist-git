@@ -110,3 +110,100 @@ function checkout_ref(ref, git_repo_dir, orphaned)
 
     return ok, err
 end
+
+-- Create an empty git repository in given directory.
+function init(dir)
+    dir = dir or sys.current_dir()
+    assert(type(dir) == "string", "git.init: Argument 'dir' is not a string.")
+    dir = sys.abs_path(dir)
+
+    local command = "git init " .. dir
+    if not cfg.debug then command = command .. " -q" end
+    return sys.exec(command)
+end
+
+-- Add all files in the 'repo_dir' to the git index. The 'repo_dir' must be
+-- in the initialized git repository.
+function add_all(repo_dir)
+    repo_dir = repo_dir or sys.current_dir()
+    assert(type(repo_dir) == "string", "git.add_all: Argument 'repo_dir' is not a string.")
+    repo_dir = sys.abs_path(repo_dir)
+
+    local ok, prev_dir, msg
+    ok, prev_dir = sys.change_dir(repo_dir);
+    if not ok then return nil, err end
+
+    ok, msg = sys.exec("git add -A " .. repo_dir)
+    sys.change_dir(prev_dir)
+
+    return ok, msg
+end
+
+-- Commit all indexed files in 'repo_dir' with the given commit 'message'.
+-- The 'repo_dir' must be in the initialized git repository.
+function commit(message, repo_dir)
+    repo_dir = repo_dir or sys.current_dir()
+    message = message or "commit by luadist-git"
+    message = sys.quote(message)
+    assert(type(message) == "string", "git.commit: Argument 'message' is not a string.")
+    assert(type(repo_dir) == "string", "git.commit: Argument 'repo_dir' is not a string.")
+    repo_dir = sys.abs_path(repo_dir)
+
+    local ok, prev_dir, msg
+    ok, prev_dir = sys.change_dir(repo_dir);
+    if not ok then return nil, err end
+
+    local command = "git commit -m " .. message
+    if not cfg.debug then command = command .. " -q" end
+    ok, msg = sys.exec(command)
+    sys.change_dir(prev_dir)
+
+    return ok, msg
+end
+
+
+-- Rename branch 'old_name' to 'new_name'. -- The 'repo_dir' must be
+-- in the initialized git repository and the branch 'new_name' must
+-- not already exist in that repository.
+function rename_branch(old_name, new_name, repo_dir)
+    repo_dir = repo_dir or sys.current_dir()
+    assert(type(old_name) == "string", "git.rename_branch: Argument 'old_name' is not a string.")
+    assert(type(new_name) == "string", "git.rename_branch: Argument 'new_name' is not a string.")
+    assert(type(repo_dir) == "string", "git.rename_branch: Argument 'repo_dir' is not a string.")
+    repo_dir = sys.abs_path(repo_dir)
+
+    local ok, prev_dir, msg
+    ok, prev_dir = sys.change_dir(repo_dir);
+    if not ok then return nil, err end
+
+    ok, msg = sys.exec("git branch -m " .. old_name .. " " .. new_name)
+    sys.change_dir(prev_dir)
+
+    return ok, msg
+end
+
+-- Push the branch 'branch_name' from the 'repo_dir' to the remote git
+-- repository 'git_repo_url'. If 'delete' is set to 'true' then the remote
+-- branch will be deleted, not pushed to.
+function push_branch(repo_dir, branch_name, git_repo_url, delete)
+    repo_dir = repo_dir or sys.current_dir()
+    delete = delete or false
+    assert(type(git_repo_url) == "string", "git.push_branch: Argument 'git_repo_url' is not a string.")
+    assert(type(branch_name) == "string", "git.push_branch: Argument 'branch_name' is not a string.")
+    assert(type(delete) == "boolean", "git.push_branch: Argument 'delete' is not a boolean.")
+    repo_dir = sys.abs_path(repo_dir)
+
+    local ok, prev_dir, msg
+    ok, prev_dir = sys.change_dir(repo_dir);
+    if not ok then return nil, err end
+
+    local command = "git push " .. git_repo_url
+    if delete then command = command .. " --delete " end
+    command = command .. " " .. branch_name .. " -f"
+    if not cfg.debug then command = command .. " -q" end
+
+    ok, msg = sys.exec(command)
+    sys.change_dir(prev_dir)
+
+    return ok, msg
+end
