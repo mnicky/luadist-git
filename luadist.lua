@@ -148,7 +148,7 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] remove MODULES... [-VARIABLES...]
                 print(err)
                 os.exit(1)
             else
-               print("Removed packages: " .. num)
+               print("Removed modules: " .. num)
                return 0
             end
         end
@@ -325,7 +325,7 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] upload MODULES... [-VARIABLES...]
                 print(err)
                 os.exit(1)
             else
-               print("Uploaded packages: " .. num)
+               print("Uploaded modules: " .. num)
                return 0
             end
         end
