@@ -94,7 +94,7 @@ function checkout_ref(ref, git_repo_dir, orphaned)
     git_repo_dir = sys.abs_path(git_repo_dir)
 
     local command = "git checkout "
-    if orphaned then command = " --orphan " end
+    if orphaned then command = command .. " --orphan " end
     command = command .. " " .. ref .. " -f"
     if not cfg.debug then command = command .. " -q" end
 
