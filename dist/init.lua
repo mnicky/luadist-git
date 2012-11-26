@@ -175,3 +175,99 @@ function fetch(pkg_names, fetch_dir)
         return ok
     end
 end
+
+-- Upload binary version of given modules installed in the specified
+-- 'deploy_dir' to the repository specified by provided base url.
+--
+-- Organization of uploaded modules is subject to the following conventions:
+--   - destination repository is: 'DEST_GIT_BASE_URL/MODULE_NAME'
+--   - module will be uploaded to the branch: 'ARCH-TYPE' according
+--     to the arch and type of the user's machine
+--   - the module will be tagged as: 'VERSION-ARCH-TYPE' (if the tag already
+--     exists, it will be overwritten)
+--
+-- E.g. assume that the module 'lua-5.1.4' is installed on the 32bit Linux
+-- system (Linux-i686). When this function is called with the module name
+-- 'lua' and base url 'git@github.com:LuaDist', then the binary version
+-- of the module 'lua', that is installed on the machine, will be uploaded
+-- to the branch 'Linux-i686' of the repository 'git@github.com:LuaDist/lua.git'
+-- and tagged as '5.1.4-Linux-i686'.
+function upload_modules(deploy_dir, module_names, dest_git_base_url)
+    deploy_dir = deploy_dir or cfg.root_dir
+    if type(module_names) == "string" then module_names = {module_names} end
+    assert(type(deploy_dir) == "string", "dist.upload_module: Argument 'deploy_dir' is not a string.")
+    assert(type(module_names) == "table", "dist.upload_module: Argument 'module_name' is not a string or table.")
+    assert(type(dest_git_base_url) == "string", "dist.upload_module: Argument 'dest_git_base_url' is not a string.")
+    deploy_dir = sys.abs_path(deploy_dir)
+
+    local installed = depends.get_installed(deploy_dir)
+
+    for _, module_name in pairs(module_names) do
+
+        for _, installed_module in pairs(installed) do
+
+            -- check whether the module is installed
+            if installed_module.name == module_name then
+
+                -- set names
+                local branch_name = cfg.arch .. "-" .. cfg.type
+                local tag_name = installed_module.version .. "-" .. branch_name
+                local full_name = installed_module.name .. "-" .. tag_name
+                local tmp_dir = sys.make_path(deploy_dir, cfg.temp_dir, full_name .. "-to-upload")
+                local dest_git_url = sys.make_path(dest_git_base_url, installed_module.name .. ".git")
+                local distinfo_file = sys.make_path(deploy_dir, cfg.distinfos_dir, installed_module.name .. "-" .. installed_module.version, "dist.info")
+
+                -- create temporary directory
+                local ok, err = sys.make_dir(tmp_dir)
+                if not ok then return nil, err end
+
+                -- copy the module files
+                for _, file in ipairs(installed_module.files) do
+                    local file_path = sys.make_path(deploy_dir, file)
+                    local dest_path = sys.make_path(tmp_dir, file)
+                    if sys.is_dir(file_path) then
+                        sys.make_dir(dest_path)
+                    elseif sys.is_file(file_path) then
+                        sys.copy(file_path, sys.parent_dir(dest_path))
+                    end
+                end
+
+                -- add module's dist.info file
+                sys.copy(distinfo_file, tmp_dir)
+
+                -- create git repo
+                ok, err = git.init(tmp_dir)
+                if not ok then return nil, "Error initializing empty git repository in '" .. tmp_dir .. "': " .. err end
+
+                -- add all files
+                ok, err = git.add_all(tmp_dir)
+                if not ok then return nil, "Error adding all files to the git index in '" .. tmp_dir .. "': " .. err end
+
+                -- create commit
+                ok, err = git.commit("add " .. full_name, tmp_dir)
+                if not ok then return nil, "Error commiting changes in '" .. tmp_dir .. "': " .. err end
+
+                -- rename branch
+                ok, err = git.rename_branch("master", branch_name, tmp_dir)
+                if not ok then return nil, "Error renaming branch 'master' to '" .. branch_name .. "' in '" .. tmp_dir .. "': " .. err  end
+
+                -- create tag
+                ok, err = git.create_tag(tmp_dir, tag_name)
+                if not ok then return nil, "Error creating tag '" .. tag_name .. " in '" .. tmp_dir .. "': " .. err end
+
+                -- push to the repository
+                ok, err = git.push_ref(tmp_dir, branch_name, dest_git_url)
+                if not ok then return nil, "Error pushing branch '" .. branch_name .. "'in '" .. tmp_dir .. "': " .. err end
+                ok, err = git.push_ref(tmp_dir, tag_name, dest_git_url)
+                if not ok then return nil, "Error pushing tag '" .. tag_name .. "'in '" .. tmp_dir .. "': " .. err end
+
+                -- delete temporary directory (if not in debug mode)
+                if not cfg.debug then sys.delete(tmp_dir) end
+
+                print(full_name .. " successfully uploaded to " .. dest_git_url)
+            end
+        end
+    end
+
+    return true
+end
