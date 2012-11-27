@@ -268,7 +268,7 @@ function upload_modules(deploy_dir, module_names, dest_git_base_url)
 
         -- push to the repository
         ok, err = git.push_ref(tmp_dir, branch_name, dest_git_url, true)
-        if not ok then return nil, "Error when pushing branch '" .. branch_name .. " and tag '" .. tag_name .. "' to '" .. dest_git_url .. "': " .. err end
+        if not ok then return nil, "Error when pushing branch '" .. branch_name .. "' and tag '" .. tag_name .. "' to '" .. dest_git_url .. "': " .. err end
 
         -- delete temporary directory (if not in debug mode)
         if not cfg.debug then sys.delete(tmp_dir) end
