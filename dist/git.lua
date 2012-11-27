@@ -182,15 +182,19 @@ function rename_branch(old_name, new_name, repo_dir)
     return ok, msg
 end
 
--- Push the ref 'ref _name' from the 'repo_dir' to the remote git
--- repository 'git_repo_url'. If 'delete' is set to 'true' then the remote
--- ref will be deleted, not pushed to.
-function push_ref(repo_dir, ref_name, git_repo_url, delete)
+-- Push the ref 'ref_name' from the 'repo_dir' to the remote git
+-- repository 'git_repo_url'. If 'all_tags' is set to true, all tags
+-- will be pushed, in addition to the explicitly given ref.
+-- If 'delete' is set to 'true' then the explicitly given remote ref
+-- will be deleted, not pushed.
+function push_ref(repo_dir, ref_name, git_repo_url, all_tags, delete)
     repo_dir = repo_dir or sys.current_dir()
+    all_tags = all_tags or false
     delete = delete or false
     assert(type(repo_dir) == "string", "git.push_ref: Argument 'repo_dir' is not a string.")
     assert(type(git_repo_url) == "string", "git.push_ref: Argument 'git_repo_url' is not a string.")
     assert(type(ref_name) == "string", "git.push_ref: Argument 'ref_name' is not a string.")
+    assert(type(all_tags) == "boolean", "git.push_ref: Argument 'all_tags' is not a boolean.")
     assert(type(delete) == "boolean", "git.push_ref: Argument 'delete' is not a boolean.")
     repo_dir = sys.abs_path(repo_dir)
 
@@ -199,6 +203,7 @@ function push_ref(repo_dir, ref_name, git_repo_url, delete)
     if not ok then return nil, err end
 
     local command = "git push " .. git_repo_url
+    if all_tags then command = command .. " --tags " end
     if delete then command = command .. " --delete " end
     command = command .. " " .. ref_name .. " -f"
     if not cfg.debug then command = command .. " -q" end
