@@ -31,8 +31,8 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] <COMMAND> [ARGUMENTS...] [-VARIABLES...]
         info      - show information about modules
         search    - search repositories for modules
         fetch     - download modules
-        upload    - upload modules
         make      - manually deploy modules from local paths
+        upload    - upload installed modules to their repositories
         selftest  - run the selftest of LuaDist
 
     To get help on specific command, run:
@@ -290,11 +290,10 @@ Usage: luadist [FETCH_DIRECTORY] fetch MODULES... [-VARIABLES...]
 Usage: luadist [DEPLOYMENT_DIRECTORY] upload MODULES... [-VARIABLES...]
 
     The 'upload' command will upload the binary versions of specified MODULES,
-    installed on this machine, to their LuaDist repositories.
+    installed in the DEPLOYMENT_DIRECTORY, to their LuaDist repositories.
 
-    The base url of the repositories is given by the configuration variable
-    'upload_url' (by default ']] .. cfg.upload_url .. [[') which
-    you can change.
+    Base url of repositories is given by configuration variable 'upload_url'
+    (by default ']] .. cfg.upload_url .. [[') which you can change.
     E.g.: Binary version of module 'lua', installed in DEPLOYMENT_DIRECTORY,
     will now be uploaded to repository ']] .. cfg.upload_url .. [[lua.git'.
 
@@ -303,7 +302,8 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] upload MODULES... [-VARIABLES...]
     of the 'dist.upload_modules()' function (file 'dist/init.lua').
 
     If DEPLOYMENT_DIRECTORY is not specified, the deployment directory
-    of LuaDist is used.
+    of LuaDist is used. If no MODULES are specified, all installed modules
+    will be uploaded.
 
     You can use * (an asterisk sign) in the name of the module as a wildcard
     with the meaning 'any symbols' (in most shells, the module name then must
