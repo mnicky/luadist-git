@@ -82,6 +82,7 @@ function exec(command, force_verbose)
         end
     end
 
+    if cfg.debug then print("Executing the command: " .. command) end
     local ok = os.execute(command)
 
     if ok ~= 0 then
