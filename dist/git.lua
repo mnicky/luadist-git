@@ -227,8 +227,50 @@ function create_tag(repo_dir, tag_name)
     ok, prev_dir = sys.change_dir(repo_dir);
     if not ok then return nil, err end
 
-    ok, msg = sys.exec("git tag " .. tag_name .. " -f")
+    ok, msg = sys.exec("git tag " .. tag_name .. " -f ")
     sys.change_dir(prev_dir)
 
     return ok, msg
+end
+
+-- Fetch given 'ref_name' from the remote 'git_repo_url' to the local repository
+-- 'repo_dir' and save it as a ref with the same 'ref_name' and 'ref_type'.
+-- 'ref_type' can be "tag" or "head".
+local function fetch_ref(repo_dir, git_repo_url, ref_name, ref_type)
+    repo_dir = repo_dir or sys.current_dir()
+    assert(type(repo_dir) == "string", "git.fetch_ref: Argument 'repo_dir' is not a string.")
+    assert(type(git_repo_url) == "string", "git.fetch_ref: Argument 'git_repo_url' is not a string.")
+    assert(type(ref_name) == "string", "git.fetch_ref: Argument 'ref_name' is not a string.")
+    assert(type(ref_type) == "string", "git.fetch_ref: Argument 'ref_type' is not a string.")
+    assert(ref_type == "tag" or ref_type == "head", "git.get_remote_refs: Argument 'ref_type' is not \"tag\" or \"head\".")
+    repo_dir = sys.abs_path(repo_dir)
+
+    local ok, prev_dir, msg
+    ok, prev_dir = sys.change_dir(repo_dir);
+    if not ok then return nil, err end
+
+    local command = "git fetch -f -u " .. git_repo_url .. " "
+
+    if ref_type == 'tag' then
+        command = command .. " +refs/tags/" .. ref_name .. ":refs/tags/" .. ref_name
+    elseif ref_type == 'head' then
+        command = command .. " +refs/heads/" .. ref_name .. ":" .. ref_name
+    end
+    if not cfg.debug then command = command .. " -q " end
+
+    ok, msg = sys.exec(command)
+    sys.change_dir(prev_dir)
+    return ok, msg
+end
+
+-- Fetch given 'tag_name' from the remote 'git_repo_url' to the local repository
+-- 'repo_dir' and save it as a tag with the same 'tag_name'.
+function fetch_tag(repo_dir, git_repo_url, tag_name)
+    return fetch_ref(repo_dir, git_repo_url, tag_name, "tag")
+end
+
+-- Fetch given 'branch_name' from the remote 'git_repo_url' to the local repository
+-- 'repo_dir' and save it as a branch with the same 'branch_name'.
+function fetch_branch(repo_dir, git_repo_url, branch_name)
+    return fetch_ref(repo_dir, git_repo_url, branch_name, "head")
 end
