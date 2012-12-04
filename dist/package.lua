@@ -325,13 +325,21 @@ function fetch_pkg(pkg, download_dir)
         return clone_dir
     end
 
-    -- clone pkg's repository
-    print("Getting " .. pkg_full_name .. "...")
-    local ok, err = git.clone(repo_url, clone_dir)
+    -- init the git repository
+    ok, err = git.init(clone_dir)
 
-    -- checkout git tag according to the version of pkg
+    -- Fetch the desired ref (from the pkg's remote repo) and checkout into it.
+    -- If we want the 'scm' version, we fetch the 'master' branch, otherwise
+    -- we fetch the tag, matching the desired package version.
+
+    print("Getting " .. pkg_full_name .. "...")
+
     if ok and pkg.version ~= "scm" then
-        ok, err = git.checkout_ref(pkg.version, clone_dir)
+        ok, err = git.fetch_tag(clone_dir, repo_url, pkg.version)
+        if ok then ok, err = git.checkout_ref(pkg.version, clone_dir) end
+    elseif ok then
+        ok, err = git.fetch_branch(clone_dir, repo_url, "master")
+        if ok then ok, err = git.checkout_ref("master", clone_dir) end
     end
 
     if not ok then

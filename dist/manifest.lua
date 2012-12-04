@@ -63,7 +63,10 @@ function download_manifest(dest_dir, repository_urls)
         local clone_dir = sys.make_path(temp_dir, "repository_" .. tostring(k))
 
         -- clone the repo and add its '.gitmodules' file to the manifest table
-        ok, err = git.clone(repo, clone_dir, 1)
+        ok, err = git.init(clone_dir)
+        if ok then ok, err = git.fetch_branch(clone_dir, repo, "master") end
+        if ok then ok, err = git.checkout_ref("master", clone_dir) end
+
         if not ok then
             err = "Error when downloading the manifest from repository with url: '" .. repo .. "': " .. err
             if not cfg.debug then sys.delete(clone_dir) end
