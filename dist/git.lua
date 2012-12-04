@@ -33,7 +33,7 @@ function clone(repository_url, dest_dir, depth, branch)
     sys.change_dir(dest_dir)
 
     -- execute git clone
-    if not cfg.debug then command = command .. " -q" end
+    if not cfg.debug then command = command .. " -q " end
     local ok, err = sys.exec(command)
 
     -- change the current working directory back
@@ -58,10 +58,11 @@ function get_repo_url(git_url)
     end
 end
 
--- Return table of all refs of the remote repository at the 'git_url'. Ref_type can be 'tags' or 'heads'.
+-- Return table of all refs of the remote repository at the 'git_url'. Ref_type can be "tags" or "heads".
 local function get_remote_refs(git_url, ref_type)
     assert(type(git_url) == "string", "git.get_remote_refs: Argument 'git_url' is not a string.")
     assert(type(ref_type) == "string", "git.get_remote_refs: Argument 'ref_type' is not a string.")
+    assert(ref_type == "tags" or ref_type == "heads", "git.get_remote_refs: Argument 'ref_type' is not \"tags\" or \"heads\".")
 
     local refs = {}
     local refstrings, err = sys.capture_output("git ls-remote --" .. ref_type .. " " .. git_url)
@@ -96,7 +97,7 @@ function checkout_ref(ref, git_repo_dir, orphaned)
     local command = "git checkout "
     if orphaned then command = command .. " --orphan " end
     command = command .. " " .. ref .. " -f"
-    if not cfg.debug then command = command .. " -q" end
+    if not cfg.debug then command = command .. " -q " end
 
     local ok, err
     if git_repo_dir ~= sys.current_dir() then
@@ -118,7 +119,7 @@ function init(dir)
     dir = sys.abs_path(dir)
 
     local command = "git init " .. dir
-    if not cfg.debug then command = command .. " -q" end
+    if not cfg.debug then command = command .. " -q " end
     return sys.exec(command)
 end
 
@@ -154,7 +155,7 @@ function commit(message, repo_dir)
     if not ok then return nil, err end
 
     local command = "git commit -m " .. message
-    if not cfg.debug then command = command .. " -q" end
+    if not cfg.debug then command = command .. " -q " end
     ok, msg = sys.exec(command)
     sys.change_dir(prev_dir)
 
@@ -205,8 +206,8 @@ function push_ref(repo_dir, ref_name, git_repo_url, all_tags, delete)
     local command = "git push " .. git_repo_url
     if all_tags then command = command .. " --tags " end
     if delete then command = command .. " --delete " end
-    command = command .. " " .. ref_name .. " -f"
-    if not cfg.debug then command = command .. " -q" end
+    command = command .. " " .. ref_name .. " -f "
+    if not cfg.debug then command = command .. " -q " end
 
     ok, msg = sys.exec(command)
     sys.change_dir(prev_dir)
