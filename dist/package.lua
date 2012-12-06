@@ -402,7 +402,7 @@ function retrieve_versions(package, manifest)
 
     -- get available versions
     local tags, err = git.get_remote_tags(package.path)
-    if not tags then return nil, "Error when retrieving versions of package '" .. package.name .. "':" .. err end
+    if not tags then return nil, "Error when retrieving versions of package '" .. package.name .. "': " .. err end
 
     -- filter out tags of binary packages
     local versions = utils.filter(tags, function (tag) return tag:match("^[^%-]+%-?[^%-]*$") and true end)
@@ -434,7 +434,7 @@ function retrieve_pkg_info(package, deploy_dir)
 
     -- download the package
     local pkg_dir, err = fetch_pkg(package, tmp_dir)
-    if not pkg_dir then return nil, "Error when retrieving the info about '" .. package.name .. "':" .. err end
+    if not pkg_dir then return nil, "Error when retrieving the info about '" .. package.name .. "': " .. err end
 
     -- load information from 'dist.info'
     local info, err = mf.load_distinfo(sys.make_path(pkg_dir, "dist.info"))
