@@ -19,8 +19,8 @@ Main Goals
  * once [libgit2](https://github.com/libgit2/libgit2) matures, use it instead of the git cli command
 
 
-Useful links
-----------
+Useful Links
+------------
 * [Installation instructions](https://github.com/LuaDist/Repository/wiki/LuaDist%3A-Installation)
 * [LuaDist documentation](https://github.com/LuaDist/Repository/wiki)
 * [Bug tracker for the luadist-git utility](https://github.com/LuaDist/luadist-git/issues)
