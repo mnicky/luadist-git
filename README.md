@@ -21,9 +21,11 @@ Main Goals
 
 Useful links
 ----------
-* [Bug tracker](https://github.com/LuaDist/luadist-git/issues)
+* [Installation instructions](https://github.com/LuaDist/Repository/wiki/LuaDist%3A-Installation)
 * [LuaDist documentation](https://github.com/LuaDist/Repository/wiki)
+
+* [Bug tracker for the luadist-git utility](https://github.com/LuaDist/luadist-git/issues)
+* [General bug tracker of the whole LuaDist project](https://github.com/LuaDist/Repository/issues)
 
 <br>
 Under the MIT License.
-
