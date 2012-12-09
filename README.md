@@ -12,9 +12,9 @@ Main Goals
    dependencies (i.e. luasocket, luasec, md5, openssl, unzip) - **DONE**
 
  * use _.gitmodules_ as a repository manifest file instead of _dist.manifest_,
-   thus removing the need to update the manifest after every change in modules  - **DONE**
+   thus removing the need to update the manifest after every change in modules - **DONE**
 
- * add functionality for uploading binary versions of modules to repositories
+ * add functionality for uploading binary versions of modules to repositories - **DONE**
 
  * once [libgit2](https://github.com/libgit2/libgit2) matures, use it instead of the git cli command
 
