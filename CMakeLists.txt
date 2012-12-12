@@ -23,9 +23,13 @@ elseif ( MSVC )
   set ( DETECTED_TYPE MSVC32 )
 endif ( )
 
-set ( DIST_TYPE ${DETECTED_TYPE} CACHE STRING "Host system type. PLEASE CHECK!" FORCE )
-set ( DIST_ARCH ${DETECTED_ARCH} CACHE STRING "Host system architecture. PLEASE CHECK!" 
-  FORCE )
+if ( DETECTED_ARCH STREQUAL "Darwin" )
+  # Mac keeps CMAKE_SYSTEM_PROCESSOR set to i386 even on 64bit systems
+  execute_process ( COMMAND uname -m OUTPUT_VARIABLE DETECTED_TYPE OUTPUT_STRIP_TRAILING_WHITESPACE )
+endif ( )
+
+set ( DIST_TYPE ${DETECTED_TYPE} CACHE STRING "Host system type. PLEASE CHECK!" )
+set ( DIST_ARCH ${DETECTED_ARCH} CACHE STRING "Host system architecture. PLEASE CHECK!" )
 
 configure_file ( dist/config.lua.in ${CMAKE_CURRENT_BINARY_DIR}/dist/config.lua @ONLY )
 
