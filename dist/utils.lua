@@ -44,6 +44,15 @@ function sort(array, compare_fn)
     return tbl
 end
 
+-- Return whether the 'value' is in the table 'tbl'.
+function contains(tbl, value)
+    assert(type(tbl) == "table", "utils.contains: Argument 'tbl' is not a table.")
+    for _,v in pairs(tbl) do
+        if v == value then return true end
+    end
+    return false
+end
+
 -- Return single line string consisting of values in 'tbl' separated by comma.
 -- Used for printing the dependencies/provides/conflicts.
 function table_tostring(tbl, label)
