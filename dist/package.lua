@@ -282,13 +282,13 @@ function deploy_pkg(pkg_dir, deploy_dir)
     if not info then return nil, "Error deploying package from '" .. pkg_dir .. "': it doesn't contain valid 'dist.info' file." end
     local pkg_name = info.name .. "-" .. info.version
 
-    -- delete the 'dist.info' file
-    sys.delete(sys.make_path(pkg_dir, "dist.info"))
-
     -- if this is only simulation, exit sucessfully, skipping the next actions
     if cfg.simulate then
         return true, "Simulated deployment of package '" .. pkg_name .. "' sucessfull."
     end
+
+    -- delete the 'dist.info' file
+    sys.delete(sys.make_path(pkg_dir, "dist.info"))
 
     -- copy all files to the deploy_dir
     local ok, err = sys.copy(sys.make_path(pkg_dir, "."), deploy_dir)
