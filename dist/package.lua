@@ -345,7 +345,7 @@ function fetch_pkg(pkg, download_dir)
 
     if use_binary then
 
-        if cfg.verbose then print("Downloading binary version.") end
+        if cfg.verbose or cfg.debug then print("Downloading binary version.") end
 
         -- We fetch the binary tag.
         ok, err = git.fetch_tag(clone_dir, repo_url, bin_tag)
@@ -353,7 +353,7 @@ function fetch_pkg(pkg, download_dir)
 
     elseif cfg.source then
 
-        if cfg.verbose then print("Downloading source version.") end
+        if cfg.verbose or cfg.debug then print("Downloading source version.") end
 
         -- If we want the 'scm' version, we fetch the 'master' branch, otherwise
         -- we fetch the tag, matching the desired package version.
