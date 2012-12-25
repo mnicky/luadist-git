@@ -112,7 +112,7 @@ function install_pkg(pkg_dir, deploy_dir, variables, preserve_pkg_dir)
 
     -- if package is of binary type, just deploy it
     if info.type ~= "source" then
-        ok, err = deploy_pkg(pkg_dir, deploy_dir)
+        ok, err = deploy_binary_pkg(pkg_dir, deploy_dir)
 
     -- else build and then deploy
     else
@@ -266,13 +266,12 @@ function build_pkg(src_dir, deploy_dir, variables)
     return true, "Package '" .. pkg_name .. "' successfully builded and deployed to '" .. deploy_dir .. "'."
 end
 
--- TODO: implement component deployment of binary modules
--- Deploy package from 'pkg_dir' to 'deploy_dir' by copying.
-function deploy_pkg(pkg_dir, deploy_dir)
+-- Deploy binary package from 'pkg_dir' to 'deploy_dir' by copying.
+function deploy_binary_pkg(pkg_dir, deploy_dir)
     deploy_dir = deploy_dir or cfg.root_dir
 
-    assert(type(pkg_dir) == "string", "package.deploy_pkg: Argument 'pkg_dir' is not a string.")
-    assert(type(deploy_dir) == "string", "package.deploy_pkg: Argument 'deploy_dir' is not a string.")
+    assert(type(pkg_dir) == "string", "package.deploy_binary_pkg: Argument 'pkg_dir' is not a string.")
+    assert(type(deploy_dir) == "string", "package.deploy_binary_pkg: Argument 'deploy_dir' is not a string.")
 
     pkg_dir = sys.abs_path(pkg_dir)
     deploy_dir = sys.abs_path(deploy_dir)
@@ -287,18 +286,24 @@ function deploy_pkg(pkg_dir, deploy_dir)
         return true, "Simulated deployment of package '" .. pkg_name .. "' sucessfull."
     end
 
-    -- delete the 'dist.info' file
-    sys.delete(sys.make_path(pkg_dir, "dist.info"))
+    -- copy all components of the module to the deploy_dir
+    for _, component in ipairs(cfg.components) do
+        if info.files[component] then
+            for _, file in ipairs(info.files[component]) do
+                local dest_dir = sys.make_path(deploy_dir, sys.parent_dir(file))
 
-    -- copy all files to the deploy_dir
-    local ok, err = sys.copy(sys.make_path(pkg_dir, "."), deploy_dir)
-    if not ok then return nil, "Error deploying package '" .. pkg_name .. "': " .. err end
+                local ok, err = sys.make_dir(dest_dir)
+                if not ok then return nil, "Error when deploying package '" .. pkg_name .. "': cannot create directory '" .. dest_dir .. "': " .. err end
 
-    -- save modified 'dist.info' file
-    info.files = sys.get_file_list(pkg_dir)
+                ok, err = sys.copy(sys.make_path(pkg_dir, file), dest_dir)
+                if not ok then return nil, "Error when deploying package '" .. pkg_name .. "': cannot copy file '" .. file .. "' to the directory '" .. dest_dir .. "': " .. err end
+            end
+        end
+    end
+
+    -- copy dist.info to register the module as installed
     local pkg_distinfo_dir = sys.make_path(deploy_dir, cfg.distinfos_dir, pkg_name)
     sys.make_dir(pkg_distinfo_dir)
-
     ok, err = mf.save_distinfo(info, sys.make_path(pkg_distinfo_dir, "dist.info"))
     if not ok then return nil, err end
 
