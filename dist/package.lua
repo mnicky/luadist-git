@@ -322,7 +322,7 @@ function fetch_pkg(pkg, download_dir)
     download_dir = sys.abs_path(download_dir)
 
     local pkg_full_name = pkg.name .. "-" .. pkg.version
-    local repo_url = git.get_repo_url(pkg.path)
+    local repo_url = pkg.path
     local clone_dir = sys.abs_path(sys.make_path(download_dir, pkg_full_name))
 
     -- check if download_dir already exists, assuming the package was already downloaded

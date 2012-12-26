@@ -42,22 +42,6 @@ function clone(repository_url, dest_dir, depth, branch)
     return ok, err
 end
 
--- Return git repository url from git url (used when old 'dist.manifest' format is present)
-function get_repo_url(git_url)
-    assert(type(git_url) == "string", "git.get_repo_path: Argument 'git_url' is not a string.")
-
-    -- if it already is git repo url, just return it
-    if git_url:sub(-4,-1) == ".git" then return git_url end
-
-    local repo_start, repo_end = git_url:find("github.com/[^/]*/[^/]*")
-
-    if repo_start ~= nil then
-        return "https://" .. git_url:sub(repo_start, repo_end) .. ".git"
-    else
-        return nil, "Error getting git repository: not a valid git url: '" .. git_url .. "'."
-    end
-end
-
 -- Return table of all refs of the remote repository at the 'git_url'. Ref_type can be "tags" or "heads".
 local function get_remote_refs(git_url, ref_type)
     assert(type(git_url) == "string", "git.get_remote_refs: Argument 'git_url' is not a string.")
