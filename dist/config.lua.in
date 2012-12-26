@@ -27,7 +27,7 @@ cache_file    = ""
 
 -- Repositories ------------------------------------------------------
 repos = {
-    "https://github.com/LuaDist/Repository.git",
+    "git://github.com/LuaDist/Repository.git",
 }
 
 upload_url = "git@github.com:LuaDist/"
