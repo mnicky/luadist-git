@@ -102,6 +102,11 @@ function init(dir)
     assert(type(dir) == "string", "git.init: Argument 'dir' is not a string.")
     dir = sys.abs_path(dir)
 
+    -- create the 'dir' first, since it causes 'git init' to fail on Windows
+    -- when the parent directory of 'dir' doesn't exist
+    local ok, err = sys.make_dir(dir)
+    if not ok then return nil, err end
+
     local command = "git init " .. dir
     if not cfg.debug then command = command .. " -q " end
     return sys.exec(command)
