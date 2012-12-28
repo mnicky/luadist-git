@@ -2,6 +2,7 @@
 
 module ("dist.git", package.seeall)
 
+require "git"
 local sys = require "dist.sys"
 local cfg = require "dist.config"
 
@@ -49,11 +50,15 @@ local function get_remote_refs(git_url, ref_type)
     assert(ref_type == "tags" or ref_type == "heads", "git.get_remote_refs: Argument 'ref_type' is not \"tags\" or \"heads\".")
 
     local refs = {}
-    local refstrings, err = sys.capture_output("git ls-remote --" .. ref_type .. " " .. git_url)
+
+    -- TODO: error handling (e.g. lua-git raises exception on nonexistent url)
+    local refstrings, err = git.protocol.remotes(git_url)
     if not refstrings then return nil, "Error getting refs of the remote repository '" .. git_url .. "': " .. err end
 
-    for ref in refstrings:gmatch("/" .. ref_type .. "/(%S+)") do
-        if not ref:match("%^{}") then table.insert(refs, ref) end
+    for ref, sha in pairs(refstrings) do
+        if ref:match("%S+/" .. ref_type .. "/%S+") and not ref:match("%^{}") then
+            table.insert(refs, ref:match("%S+/" .. ref_type .. "/(%S+)"))
+        end
     end
 
     return refs
