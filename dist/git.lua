@@ -101,6 +101,31 @@ function checkout_ref(ref, git_repo_dir, orphaned)
     return ok, err
 end
 
+-- Checkout specified sha in specified git_repo_dir
+function checkout_sha(sha, git_repo_dir)
+    git_repo_dir = git_repo_dir or sys.current_dir()
+    assert(type(sha) == "string", "git.checkout_sha: Argument 'sha' is not a string.")
+    assert(type(git_repo_dir) == "string", "git.checkout_sha: Argument 'git_repo_dir' is not a string.")
+    git_repo_dir = sys.abs_path(git_repo_dir)
+
+    if git_repo_dir ~= sys.current_dir() then
+        local prev_current_dir = sys.current_dir()
+        sys.change_dir(git_repo_dir)
+
+        -- TODO: error handling
+        local repo = git.repo.open(git_repo_dir)
+        repo:commit(sha):checkout(git_repo_dir)
+
+        sys.change_dir(prev_current_dir)
+    else
+        -- TODO: error handling
+        local repo = git.repo.open(git_repo_dir)
+        repo:commit(sha):checkout(git_repo_dir)
+    end
+
+    return true
+end
+
 -- Create an empty git repository in given directory.
 function init(dir)
     dir = dir or sys.current_dir()
@@ -228,8 +253,7 @@ function create_tag(repo_dir, tag_name)
 end
 
 -- Fetch given 'ref_name' from the remote 'git_repo_url' to the local repository
--- 'repo_dir' and save it as a ref with the same 'ref_name' and 'ref_type'.
--- 'ref_type' can be "tag" or "head".
+-- 'repo_dir' and return its sha. 'ref_type' can be "tag" or "head".
 local function fetch_ref(repo_dir, git_repo_url, ref_name, ref_type)
     repo_dir = repo_dir or sys.current_dir()
     assert(type(repo_dir) == "string", "git.fetch_ref: Argument 'repo_dir' is not a string.")
@@ -239,22 +263,13 @@ local function fetch_ref(repo_dir, git_repo_url, ref_name, ref_type)
     assert(ref_type == "tag" or ref_type == "head", "git.get_remote_refs: Argument 'ref_type' is not \"tag\" or \"head\".")
     repo_dir = sys.abs_path(repo_dir)
 
-    local ok, prev_dir, msg
-    ok, prev_dir = sys.change_dir(repo_dir);
-    if not ok then return nil, err end
+    local refstring = "refs/" .. ref_type .. "s/" .. ref_name
 
-    local command = "git fetch -f -u " .. git_repo_url .. " "
+    -- TODO: error handling
+    local repo = git.repo.open(repo_dir)
+    local pack, sha = git.protocol.fetch(git_repo_url, repo, refstring, true)
 
-    if ref_type == 'tag' then
-        command = command .. " +refs/tags/" .. ref_name .. ":refs/tags/" .. ref_name
-    elseif ref_type == 'head' then
-        command = command .. " +refs/heads/" .. ref_name .. ":" .. ref_name
-    end
-    if not cfg.debug then command = command .. " -q " end
-
-    ok, msg = sys.exec(command)
-    sys.change_dir(prev_dir)
-    return ok, msg
+    return sha
 end
 
 -- Fetch given 'tag_name' from the remote 'git_repo_url' to the local repository
@@ -267,4 +282,11 @@ end
 -- 'repo_dir' and save it as a branch with the same 'branch_name'.
 function fetch_branch(repo_dir, git_repo_url, branch_name)
     return fetch_ref(repo_dir, git_repo_url, branch_name, "head")
+end
+
+-- Creates the git repo and returns the repo object (that can be used in checkout_sha etc.)
+function create_repo(dir)
+    assert(type(dir) == "string", "git.create_repo: Argument 'dir' is not a string.")
+    -- TODO: error handling
+    return git.repo.create(dir)
 end

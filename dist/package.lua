@@ -343,7 +343,7 @@ function fetch_pkg(pkg, download_dir)
     end
 
     -- init the git repository
-    ok, err = git.init(clone_dir)
+    local ok, err = git.create_repo(clone_dir)
 
     -- Fetch the desired ref (from the pkg's remote repo) and checkout into it.
     print("Getting " .. pkg_full_name .. "...")
@@ -353,8 +353,9 @@ function fetch_pkg(pkg, download_dir)
         if cfg.verbose or cfg.debug then print("Downloading binary version.") end
 
         -- We fetch the binary tag.
-        ok, err = git.fetch_tag(clone_dir, repo_url, bin_tag)
-        if ok then ok, err = git.checkout_ref(bin_tag, clone_dir) end
+        local sha
+        if ok then sha, err = git.fetch_tag(clone_dir, repo_url, bin_tag) end
+        if sha then ok, err = git.checkout_sha(sha, clone_dir) end
 
     elseif cfg.source then
 
@@ -363,11 +364,13 @@ function fetch_pkg(pkg, download_dir)
         -- If we want the 'scm' version, we fetch the 'master' branch, otherwise
         -- we fetch the tag, matching the desired package version.
         if ok and pkg.version ~= "scm" then
-            ok, err = git.fetch_tag(clone_dir, repo_url, pkg.version)
-            if ok then ok, err = git.checkout_ref(pkg.version, clone_dir) end
+            local sha
+            sha, err = git.fetch_tag(clone_dir, repo_url, pkg.version)
+            if sha then ok, err = git.checkout_sha(sha, clone_dir) end
         elseif ok then
-            ok, err = git.fetch_branch(clone_dir, repo_url, "master")
-            if ok then ok, err = git.checkout_ref("master", clone_dir) end
+            local sha
+            sha, err = git.fetch_branch(clone_dir, repo_url, "master")
+            if sha then ok, err = git.checkout_sha(sha, clone_dir) end
         end
 
     else
