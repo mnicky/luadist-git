@@ -30,7 +30,7 @@ repos = {
     "git://github.com/LuaDist/Repository.git",
 }
 
-upload_url = "git@github.com:LuaDist/"
+upload_url = "git@github.com:LuaDist" -- must not contain trailing '/'
 
 -- Settings ----------------------------------------------------------
 debug         = false         -- Use debug mode.

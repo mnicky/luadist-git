@@ -219,7 +219,7 @@ function upload_modules(deploy_dir, module_names, dest_git_base_url)
         local tag_name = installed_module.version .. "-" .. branch_name
         local full_name = installed_module.name .. "-" .. tag_name
         local tmp_dir = sys.make_path(deploy_dir, cfg.temp_dir, full_name .. "-to-upload")
-        local dest_git_url = sys.make_path(dest_git_base_url, installed_module.name .. ".git")
+        local dest_git_url = dest_git_base_url .. "/" .. installed_module.name .. ".git"
         local distinfo_file = sys.make_path(deploy_dir, cfg.distinfos_dir, installed_module.name .. "-" .. installed_module.version, "dist.info")
 
         -- create temporary directory (delete previous if already exists)
