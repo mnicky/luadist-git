@@ -266,8 +266,9 @@ local function fetch_ref(repo_dir, git_repo_url, ref_name, ref_type)
     local refstring = "refs/" .. ref_type .. "s/" .. ref_name
 
     -- TODO: error handling
+    local suppress_fetch_progress = not cfg.debug
     local repo = git.repo.open(repo_dir)
-    local pack, sha = git.protocol.fetch(git_repo_url, repo, refstring, true)
+    local pack, sha = git.protocol.fetch(git_repo_url, repo, refstring, suppress_fetch_progress)
 
     return sha
 end
