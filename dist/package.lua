@@ -331,8 +331,13 @@ function fetch_pkg(pkg, download_dir)
     local clone_dir = sys.abs_path(sys.make_path(download_dir, pkg_full_name))
 
     -- check if download_dir already exists, assuming the package was already downloaded
-    if sys.exists(sys.make_path(clone_dir, "dist.info")) and not utils.cache_timeout_expired(cfg.cache_timeout, clone_dir) then
-        return clone_dir
+    if sys.exists(sys.make_path(clone_dir, "dist.info")) then
+        if cfg.cache and not utils.cache_timeout_expired(cfg.cache_timeout, clone_dir) then
+            print("'" .. pkg_full_name .. "' already in cache, skipping downloading (use '-cache=false' to force download).")
+            return clone_dir
+        else
+            sys.delete(sys.make_path(clone_dir))
+        end
     end
 
     local bin_tag = pkg.version .. "-" .. cfg.arch .. "-" .. cfg.type
