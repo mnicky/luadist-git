@@ -116,6 +116,11 @@ function install_pkg(pkg_dir, deploy_dir, variables, preserve_pkg_dir)
 
     -- else build and then deploy
     else
+
+        -- check if we have cmake
+        ok = utils.system_dependency_available("cmake", "cmake --version")
+        if not ok then return nil, "Error when installing: Command 'cmake' not available on the system." end
+
         -- set cmake variables
         local cmake_variables = {}
 

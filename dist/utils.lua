@@ -112,3 +112,18 @@ function rand(...)
     math.randomseed(os.time())
     return math.random(...)
 end
+
+-- Perform check of system dependency, which isn't provided in the LuaDist
+-- installation itself and if it is missing, print instructions how
+-- to install it.
+function system_dependency_available(name, command)
+    assert(type(name) == "string", "utils.check_system_command: Argument 'name' is not a string.")
+    assert(type(command) == "string", "utils.check_system_command: Argument 'command' is not a string.")
+
+    if not sys.exec(command) then
+        print("Error: command '" .. name .. "' not found on system. See installation instructions at\nhttps://github.com/LuaDist/Repository/wiki/Installation-of-System-Dependencies")
+        return false
+    end
+
+    return true
+end
