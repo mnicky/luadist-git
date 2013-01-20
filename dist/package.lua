@@ -351,11 +351,10 @@ function fetch_pkg(pkg, download_dir)
     local ok, err = git.create_repo(clone_dir)
 
     -- Fetch the desired ref (from the pkg's remote repo) and checkout into it.
-    print("Getting " .. pkg_full_name .. "...")
 
     if use_binary then
 
-        if cfg.verbose or cfg.debug then print("Downloading binary version.") end
+        print("Getting " .. pkg_full_name .. " (binary)...")
 
         -- We fetch the binary tag.
         local sha
@@ -364,7 +363,7 @@ function fetch_pkg(pkg, download_dir)
 
     elseif cfg.source then
 
-        if cfg.verbose or cfg.debug then print("Downloading source version.") end
+        print("Getting " .. pkg_full_name .. " (source)...")
 
         -- If we want the 'scm' version, we fetch the 'master' branch, otherwise
         -- we fetch the tag, matching the desired package version.
