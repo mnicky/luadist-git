@@ -64,15 +64,13 @@ function download_manifest(dest_dir, repository_urls)
 
         -- clone the repo and add its '.gitmodules' file to the manifest table
 
-
-        -- TODO: error handling
-        git.create_repo(clone_dir)
+        ok, err = git.create_repo(clone_dir)
 
         local sha
         if ok then sha, err = git.fetch_branch(clone_dir, repo, "master") end
         if sha then ok, err = git.checkout_sha(sha, clone_dir) end
 
-        if not ok then
+        if not (ok and sha) then
             err = "Error when downloading the manifest from repository with url: '" .. repo .. "': " .. err
             if not cfg.debug then sys.delete(clone_dir) end
             return nil, err

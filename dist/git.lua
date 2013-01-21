@@ -51,11 +51,10 @@ local function get_remote_refs(git_url, ref_type)
 
     local refs = {}
 
-    -- TODO: error handling (e.g. lua-git raises exception on nonexistent url)
-    local refstrings, err = git.protocol.remotes(git_url)
-    if not refstrings then return nil, "Error getting refs of the remote repository '" .. git_url .. "': " .. err end
+    local ok, refs_or_err = pcall(git.protocol.remotes, git_url)
+    if not ok then return nil, "Error getting refs of the remote repository '" .. git_url .. "': " .. refs_or_err end
 
-    for ref, sha in pairs(refstrings) do
+    for ref, sha in pairs(refs_or_err) do
         if ref:match("%S+/" .. ref_type .. "/%S+") and not ref:match("%^{}") then
             table.insert(refs, ref:match("%S+/" .. ref_type .. "/(%S+)"))
         end
@@ -112,15 +111,19 @@ function checkout_sha(sha, git_repo_dir)
         local prev_current_dir = sys.current_dir()
         sys.change_dir(git_repo_dir)
 
-        -- TODO: error handling
-        local repo = git.repo.open(git_repo_dir)
-        repo:commit(sha):checkout(git_repo_dir)
+        local ok, repo_or_err = pcall(git.repo.open, git_repo_dir)
+        if not ok then return nil, repo_or_err end
+
+        ok, err = pcall(repo_or_err.checkout, repo_or_err, sha, git_repo_dir)
+        if not ok then return nil, err end
 
         sys.change_dir(prev_current_dir)
     else
-        -- TODO: error handling
-        local repo = git.repo.open(git_repo_dir)
-        repo:commit(sha):checkout(git_repo_dir)
+        local ok, repo_or_err = pcall(git.repo.open, git_repo_dir)
+        if not ok then return nil, repo_or_err end
+
+        ok, err = pcall(repo_or_err.checkout, repo_or_err, sha, git_repo_dir)
+        if not ok then return nil, err end
     end
 
     return true
@@ -265,10 +268,12 @@ local function fetch_ref(repo_dir, git_repo_url, ref_name, ref_type)
 
     local refstring = "refs/" .. ref_type .. "s/" .. ref_name
 
-    -- TODO: error handling
     local suppress_fetch_progress = not cfg.debug
-    local repo = git.repo.open(repo_dir)
-    local pack, sha = git.protocol.fetch(git_repo_url, repo, refstring, suppress_fetch_progress)
+    local ok, repo_or_err = pcall(git.repo.open, repo_dir)
+    if not ok then return nil, repo_or_err end
+
+    local ok, pack_or_err, sha = pcall(git.protocol.fetch, git_repo_url, repo_or_err, refstring, suppress_fetch_progress)
+    if not ok then return nil, pack_or_err end
 
     return sha
 end
@@ -288,6 +293,9 @@ end
 -- Creates the git repo and returns the repo object (that can be used in checkout_sha etc.)
 function create_repo(dir)
     assert(type(dir) == "string", "git.create_repo: Argument 'dir' is not a string.")
-    -- TODO: error handling
-    return git.repo.create(dir)
+
+    local ok, repo_or_err = pcall(git.repo.create, dir)
+    if not ok then return nil, repo_or_err end
+
+    return repo_or_err
 end
