@@ -107,24 +107,22 @@ function checkout_sha(sha, git_repo_dir)
     assert(type(git_repo_dir) == "string", "git.checkout_sha: Argument 'git_repo_dir' is not a string.")
     git_repo_dir = sys.abs_path(git_repo_dir)
 
+    local dir_changed, prev_current_dir
+
     if git_repo_dir ~= sys.current_dir() then
-        local prev_current_dir = sys.current_dir()
+        prev_current_dir = sys.current_dir()
         sys.change_dir(git_repo_dir)
-
-        local ok, repo_or_err = pcall(git.repo.open, git_repo_dir)
-        if not ok then return nil, repo_or_err end
-
-        ok, err = pcall(repo_or_err.checkout, repo_or_err, sha, git_repo_dir)
-        if not ok then return nil, err end
-
-        sys.change_dir(prev_current_dir)
-    else
-        local ok, repo_or_err = pcall(git.repo.open, git_repo_dir)
-        if not ok then return nil, repo_or_err end
-
-        ok, err = pcall(repo_or_err.checkout, repo_or_err, sha, git_repo_dir)
-        if not ok then return nil, err end
+        dir_changed = true
     end
+
+    local ok, repo_or_err = pcall(git.repo.open, git_repo_dir)
+    if not ok then return nil, "Error when opening the git repository '" .. git_repo_dir .. "': " .. repo_or_err end
+
+    local err
+    ok, err = pcall(repo_or_err.checkout, repo_or_err, sha, git_repo_dir)
+    if not ok then return nil, "Error when checking out the sha '" .. sha .. "' in the git repository '" .. git_repo_dir .. "': " .. err end
+
+    if dir_changed then sys.change_dir(prev_current_dir) end
 
     return true
 end
@@ -270,10 +268,10 @@ local function fetch_ref(repo_dir, git_repo_url, ref_name, ref_type)
 
     local suppress_fetch_progress = not cfg.debug
     local ok, repo_or_err = pcall(git.repo.open, repo_dir)
-    if not ok then return nil, repo_or_err end
+    if not ok then return nil, "Error when opening the git repository '" .. repo_dir .. "': " .. repo_or_err end
 
     local ok, pack_or_err, sha = pcall(git.protocol.fetch, git_repo_url, repo_or_err, refstring, suppress_fetch_progress)
-    if not ok then return nil, pack_or_err end
+    if not ok then return nil, "Error when fetching ref '" .. refstring .. "' from git repository '" .. git_repo_url .. "': " .. pack_or_err end
 
     return sha
 end
@@ -295,7 +293,7 @@ function create_repo(dir)
     assert(type(dir) == "string", "git.create_repo: Argument 'dir' is not a string.")
 
     local ok, repo_or_err = pcall(git.repo.create, dir)
-    if not ok then return nil, repo_or_err end
+    if not ok then return nil, "Error when creating the git repository '" .. dir .. "': " .. repo_or_err end
 
     return repo_or_err
 end
