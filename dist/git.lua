@@ -156,7 +156,7 @@ function add_all(repo_dir)
     ok, prev_dir = sys.change_dir(repo_dir);
     if not ok then return nil, err end
 
-    ok, msg = sys.exec("git add -A " .. repo_dir)
+    ok, msg = sys.exec("git add -A -f " .. repo_dir)
     sys.change_dir(prev_dir)
 
     return ok, msg
