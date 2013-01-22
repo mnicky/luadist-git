@@ -240,6 +240,9 @@ local function get_packages_to_install(pkg, installed, manifest, force_no_downlo
         print('  -is installed: ', is_installed(pkg.name, tmp_installed, pkg_constraint))
         --]]
 
+        -- if there's an error from previous candidate, print the reason for trying another one
+        if err then print(" - trying another candidate due to: " .. err) end
+
         -- clear the state from previous candidate
         pkg_is_installed, err = false, nil
 
