@@ -353,6 +353,8 @@ function delete(path)
     assert(type(path) == "string", "sys.delete: Argument 'path' is not a string.")
     assert(is_abs(path), "sys.delete: Argument 'path' is not an absolute path.")
 
+    if cfg.debug then print("deleting " .. path) end
+
     if cfg.arch == "Windows" then
         if not exists(path) then
             return true
