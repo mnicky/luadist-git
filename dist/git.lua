@@ -288,9 +288,12 @@ function fetch_branch(repo_dir, git_repo_url, branch_name)
     return fetch_ref(repo_dir, git_repo_url, branch_name, "head")
 end
 
--- Creates the git repo and returns the repo object (that can be used in checkout_sha etc.)
+-- Create the git repository and return the repo object (which can be used in checkout_sha etc.)
+-- If the 'dir' exists, it's deleted prior to creating the git repository.
 function create_repo(dir)
     assert(type(dir) == "string", "git.create_repo: Argument 'dir' is not a string.")
+
+    if sys.exists(dir) then sys.delete(dir) end
 
     local ok, repo_or_err = pcall(git.repo.create, dir)
     if not ok then return nil, "Error when creating the git repository '" .. dir .. "': " .. repo_or_err end
