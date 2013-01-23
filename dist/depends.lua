@@ -170,6 +170,9 @@ end
 -- about packages won't be downloaded during dependency resolving, assuming that
 -- entries in the provided manifest are already complete.
 --
+-- When optional 'suppress_printing' parameter is set to true, then messages
+-- for the user won't be printed during dependency resolving.
+--
 -- Optional argument 'deploy_dir' is used just as a temporary place to place
 -- the downloaded packages into.
 --
@@ -182,9 +185,10 @@ end
 -- in installed packages between the recursive calls of this function.
 --
 -- TODO: refactor this spaghetti code!
-local function get_packages_to_install(pkg, installed, manifest, force_no_download, deploy_dir, dependency_parents, tmp_installed)
+local function get_packages_to_install(pkg, installed, manifest, force_no_download, suppress_printing, deploy_dir, dependency_parents, tmp_installed)
     manifest = manifest or mf.get_manifest()
     force_no_download = force_no_download or false
+    suppress_printing = suppress_printing or false
     deploy_dir = deploy_dir or cfg.root_dir
     dependency_parents = dependency_parents or {}
 
@@ -195,9 +199,10 @@ local function get_packages_to_install(pkg, installed, manifest, force_no_downlo
     assert(type(installed) == "table", "depends.get_packages_to_install: Argument 'installed' is not a table.")
     assert(type(manifest) == "table", "depends.get_packages_to_install: Argument 'manifest' is not a table.")
     assert(type(force_no_download) == "boolean", "depends.get_packages_to_install: Argument 'force_no_download' is not a boolean.")
+    assert(type(suppress_printing) == "boolean", "depends.get_packages_to_install: Argument 'suppress_printing' is not a boolean.")
+    assert(type(deploy_dir) == "string", "depends.get_packages_to_install: Argument 'deploy_dir' is not a string.")
     assert(type(dependency_parents) == "table", "depends.get_packages_to_install: Argument 'dependency_parents' is not a table.")
     assert(type(tmp_installed) == "table", "depends.get_packages_to_install: Argument 'tmp_installed' is not a table.")
-    assert(type(deploy_dir) == "string", "depends.get_packages_to_install: Argument 'deploy_dir' is not a string.")
     deploy_dir = sys.abs_path(deploy_dir)
 
     --[[ for future debugging:
@@ -242,7 +247,7 @@ local function get_packages_to_install(pkg, installed, manifest, force_no_downlo
         --]]
 
         -- if there's an error from previous candidate, print the reason for trying another one
-        if err then print(" - trying another candidate due to: " .. err) end
+        if not suppress_printing and err then print(" - trying another candidate due to: " .. err) end
 
         -- clear the state from previous candidate
         pkg_is_installed, err = false, nil
@@ -324,7 +329,7 @@ local function get_packages_to_install(pkg, installed, manifest, force_no_downlo
                         if not is_circular_dependency then
 
                             -- recursively call this function on the candidates of this pkg's dependency
-                            local depends_to_install, dep_err = get_packages_to_install(depend, installed, manifest, force_no_download, deploy_dir, dependency_parents, tmp_installed)
+                            local depends_to_install, dep_err = get_packages_to_install(depend, installed, manifest, force_no_download, suppress_printing, deploy_dir, dependency_parents, tmp_installed)
 
                             -- if any suitable dependency packages were found, insert them to the 'to_install' table
                             if depends_to_install then
@@ -409,12 +414,16 @@ end
 -- about packages won't be downloaded during dependency resolving, assuming that
 -- entries in manifest are complete.
 --
+-- When optional 'suppress_printing' parameter is set to true, then messages
+-- for the user won't be printed during dependency resolving.
+--
 -- Optional argument 'deploy_dir' is used just as a temporary place to place
 -- the downloaded packages into.
-function get_depends(packages, installed, manifest, force_no_download, deploy_dir)
+function get_depends(packages, installed, manifest, force_no_download, suppress_printing, deploy_dir)
     if not packages then return {} end
     manifest = manifest or mf.get_manifest()
     force_no_download = force_no_download or false
+    suppress_printing = suppress_printing or false
     deploy_dir = deploy_dir or cfg.root_dir
     if type(packages) == "string" then packages = {packages} end
 
@@ -422,6 +431,7 @@ function get_depends(packages, installed, manifest, force_no_download, deploy_di
     assert(type(installed) == "table", "depends.get_depends: Argument 'installed' is not a table.")
     assert(type(manifest) == "table", "depends.get_depends: Argument 'manifest' is not a table.")
     assert(type(force_no_download) == "boolean", "depends.get_depends: Argument 'force_no_download' is not a boolean.")
+    assert(type(suppress_printing) == "boolean", "depends.get_depends: Argument 'suppress_printing' is not a boolean.")
     assert(type(deploy_dir) == "string", "depends.get_depends: Argument 'deploy_dir' is not a string.")
     deploy_dir = sys.abs_path(deploy_dir)
 
@@ -439,7 +449,7 @@ function get_depends(packages, installed, manifest, force_no_download, deploy_di
     -- get packages needed to to satisfy dependencies
     for _, pkg in pairs(packages) do
 
-        local needed_to_install, err = get_packages_to_install(pkg, tmp_installed, manifest, force_no_download, deploy_dir)
+        local needed_to_install, err = get_packages_to_install(pkg, tmp_installed, manifest, force_no_download, suppress_printing, deploy_dir)
 
         if needed_to_install then
             for _, needed_pkg in pairs(needed_to_install) do
