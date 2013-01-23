@@ -23,12 +23,12 @@ function get_manifest(manifest_file, force_no_cache)
     if not sys.exists(manifest_file) or force_no_cache or not cfg.cache or utils.cache_timeout_expired(cfg.cache_timeout, manifest_file) then
         local manifest_dest = sys.parent_dir(manifest_file) or sys.current_dir()
         local ok, err = download_manifest(manifest_dest, cfg.repos)
-        if not ok then return nil, "Error downloading manifest: " .. err end
+        if not ok then return nil, "Error when downloading manifest: " .. err end
     end
 
     -- load manifest from cache
     local manifest, err = load_manifest(manifest_file)
-    if not manifest then return nil, "Error loading manifest: " .. err end
+    if not manifest then return nil, "Error when loading manifest: " .. err end
 
     return manifest
 end
@@ -71,9 +71,8 @@ function download_manifest(dest_dir, repository_urls)
         if sha then ok, err = git.checkout_sha(sha, clone_dir) end
 
         if not (ok and sha) then
-            err = "Error when downloading the manifest from repository with url: '" .. repo .. "': " .. err
             if not cfg.debug then sys.delete(clone_dir) end
-            return nil, err
+            return nil, "Error when downloading the manifest from repository with url: '" .. repo .. "': " .. err
         else
             for _, pkg in pairs(load_manifest(sys.make_path(clone_dir, ".gitmodules"))) do
                 table.insert(manifest, pkg)
@@ -99,11 +98,11 @@ function load_manifest(manifest_file)
     if sys.exists(manifest_file) then
         -- load the manifest file
         local file, err = io.open(manifest_file, "r")
-        if not file then return nil, "Error opening the manifest file '" .. manifest_file .. "':" .. err end
+        if not file then return nil, "Error when opening the manifest file '" .. manifest_file .. "':" .. err end
 
         local mf_text = file:read("*a")
         file:close()
-        if not mf_text then return nil, "Error reading the manifest file '" .. manifest_file .. "':" .. err end
+        if not mf_text then return nil, "Error when reading the manifest file '" .. manifest_file .. "':" .. err end
 
         manifest = {}
         for url in mf_text:gmatch("git://%S+.git") do
@@ -150,7 +149,7 @@ function save_manifest(manifest_table, file)
     end
 
     local manifest_file = io.open(file, "w")
-    if not manifest_file then return false, "Error saving table: cannot open the file '" .. file .. "'." end
+    if not manifest_file then return nil, "Error when saving manifest: cannot open the file '" .. file .. "'." end
 
     manifest_file:write('return {\n')
     print_table(manifest_file, manifest_table)
@@ -166,21 +165,20 @@ function load_distinfo(distinfo_file)
     assert(type(distinfo_file) == "string", "manifest.load_distinfo: Argument 'distinfo_file' is not a string.")
     distinfo_file = sys.abs_path(distinfo_file)
 
-    if sys.exists(distinfo_file) then
-
-        -- load the distinfo file
-        local distinfo, err = loadfile(distinfo_file)
-        if not distinfo then return nil, err end
-
-        -- set clear environment for the distinfo file execution and collect values into it
-        local distinfo_env = {}
-        setfenv(distinfo, distinfo_env)
-        distinfo()
-
-        return distinfo_env
-    else
-        return nil, "Error when loading the package info from file: " .. distinfo_file
+    if not sys.exists(distinfo_file) then
+        return nil, "Error when loading the package info: file '" .. distinfo_file .. "' doesn't exist."
     end
+
+    -- load the distinfo file
+    local distinfo, err = loadfile(distinfo_file)
+    if not distinfo then return nil, "Error when loading package info:" .. err end
+
+    -- set clear environment for the distinfo file execution and collect values into it
+    local distinfo_env = {}
+    setfenv(distinfo, distinfo_env)
+    distinfo()
+
+    return distinfo_env
 end
 
 -- Save distinfo table to the 'file'
@@ -218,7 +216,7 @@ function save_distinfo(distinfo_table, file)
     end
 
     local distinfo_file = io.open(file, "w")
-    if not distinfo_file then return false, "Error saving table: cannot open the file '" .. file .. "'." end
+    if not distinfo_file then return nil, "Error when saving dist-info table: cannot open the file '" .. file .. "'." end
 
     print_table(distinfo_file, distinfo_table)
     distinfo_file:close()
