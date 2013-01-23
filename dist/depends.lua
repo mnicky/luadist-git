@@ -107,16 +107,17 @@ end
 
 -- Check whether the package 'pkg' conflicts with 'installed_pkg' and return
 -- false or error message.
-local function packages_conflicts(pkg, installed_pkg)
+local function packages_conflicts(pkg, installed_pkg, was_scm_version)
     assert(type(pkg) == "table", "depends.packages_conflicts: Argument 'pkg' is not a table.")
     assert(type(installed_pkg) == "table", "depends.packages_conflicts: Argument 'installed_pkg' is not a table.")
+    assert(type(was_scm_version) == "boolean", "depends.packages_conflicts: Argument 'was_scm_version' is not a boolean.")
 
     -- check if pkg doesn't provide an already installed_pkg
     if pkg.provides then
         -- for all of pkg's provides
         for _, provided_pkg in pairs(get_provides(pkg)) do
             if provided_pkg.name == installed_pkg.name then
-                return "Package '" .. pkg_full_name(pkg.name, pkg.version) .. "' provides '" .. pkg_full_name(provided_pkg.name, provided_pkg.version) .. "' but package '" .. pkg_full_name(installed_pkg.name, installed_pkg.version) .. "' is already " .. selected_or_installed(installed_pkg) .. "."
+                return "Package '" .. pkg_full_name(pkg.name, pkg.version, was_scm_version) .. "' provides '" .. pkg_full_name(provided_pkg.name, provided_pkg.version) .. "' but package '" .. pkg_full_name(installed_pkg.name, installed_pkg.version) .. "' is already " .. selected_or_installed(installed_pkg) .. "."
             end
         end
     end
@@ -125,7 +126,7 @@ local function packages_conflicts(pkg, installed_pkg)
     if pkg.conflicts then
         for _, conflict in pairs (pkg.conflicts) do
             if conflict == installed_pkg.name then
-                return "Package '" .. pkg_full_name(pkg.name, pkg.version) .. "' conflicts with already " .. selected_or_installed(installed_pkg) .. " package '" .. pkg_full_name(installed_pkg.name, installed_pkg.version) .. "'."
+                return "Package '" .. pkg_full_name(pkg.name, pkg.version, was_scm_version) .. "' conflicts with already " .. selected_or_installed(installed_pkg) .. " package '" .. pkg_full_name(installed_pkg.name, installed_pkg.version) .. "'."
             end
         end
     end
@@ -136,7 +137,7 @@ local function packages_conflicts(pkg, installed_pkg)
         -- direct conflicts with 'pkg'
         for _, conflict in pairs (installed_pkg.conflicts) do
             if conflict == pkg.name then
-                return "Already " .. selected_or_installed(installed_pkg) .. " package '" .. pkg_full_name(installed_pkg.name, installed_pkg.version) .. "' conflicts with package '" .. pkg_full_name(pkg.name, pkg.version) .. "'."
+                return "Already " .. selected_or_installed(installed_pkg) .. " package '" .. pkg_full_name(installed_pkg.name, installed_pkg.version) .. "' conflicts with package '" .. pkg_full_name(pkg.name, pkg.version, was_scm_version) .. "'."
             end
         end
 
@@ -146,7 +147,7 @@ local function packages_conflicts(pkg, installed_pkg)
                 -- for all of pkg's provides
                 for _, provided_pkg in pairs(get_provides(pkg)) do
                     if conflict == provided_pkg.name then
-                        return "Already '" .. selected_or_installed(installed_pkg) .. " package '" .. pkg_full_name(installed_pkg.name, installed_pkg.version) .. "' conflicts with package '" .. pkg_full_name(provided_pkg.name, provided_pkg.version) .. "' provided by '" .. pkg_full_name(pkg.name, pkg.version) .. "'."
+                        return "Already '" .. selected_or_installed(installed_pkg) .. " package '" .. pkg_full_name(installed_pkg.name, installed_pkg.version) .. "' conflicts with package '" .. pkg_full_name(provided_pkg.name, provided_pkg.version) .. "' provided by '" .. pkg_full_name(pkg.name, pkg.version, was_scm_version) .. "'."
                     end
                 end
             end
@@ -250,12 +251,15 @@ local function get_packages_to_install(pkg, installed, manifest, force_no_downlo
         pkg_is_installed, err = is_installed(pkg.name, tmp_installed, pkg_constraint)
         if pkg_is_installed then break end
 
+        local was_scm_version = false
+        if pkg.version == "scm" then was_scm_version = true end
+
         -- download info about the package
         if not force_no_download then
             local path_or_err
             pkg, path_or_err = package.retrieve_pkg_info(pkg, deploy_dir)
             if not pkg then
-                return nil, path_or_err
+                return nil, "Error when resolving dependencies: " .. path_or_err
             else
                 -- set path to downloaded package - used to delete unused but downloaded
                 -- packages and also to install packages selected to install
@@ -272,7 +276,7 @@ local function get_packages_to_install(pkg, installed, manifest, force_no_downlo
         -- checks for conflicts with other installed (or previously selected) packages
         if not err then
             for _, installed_pkg in pairs(tmp_installed) do
-                err = packages_conflicts(pkg, installed_pkg)
+                err = packages_conflicts(pkg, installed_pkg, was_scm_version)
                 if err then break end
             end
         end
@@ -533,14 +537,17 @@ end
 
 -- Return full package name and version string (e.g. 'luajit-2.0'). When version
 -- is nil or '' then return only name (e.g. 'luajit') and when name is nil or ''
--- then return '<unknown>'.
-function pkg_full_name(name, version)
+-- then return '<unknown>'. Optional 'was_scm_version' argument is a boolean,
+-- stating whether the package was originally selected for installation as a 'scm' version.
+function pkg_full_name(name, version, was_scm_version)
     name = name or ""
     version = version or ""
     if type(version) == "number" then version = tostring(version) end
 
     assert(type(name) == "string", "depends.pkg_full_name: Argument 'name' is not a string.")
     assert(type(version) == "string", "depends.pkg_full_name: Argument 'version' is not a string.")
+
+    if was_scm_version then version = version .. " [scm version]" end
 
     if name == "" then
         return "<unknown>"
