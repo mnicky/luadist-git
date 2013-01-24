@@ -345,7 +345,8 @@ function fetch_pkg(pkg, download_dir)
 
     if cfg.binary then
         -- check if binary version of the module for this arch & type available
-        local avail_tags = git.get_remote_tags(repo_url)
+        local avail_tags, err = git.get_remote_tags(repo_url)
+        if not avail_tags then return nil, err end
 
         if utils.contains(avail_tags, bin_tag) then
             use_binary = true
@@ -354,6 +355,7 @@ function fetch_pkg(pkg, download_dir)
 
     -- init the git repository
     local ok, err = git.create_repo(clone_dir)
+    if not ok then return nil, err end
 
     -- Fetch the desired ref (from the pkg's remote repo) and checkout into it.
 
