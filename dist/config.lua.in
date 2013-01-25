@@ -89,7 +89,15 @@ ctest         = "ctest"
 
 cache_command = cmake .. " -C cache.cmake"
 build_command = cmake .. " --build . --clean-first"
-install_component_command = cmake .. " -DCOMPONENT=#COMPONENT# -P cmake_install.cmake"
+
+if debug then
+	strip_option = ""
+else
+	strip_option = " -DCMAKE_INSTALL_DO_STRIP=true"
+end
+
+install_component_command = cmake .. strip_option .. " -DCOMPONENT=#COMPONENT# -P cmake_install.cmake"
+
 test_command = ctest .. " -V ."
 
 cache_debug_options = "-DCMAKE_VERBOSE_MAKEFILE=true -DCMAKE_BUILD_TYPE=Debug"
