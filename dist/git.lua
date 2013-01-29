@@ -273,7 +273,7 @@ local function fetch_ref(repo_dir, git_repo_url, ref_name, ref_type)
     local ok, pack_or_err, sha = pcall(git.protocol.fetch, git_repo_url, repo_or_err, refstring, suppress_fetch_progress)
     if not ok then return nil, "Error when fetching ref '" .. refstring .. "' from git repository '" .. git_repo_url .. "': " .. pack_or_err end
 
-    if type(pack_or_err.pack_file) == file then pack_or_err.pack_file:close() end
+    pack_or_err.pack_file:close()
 
     return sha
 end
