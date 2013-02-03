@@ -230,7 +230,7 @@ function build_pkg(src_dir, deploy_dir, variables)
         local strip_option = ""
         if not cfg.debug then strip_option = cfg.strip_option end
 
-        local ok = sys.exec("cd " .. build_dir .. " && " .. cfg.install_component_command:gsub("#COMPONENT#", component) .. strip_option)
+        local ok = sys.exec("cd " .. build_dir .. " && " .. cfg.cmake .. " " .. strip_option .. " " ..cfg.install_component_command:gsub("#COMPONENT#", component))
 
         if not ok then return nil, "Error when installing the component '" .. component .. "' with CMake in directory '" .. cmake_build_dir .. "'" end
 

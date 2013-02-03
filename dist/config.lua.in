@@ -90,7 +90,7 @@ ctest         = "ctest"
 cache_command = cmake .. " -C cache.cmake"
 build_command = cmake .. " --build . --clean-first"
 
-install_component_command = cmake .. " -DCOMPONENT=#COMPONENT# -P cmake_install.cmake"
+install_component_command = " -DCOMPONENT=#COMPONENT# -P cmake_install.cmake"
 
 test_command = ctest .. " -V ."
 
