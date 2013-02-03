@@ -227,7 +227,10 @@ function build_pkg(src_dir, deploy_dir, variables)
     local build_dir = sys.quote(cmake_build_dir)
     -- install the components
     for _, component in ipairs(cfg.components) do
-        local ok = sys.exec("cd " .. build_dir .. " && " .. cfg.install_component_command:gsub("#COMPONENT#", component) )
+        local strip_option = ""
+        if not cfg.debug then strip_option = cfg.strip_option end
+
+        local ok = sys.exec("cd " .. build_dir .. " && " .. cfg.install_component_command:gsub("#COMPONENT#", component) .. strip_option)
 
         if not ok then return nil, "Error when installing the component '" .. component .. "' with CMake in directory '" .. cmake_build_dir .. "'" end
 
