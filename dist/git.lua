@@ -122,6 +122,7 @@ function checkout_sha(sha, git_repo_dir)
     ok, err = pcall(repo_or_err.checkout, repo_or_err, sha, git_repo_dir)
     if not ok then return nil, "Error when checking out the sha '" .. sha .. "' in the git repository '" .. git_repo_dir .. "': " .. err end
 
+    repo_or_err:close()
     if dir_changed then sys.change_dir(prev_current_dir) end
 
     return true
@@ -273,7 +274,8 @@ local function fetch_ref(repo_dir, git_repo_url, ref_name, ref_type)
     local ok, pack_or_err, sha = pcall(git.protocol.fetch, git_repo_url, repo_or_err, refstring, suppress_fetch_progress)
     if not ok then return nil, "Error when fetching ref '" .. refstring .. "' from git repository '" .. git_repo_url .. "': " .. pack_or_err end
 
-    if pack_or_err.pack_file then pack_or_err.pack_file:close() end
+    repo_or_err:close()
+    pack_or_err:close()
 
     return sha
 end
@@ -300,5 +302,6 @@ function create_repo(dir)
     local ok, repo_or_err = pcall(git.repo.create, dir)
     if not ok then return nil, "Error when creating the git repository '" .. dir .. "': " .. repo_or_err end
 
-    return repo_or_err
+    repo_or_err:close()
+    return true
 end
