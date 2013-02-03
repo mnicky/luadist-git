@@ -14,7 +14,7 @@ depends = {
   "lua ~> 5.1",
   "luafilesystem >= 1.4.1",
   "srlua >= 5.1",
-  "lua-git >= 0.3"
+  "lua-git >= 0.4"
 }
 
 conflicts = {
