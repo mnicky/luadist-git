@@ -228,7 +228,7 @@ function build_pkg(src_dir, deploy_dir, variables)
     -- install the components
     for _, component in ipairs(cfg.components) do
         local strip_option = ""
-        if not cfg.debug then strip_option = cfg.strip_option end
+        if not cfg.debug and component ~= "Library" then strip_option = cfg.strip_option end
 
         local ok = sys.exec("cd " .. build_dir .. " && " .. cfg.cmake .. " " .. strip_option .. " " ..cfg.install_component_command:gsub("#COMPONENT#", component))
 
