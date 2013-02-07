@@ -264,7 +264,7 @@ local function get_packages_to_install(pkg, installed, manifest, force_no_downlo
             local path_or_err
             pkg, path_or_err = package.retrieve_pkg_info(pkg, deploy_dir)
             if not pkg then
-                return nil, "Error when resolving dependencies: " .. path_or_err
+                err = "Error when resolving dependencies: " .. path_or_err
             else
                 -- set path to downloaded package - used to delete unused but downloaded
                 -- packages and also to install packages selected to install
@@ -273,9 +273,11 @@ local function get_packages_to_install(pkg, installed, manifest, force_no_downlo
         end
 
         -- check arch & type
-        if not (pkg.arch == "Universal" or pkg.arch == cfg.arch) or
-           not (pkg.type == "all" or pkg.type == "source" or pkg.type == cfg.type) then
-            err = "Package '" .. pkg_full_name(pkg.name, pkg.version) .. "' doesn't have required arch and type."
+        if not err then
+            if not (pkg.arch == "Universal" or pkg.arch == cfg.arch) or
+               not (pkg.type == "all" or pkg.type == "source" or pkg.type == cfg.type) then
+                err = "Package '" .. pkg_full_name(pkg.name, pkg.version) .. "' doesn't have required arch and type."
+            end
         end
 
         -- checks for conflicts with other installed (or previously selected) packages
@@ -392,7 +394,7 @@ local function get_packages_to_install(pkg, installed, manifest, force_no_downlo
         -- if error occured
         else
             -- delete the downloaded package
-            if pkg.download_dir and not cfg.debug then sys.delete(pkg.download_dir) end
+            if pkg and pkg.download_dir and not cfg.debug then sys.delete(pkg.download_dir) end
 
             -- if pkg is already installed, skip checking its other candidates
             if pkg_is_installed then break end
