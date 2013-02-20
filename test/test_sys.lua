@@ -969,7 +969,7 @@ tests.delete_with_empty_dir_os_specific = function()
     local tmpdir = sys.parent_dir(tmpfile)
 
     -- create a dir
-    local dir = sys.make_path(tmpdir, "dir-413841-" .. utils.rand(1000000))
+    local dir = sys.make_path(tmpdir, "dir-414741-" .. utils.rand(1000000))
     assert(sys.make_dir(dir))
 
     -- delete the dir
@@ -989,7 +989,7 @@ tests.delete_with_nonempty_dir_os_specific = function()
     local tmpdir = sys.parent_dir(tmpfile)
 
     -- create a dir
-    local dir = sys.make_path(tmpdir, "dir-413841-" .. utils.rand(1000000))
+    local dir = sys.make_path(tmpdir, "dir-416541-" .. utils.rand(1000000))
     assert(sys.make_dir(dir))
 
     -- create a file within
