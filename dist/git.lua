@@ -139,7 +139,7 @@ function init(dir)
     local ok, err = sys.make_dir(dir)
     if not ok then return nil, err end
 
-    local command = "git init " .. dir
+    local command = "git init " .. sys.quote(dir)
     if not cfg.debug then command = command .. " -q " end
     return sys.exec(command)
 end
@@ -155,7 +155,7 @@ function add_all(repo_dir)
     ok, prev_dir = sys.change_dir(repo_dir);
     if not ok then return nil, err end
 
-    ok, msg = sys.exec("git add -A -f " .. repo_dir)
+    ok, msg = sys.exec("git add -A -f " .. sys.quote(repo_dir))
     sys.change_dir(prev_dir)
 
     return ok, msg
@@ -166,7 +166,6 @@ end
 function commit(message, repo_dir)
     repo_dir = repo_dir or sys.current_dir()
     message = message or "commit by luadist-git"
-    message = sys.quote(message)
     assert(type(message) == "string", "git.commit: Argument 'message' is not a string.")
     assert(type(repo_dir) == "string", "git.commit: Argument 'repo_dir' is not a string.")
     repo_dir = sys.abs_path(repo_dir)
@@ -175,7 +174,7 @@ function commit(message, repo_dir)
     ok, prev_dir = sys.change_dir(repo_dir);
     if not ok then return nil, err end
 
-    local command = "git commit -m " .. message
+    local command = "git commit -m " .. sys.quote(message)
     if not cfg.debug then command = command .. " -q " end
     ok, msg = sys.exec(command)
     sys.change_dir(prev_dir)
