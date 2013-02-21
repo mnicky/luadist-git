@@ -272,18 +272,9 @@ end
 
 --- is_file()
 
-tests.is_file_unix = function()
-    cfg.arch = "Linux"
-    local filename = assert(os.tmpname())
-    assert(io.open(filename, "w"):close())
-    local val, err = sys.is_file(filename)
-    assert(os.remove(filename))
-    assert(val == true, fail_msg(val, err))
-end
-
-tests.is_file_win = function()
-    cfg.arch = "Windows"
-    local filename = assert(os.tmpname())
+tests.is_file_os_specific = function()
+    cfg.arch = original_arch
+    local filename = sys.tmp_name("is_file_os_specific--file--")
     assert(io.open(filename, "w"):close())
     local val, err = sys.is_file(filename)
     assert(os.remove(filename))
@@ -660,21 +651,31 @@ tests.abs_path_with_abs_win_2 = function()
     assert(val == "\\this\\is\\my\\little\\path", fail_msg(val, err))
 end
 
+--- tmp_dir()
+
+tests.tmp_dir_os_specific = function()
+    cfg.arch = original_arch
+    local val, err = sys.tmp_dir()
+    assert(type(val) == "string" and val ~= "" and sys.is_abs(val) and sys.exists(val) and sys.is_dir(val) , fail_msg(val, err))
+end
+
+--- tmp_name()
+
+tests.tmp_name_os_specific = function()
+    cfg.arch = original_arch
+    local val, err = sys.tmp_name()
+    assert(type(val) == "string" and val ~= "" and sys.is_abs(val) and not sys.exists(val) , fail_msg(val, err))
+end
+
 --- get_file_list()
 
 tests.get_file_list_os_specific = function()
     cfg.arch = original_arch
 
-    -- get the location of a temporary directory
-    local tmpfile = assert(os.tmpname())
-    assert(io.open(tmpfile, "w"):close())
-    assert(os.remove(tmpfile))
-    local tmpdir = sys.parent_dir(tmpfile)
-
     -- create directory and files within
-    local dir = sys.make_path(tmpdir, "dir-957834-" .. utils.rand(1000000))
-    local file1 = sys.make_path(dir, "file1-235689-" .. utils.rand(1000000))
-    local file2 = sys.make_path(dir, "file2-897452-" .. utils.rand(1000000))
+    local dir = sys.tmp_name("get_file_list_os_specific--dir--")
+    local file1 = sys.make_path(dir, "file1")
+    local file2 = sys.make_path(dir, "file2")
     assert(lfs.mkdir(dir))
     assert(io.open(file1, "w"):close())
     assert(io.open(file2, "w"):close())
@@ -695,14 +696,8 @@ end
 tests.get_file_list__with_empty_dir_os_specific = function()
     cfg.arch = original_arch
 
-    -- get the location of a temporary directory
-    local tmpfile = assert(os.tmpname())
-    assert(io.open(tmpfile, "w"):close())
-    assert(os.remove(tmpfile))
-    local tmpdir = sys.parent_dir(tmpfile)
-
     -- create a directory
-    local dir = sys.make_path(tmpdir, "dir-324687-" .. utils.rand(1000000))
+    local dir = sys.tmp_name("get_file_list__with_empty_dir_os_specific--dir--")
     assert(lfs.mkdir(dir))
 
     -- get the file list
@@ -741,14 +736,8 @@ end
 tests.make_dir_os_specific = function()
     cfg.arch = original_arch
 
-    -- get the location of a temporary directory
-    local tmpfile = assert(os.tmpname())
-    assert(io.open(tmpfile, "w"):close())
-    assert(os.remove(tmpfile))
-    local tmpdir = sys.parent_dir(tmpfile)
-
     -- create the dir
-    local dir = sys.make_path(tmpdir, "dir-831475-" .. utils.rand(1000000))
+    local dir = sys.tmp_name("make_dir_os_specific--dir--")
     local val, err = sys.make_dir(dir)
 
     -- verify
@@ -764,12 +753,11 @@ tests.move_to_with_file_os_specific = function()
     cfg.arch = original_arch
 
     -- create a file
-    local file = assert(os.tmpname())
+    local file = sys.tmp_name("make_dir_os_specific--file--")
     assert(io.open(file, "w"):close())
 
     -- create a dir
-    local tmpdir = sys.parent_dir(file)
-    local dir = sys.make_path(tmpdir, "dir-652591-" .. utils.rand(1000000))
+    local dir = sys.tmp_name("make_dir_os_specific--dir--")
     assert(sys.make_dir(dir))
 
     -- move the file to the dir
@@ -787,22 +775,16 @@ end
 tests.move_to_with_dir_os_specific = function()
     cfg.arch = original_arch
 
-    -- get the location of a temporary directory
-    local tmpfile = assert(os.tmpname())
-    assert(io.open(tmpfile, "w"):close())
-    assert(os.remove(tmpfile))
-    local tmpdir = sys.parent_dir(tmpfile)
-
     -- create a source dir
-    local src_dir = sys.make_path(tmpdir, "dir-231254-" .. utils.rand(1000000))
+    local src_dir = sys.tmp_name("move_to_with_dir_os_specific--src-dir--")
     assert(sys.make_dir(src_dir))
 
     -- create a file within
-    local file = sys.make_path(src_dir, "file-954872-" .. utils.rand(1000000))
+    local file = sys.make_path(src_dir, "file")
     assert(io.open(file, "w"):close())
 
     -- create a destination dir
-    local dest_dir = sys.make_path(tmpdir, "dir-468526-" .. utils.rand(1000000))
+    local dest_dir = sys.tmp_name("move_to_with_dir_os_specific--dest-dir--")
     assert(sys.make_dir(dest_dir))
 
     -- move the source directory to the destination directory (should be recursive)
@@ -828,12 +810,11 @@ tests.rename_with_file_os_specific = function()
     cfg.arch = original_arch
 
     -- create a file
-    local file = assert(os.tmpname())
+    local file = sys.tmp_name("rename_with_file_os_specific--file-original--")
     assert(io.open(file, "w"):close())
 
     -- rename the file
-    local tmpdir = sys.parent_dir(file)
-    local renamed_file = sys.make_path(tmpdir, "file-894568-" .. utils.rand(1000000))
+    local renamed_file = sys.tmp_name("rename_with_file_os_specific--file-renamed--")
     local val, err = sys.rename(file, renamed_file)
 
     -- verify
@@ -846,22 +827,16 @@ end
 tests.rename_with_dir_os_specific = function()
     cfg.arch = original_arch
 
-    -- get the location of a temporary directory
-    local tmpfile = assert(os.tmpname())
-    assert(io.open(tmpfile, "w"):close())
-    assert(os.remove(tmpfile))
-    local tmpdir = sys.parent_dir(tmpfile)
-
     -- create a dir
-    local dir = sys.make_path(tmpdir, "dir-312564-" .. utils.rand(1000000))
+    local dir = sys.tmp_name("rename_with_dir_os_specific--dir-original--")
     assert(sys.make_dir(dir))
 
     -- create a file within
-    local file = sys.make_path(dir, "file-975815-" .. utils.rand(1000000))
+    local file = sys.make_path(dir, "file")
     assert(io.open(file, "w"):close())
 
     -- rename the directory
-    local renamed_dir = sys.make_path(tmpdir, "dir-654521-" .. utils.rand(1000000))
+    local renamed_dir = sys.tmp_name("rename_with_dir_os_specific--dir-renamed--")
     local val, err = sys.rename(dir, renamed_dir)
 
     -- verify
@@ -882,12 +857,11 @@ tests.copy_with_file_os_specific = function()
     cfg.arch = original_arch
 
     -- create a file
-    local file = assert(os.tmpname())
+    local file = sys.tmp_name("copy_with_file_os_specific--file--")
     assert(io.open(file, "w"):close())
 
     -- create a dir
-    local tmpdir = sys.parent_dir(file)
-    local dir = sys.make_path(tmpdir, "dir-547821-" .. utils.rand(1000000))
+    local dir = sys.tmp_name("copy_with_file_os_specific--src-dir--")
     assert(sys.make_dir(dir))
 
     -- copy the file to the dir
@@ -906,22 +880,16 @@ end
 tests.copy_with_dir_os_specific = function()
     cfg.arch = original_arch
 
-    -- get the location of a temporary directory
-    local tmpfile = assert(os.tmpname())
-    assert(io.open(tmpfile, "w"):close())
-    assert(os.remove(tmpfile))
-    local tmpdir = sys.parent_dir(tmpfile)
-
     -- create a source dir
-    local src_dir = sys.make_path(tmpdir, "dir-874598-" .. utils.rand(1000000))
+    local src_dir = sys.tmp_name("copy_with_dir_os_specific--src-dir--")
     assert(sys.make_dir(src_dir))
 
     -- create a file within
-    local file = sys.make_path(src_dir, "file-657435-" .. utils.rand(1000000))
+    local file = sys.make_path(src_dir, "file")
     assert(io.open(file, "w"):close())
 
     -- create a destination dir
-    local dest_dir = sys.make_path(tmpdir, "dir-123256-" .. utils.rand(1000000))
+    local dest_dir = sys.tmp_name("copy_with_dir_os_specific--dest-dir--")
     assert(sys.make_dir(dest_dir))
 
     -- copy the source directory to the destination directory (should be recursive)
@@ -949,7 +917,7 @@ tests.delete_with_file_os_specific = function()
     cfg.arch = original_arch
 
     -- create a file
-    local file = assert(os.tmpname())
+    local file = sys.tmp_name("delete_with_file_os_specific--file--")
     assert(io.open(file, "w"):close())
 
     -- delete the file
@@ -962,14 +930,8 @@ end
 tests.delete_with_empty_dir_os_specific = function()
     cfg.arch = original_arch
 
-    -- get the location of a temporary directory
-    local tmpfile = assert(os.tmpname())
-    assert(io.open(tmpfile, "w"):close())
-    assert(os.remove(tmpfile))
-    local tmpdir = sys.parent_dir(tmpfile)
-
     -- create a dir
-    local dir = sys.make_path(tmpdir, "dir-414741-" .. utils.rand(1000000))
+    local dir = sys.tmp_name("delete_with_empty_dir_os_specific--dir--")
     assert(sys.make_dir(dir))
 
     -- delete the dir
@@ -982,18 +944,12 @@ end
 tests.delete_with_nonempty_dir_os_specific = function()
     cfg.arch = original_arch
 
-    -- get the location of a temporary directory
-    local tmpfile = assert(os.tmpname())
-    assert(io.open(tmpfile, "w"):close())
-    assert(os.remove(tmpfile))
-    local tmpdir = sys.parent_dir(tmpfile)
-
     -- create a dir
-    local dir = sys.make_path(tmpdir, "dir-416541-" .. utils.rand(1000000))
+    local dir = sys.tmp_name("delete_with_nonempty_dir_os_specific--dir--")
     assert(sys.make_dir(dir))
 
     -- create a file within
-    local file = sys.make_path(dir, "file-348756-" .. utils.rand(1000000))
+    local file = sys.make_path(dir, "file")
     assert(io.open(file, "w"):close())
 
     -- delete the dir
@@ -1006,14 +962,8 @@ end
 tests.delete_with_nonexistent_path_os_specific = function()
     cfg.arch = original_arch
 
-    -- get the location of a temporary directory
-    local tmpfile = assert(os.tmpname())
-    assert(io.open(tmpfile, "w"):close())
-    assert(os.remove(tmpfile))
-    local tmpdir = sys.parent_dir(tmpfile)
-
     -- construct a nonexistent path
-    local nonexistent_path = sys.make_path(tmpdir, "nonexistent-413841-" .. utils.rand(1000000))
+    local nonexistent_path = sys.tmp_name("delete_with_nonexistent_path_os_specific--nonexistent-path")
     assert(not sys.exists(nonexistent_path))
 
     -- attempt to delete the path (should just return true)
@@ -1025,12 +975,6 @@ end
 ---
 tests.delete_with_non_absolute_path_os_specific = function()
     cfg.arch = original_arch
-
-    -- get the location of a temporary directory
-    local tmpfile = assert(os.tmpname())
-    assert(io.open(tmpfile, "w"):close())
-    assert(os.remove(tmpfile))
-    local tmpdir = sys.parent_dir(tmpfile)
 
     -- construct a non absolute path
     local nonabs_path = "not-abs-895454-" .. utils.rand(1000000)
