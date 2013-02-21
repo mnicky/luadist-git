@@ -236,6 +236,18 @@ function abs_path(path)
     return make_path(cur_dir, path)
 end
 
+-- Returns path to the temporary directory of OS.
+function tmp_dir()
+    return os.getenv("TMPDIR") or os.getenv("TEMP") or os.getenv("TMP") or "/tmp"
+end
+
+-- Returns temporary file (or directory) path (with optional prefix).
+function tmp_name(prefix)
+    prefix = prefix or ""
+    assert(type(prefix) == "string", "sys.tmp_name: Argument 'prefix' is not a string.")
+    return make_path(tmp_dir(), prefix .. "luadist_" .. utils.rand(10000000000))
+end
+
 -- Return table of all paths in 'dir'
 function get_file_list(dir)
     dir = dir or current_dir()
