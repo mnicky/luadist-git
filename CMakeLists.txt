@@ -28,8 +28,16 @@ if ( DETECTED_ARCH STREQUAL "Darwin" )
   execute_process ( COMMAND uname -m OUTPUT_VARIABLE DETECTED_TYPE OUTPUT_STRIP_TRAILING_WHITESPACE )
 endif ( )
 
+if ( DETECTED_ARCH STREQUAL "Linux" )
+  message( "DETECTING ...")
+  # Determine LINUX flavour using lsb_release
+  execute_process ( COMMAND lsb_release -is OUTPUT_VARIABLE DETECTED_ARCH OUTPUT_STRIP_TRAILING_WHITESPACE )
+endif ()
+
 set ( DIST_TYPE ${DETECTED_TYPE} CACHE STRING "Host system type. PLEASE CHECK!" )
 set ( DIST_ARCH ${DETECTED_ARCH} CACHE STRING "Host system architecture. PLEASE CHECK!" )
+message( "Detected system: ${DETECTED_ARCH}-${DETECTED_TYPE}" )
+message( "Configured system: ${DIST_ARCH}-${DIST_TYPE}")
 
 configure_file ( dist/config.lua.in ${CMAKE_CURRENT_BINARY_DIR}/dist/config.lua @ONLY )
 
