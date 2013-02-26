@@ -1,7 +1,7 @@
 --- This file is part of LuaDist project
 
 name = "luadist-git"
-version = "0.2.3"
+version = "0.2.4"
 
 desc = "Git based deployment of LuaDist modules."
 author = "Marek Srank, Peter Drahoš"
