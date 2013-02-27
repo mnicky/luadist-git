@@ -253,7 +253,7 @@ function upload_modules(deploy_dir, module_names, dest_git_base_url)
         if not ok then return nil, "Error adding all files to the git index in '" .. tmp_dir .. "': " .. err end
 
         -- create commit
-        ok, err = git.commit("[luadist-git] add " .. full_name, tmp_dir)
+        ok, err = git.commit("[luadist-git] add " .. full_name .. " [ci skip]", tmp_dir)
         if not ok then return nil, "Error commiting changes in '" .. tmp_dir .. "': " .. err end
 
         -- rename branch
