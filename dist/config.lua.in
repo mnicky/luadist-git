@@ -12,7 +12,7 @@ type          = "@DIST_TYPE@"      -- Host type
 -- Extract LuaDist location from package.path ------------------------
 local paths = {}
 package.path:gsub("([^;]+)", function(c) table.insert(paths, c) end)
-local path = paths[2]:gsub("[/\\]bin[/\\]..*","")
+local path = paths[2]:gsub("[/\\]bin[/\\]%.%..*","")
 
 -- Directories -------------------------------------------------------
 root_dir      = path or os.getenv("DIST_ROOT") or sys.path_separator()
