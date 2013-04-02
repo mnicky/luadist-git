@@ -9,9 +9,10 @@ version       = "@DIST_VERSION@"   -- Current LuaDist version
 arch          = "@DIST_ARCH@"      -- Host architecture
 type          = "@DIST_TYPE@"      -- Host type
 
--- Look for _PROGDIR by default --------------------------------------
-local path    = _PROGDIR
-if path then path = sys.parent_dir(path) end
+-- Extract LuaDist location from package.path ------------------------
+local paths = {}
+package.path:gsub("([^;]+)", function(c) table.insert(paths, c) end)
+local path = paths[2]:gsub("/bin/..*","")
 
 -- Directories -------------------------------------------------------
 root_dir      = path or os.getenv("DIST_ROOT") or sys.path_separator()
