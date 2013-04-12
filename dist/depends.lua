@@ -652,18 +652,18 @@ function dep_manifest(module, depends_tbl)
     if dist_info.depends then
 
         -- collect all OS specific dependencies of pkg
-        for k, depend in pairs(dist_info.depends) do
-            if type(depend) == "table" then
+        for k, dep in pairs(dist_info.depends) do
+            if type(dep) == "table" then
                 if k == cfg.arch then
-                    for _, os_specific_depend in pairs(depend) do
+                    for _, os_specific_depend in pairs(dep) do
                         table.insert(dist_info.depends, os_specific_depend)
                     end
                 end
             end
         end
 
-        for _, dep in pairs(dist_info.depends) do
-            if type(depend) ~= "table" then
+        for _, dep in ipairs(dist_info.depends) do
+            if type(dep) ~= "table" then
                 deps_tbl, err = dep_manifest(dep, deps_tbl)
             end
         end
