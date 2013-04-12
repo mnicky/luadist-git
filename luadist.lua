@@ -31,6 +31,7 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] <COMMAND> [ARGUMENTS...] [-VARIABLES...]
         fetch     - download modules
         make      - manually deploy modules from local paths
         upload    - upload installed modules to their repositories
+        tree      - print dependency tree of a module
         selftest  - run the selftest of LuaDist
 
     To get help on specific command, run:
@@ -410,7 +411,7 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] info [MODULES...] [-VARIABLES...]
     repositories. This command also shows whether modules are installed
     in DEPLOYMENT_DIRECTORY.
 
-    If no MODULES are specified, all available modules are showed.
+    If no MODULES are specified, all available modules are shown.
     If DEPLOYMENT_DIRECTORY is not specified, the deployment directory
     of LuaDist is used.
 
@@ -483,6 +484,69 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] info [MODULES...] [-VARIABLES...]
                 end
                 return 0
             end
+
+        end
+    },
+
+    -- Print dependency tree.
+    ["tree"] = {
+        help = [[
+Usage: luadist [DEPLOYMENT_DIRECTORY] tree [MODULES...] [-VARIABLES...]
+
+    The 'tree' command prints dependency tree for specified modules.
+
+    If no MODULES are specified, trees for all available modules are printed.
+
+    Optional LuaDist configuration VARIABLES (e.g. -variable=value) can be
+    specified.
+        ]],
+
+        run = function (deploy_dir, modules)
+            deploy_dir = deploy_dir or dist.get_deploy_dir()
+            modules = modules or {}
+            assert(type(deploy_dir) == "string", "luadist.info: Argument 'deploy_dir' is not a string.")
+            assert(type(modules) == "table", "luadist.info: Argument 'modules' is not a table.")
+            deploy_dir = sys.abs_path(deploy_dir)
+
+            local manifest, err = mf.get_manifest()
+            if not manifest then
+                print(err)
+                os.exit(1)
+            end
+
+            -- if no modules specified explicitly, assume all modules
+            if #modules == 0 then modules = depends.sort_by_names(manifest) end
+
+            local dep_manifest, err = {}, nil
+            for _, module in pairs(modules) do
+                if type(module) == "table" then module = module.name end
+                dep_manifest, err = depends.dep_manifest(module)
+                if not dep_manifest then
+                    print(err)
+                    os.exit(1)
+                else
+
+                    -- dep_manifest = depends.sort_by_names(dep_manifest)
+
+                    local heading = "Dependency tree for " .. module .. ":"
+                    print("\n\n" .. heading .. "")
+                    print(string.rep("=", #heading) .. "\n\n")
+
+                    for _, pkg in pairs(dep_manifest) do
+
+                        print("  " .. pkg.name .. "-" .. pkg.version .. " (" .. pkg.path .. ", " .. pkg.version .. ")")
+                        if pkg.depends then
+                            for _, dep in pairs(pkg.depends) do
+                                dep = depends.sort_by_versions(depends.find_packages(dep, dep_manifest))[1]
+                                print("    * " .. dep.name .. "-" .. dep.version .. " (" .. dep.path .. ", " .. dep.version .. ")")
+                            end
+                        end
+                        print()
+                    end
+
+                end
+            end
+            return 0
 
         end
     },

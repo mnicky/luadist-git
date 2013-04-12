@@ -599,3 +599,75 @@ function compare_versions(version_a, version_b)
     assert(type(version_b) == "string", "depends.compare_versions: Argument 'version_b' is not a string.")
     return const.compareVersions(version_a, version_b)
 end
+
+-- Returns manifest augmented with information about dependencies of given module
+function dep_manifest(module, depends_tbl)
+    depends_tbl = depends_tbl or {}
+    assert(type(module) == "string", "depends.dep_manifest: Argument 'module' is not a string.")
+    assert(type(depends_tbl) == "table", "depends.dep_manifest: Argument 'depends_tbl' is not a table.")
+
+    local deps_tbl = utils.deepcopy(depends_tbl)
+    local name, constraint = split_name_constraint(module)
+    local name_ver = name .. (constraint and "-" .. constraint or "")
+
+    -- if info about the module already is in the dependency manifest, just return it
+    if constraint and deps_tbl[name_ver] and cfg.cache then return deps_tbl end
+
+    local manifest, err = mf.get_manifest()
+    if not manifest then return nil, "Error when getting manifest: " .. err end
+
+    -- find out available versions of package
+    local versions, err = package.retrieve_versions(name, manifest, true)
+    if not versions then return nil, err end
+    for _, version in pairs(versions) do
+        table.insert(manifest, version)
+    end
+
+    -- find the module's package
+    local candidates = find_packages(name_ver, manifest)
+    if #candidates == 0 then return nil, "Package '" .. name_ver .. "' not found." end
+
+    -- download the dependency info
+    candidates = sort_by_versions(candidates)
+    local download_dir = sys.abs_path(sys.make_path(cfg.root_dir, cfg.temp_dir))
+    local downloaded_path = package.fetch_pkgs({candidates[1]}, download_dir, true)
+    if not downloaded_path then return nil, err end
+
+    local distinfo = sys.make_path(downloaded_path[1], "dist.info")
+    local dist_info = mf.load_distinfo(distinfo)
+    if not manifest then return nil, "Error when loading dist.info file '" .. distinfo .. "': " .. err end
+
+    -- add information about this package
+    local dep_info = {}
+    dep_info["name"] = dist_info.name
+    dep_info["version"] = dist_info.version
+    dep_info["path"] = candidates[1].path
+    dep_info["depends"] = dist_info.depends
+
+    deps_tbl[name_ver] = dep_info
+
+    local err
+
+    -- resolve dependencies
+    if dist_info.depends then
+
+        -- collect all OS specific dependencies of pkg
+        for k, depend in pairs(dist_info.depends) do
+            if type(depend) == "table" then
+                if k == cfg.arch then
+                    for _, os_specific_depend in pairs(depend) do
+                        table.insert(dist_info.depends, os_specific_depend)
+                    end
+                end
+            end
+        end
+
+        for _, dep in pairs(dist_info.depends) do
+            if type(depend) ~= "table" then
+                deps_tbl, err = dep_manifest(dep, deps_tbl)
+            end
+        end
+    end
+
+    return deps_tbl, err
+end
