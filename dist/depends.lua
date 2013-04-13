@@ -617,7 +617,7 @@ function dependency_manifest(module, dep_manifest, dep_cache)
     local dep_info = {}
 
     -- if info about the module is in cache and cache not disabled, use it
-    if constraint and dep_cache[name_ver] and cfg.cache then
+    if constraint and dep_cache[name_ver] and cfg.dep_cache then
         dep_info = dep_cache[name_ver]
     else
         local manifest, err = mf.get_manifest()
@@ -639,7 +639,7 @@ function dependency_manifest(module, dep_manifest, dep_cache)
         name_ver = candidates[1].name .. "-" .. candidates[1].version
 
         -- if info about the module isn't in cache or cache disabled, download it
-        if dep_cache[name_ver] and cfg.cache then
+        if dep_cache[name_ver] and cfg.dep_cache then
              dep_info = dep_cache[name_ver]
         else
             -- download the dependency info

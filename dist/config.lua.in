@@ -45,6 +45,8 @@ test          = false         -- Run CTest before install.
 cache         = true          -- Use cache.
 cache_timeout = 60 * 60       -- Cache timeout in seconds.
 
+dep_cache     = true          -- Use cache for dependency information (tree functionality).
+
 -- Components (of modules) that will be installed.
 components    = {
   "Runtime", "Library", "Header", "Data", "Documentation", "Example", "Test", "Other", "Unspecified"
