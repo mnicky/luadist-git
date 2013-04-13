@@ -530,7 +530,7 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] tree [MODULES...] [-VARIABLES...]
                 else
 
                     -- print the dependency tree
-                    local heading = "Dependency tree for " .. module .. ":"
+                    local heading = "Dependency tree of '" .. module .. "' (for " .. cfg.arch .. "-" .. cfg.type .. "):"
                     print("\n\n" .. heading .. "")
                     print(string.rep("=", #heading) .. "\n\n")
 
