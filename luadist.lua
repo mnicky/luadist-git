@@ -539,8 +539,14 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] tree [MODULES...] [-VARIABLES...]
                         print("  " .. pkg.name .. "-" .. pkg.version .. " (" .. pkg.path .. ", " .. pkg.version .. ")")
                         if pkg.depends then
                             for _, dep in pairs(pkg.depends) do
-                                dep = depends.sort_by_versions(depends.find_packages(dep, dep_manifest))[1]
-                                print("    * " .. dep.name .. "-" .. dep.version .. " (" .. dep.path .. ", " .. dep.version .. ")")
+                                if type(dep) ~= "table" then
+                                    local found = depends.sort_by_versions(depends.find_packages(dep, dep_manifest))[1]
+                                    if not found then
+                                        print("Could not find the dependency '" .. dep .. "' in the dependency manifest.")
+                                        os.exit(1)
+                                    end
+                                    print("    * " .. found.name .. "-" .. found.version .. " (" .. found.path .. ", " .. found.version .. ")")
+                                end
                             end
                         end
                         print()

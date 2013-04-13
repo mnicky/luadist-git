@@ -614,11 +614,10 @@ function dependency_manifest(module, dep_manifest, dep_cache)
     local dep_cache = utils.deepcopy(dep_cache)
     local name, constraint = split_name_constraint(module)
     local name_ver = name .. (constraint and "-" .. constraint or "")
-    local dep_info = {}
 
     -- if info about the module is in cache and cache not disabled, use it
     if constraint and dep_cache[name_ver] and cfg.dep_cache then
-        dep_info = dep_cache[name_ver]
+        dep_manifest[name_ver] = dep_cache[name_ver]
     else
         local manifest, err = mf.get_manifest()
         if not manifest then return nil, "Error when getting manifest: " .. err end
@@ -640,7 +639,7 @@ function dependency_manifest(module, dep_manifest, dep_cache)
 
         -- if info about the module isn't in cache or cache disabled, download it
         if dep_cache[name_ver] and cfg.dep_cache then
-             dep_info = dep_cache[name_ver]
+             dep_manifest[name_ver] = dep_cache[name_ver]
         else
             -- download the dependency info
             local download_dir = sys.abs_path(sys.make_path(cfg.root_dir, cfg.temp_dir))
@@ -652,39 +651,37 @@ function dependency_manifest(module, dep_manifest, dep_cache)
             if not dist_info then return nil, "Error when loading dist.info file '" .. distinfo .. "': " .. err end
 
             -- add information about this package to the cache
-            dep_info.name = dist_info.name
-            dep_info.version = dist_info.version
-            dep_info.path = candidates[1].path
-            dep_info.depends = dist_info.depends
+            if not dep_manifest[name_ver] then dep_manifest[name_ver] = {} end
+            dep_manifest[name_ver].name = dist_info.name
+            dep_manifest[name_ver].version = dist_info.version
+            dep_manifest[name_ver].path = candidates[1].path
+            dep_manifest[name_ver].depends = dist_info.depends
 
-            dep_cache[name_ver] = dep_info
-            dep_manifest[name_ver] = dep_info
+            -- add also to cache
+            dep_cache[name_ver] = dep_manifest[name_ver]
         end
     end
 
-    -- add information about the package to dependency manifest
-    dep_manifest[name_ver] = dep_info
-
     -- resolve dependencies
-    if dep_info.depends then
+    if dep_manifest[name_ver].depends then
 
         if not dep_manifest[name_ver].satisfied_by then
             dep_manifest[name_ver].satisfied_by = {}
         end
 
         -- collect all OS specific dependencies of pkg
-        for k, dep in pairs(dep_info.depends) do
+        for k, dep in pairs(dep_manifest[name_ver].depends) do
             if type(dep) == "table" then
                 if k == cfg.arch then
                     for _, os_specific_depend in pairs(dep) do
-                        table.insert(dep_info.depends, os_specific_depend)
+                        table.insert(dep_manifest[name_ver].depends, os_specific_depend)
                     end
                 end
             end
         end
 
         -- get dependency information of this module's dependencies
-        for _, dep in ipairs(dep_info.depends) do
+        for _, dep in ipairs(dep_manifest[name_ver].depends) do
             if type(dep) ~= "table" then
                 local satisfying = dep_manifest[name_ver].satisfied_by[dep]
                 if satisfying then dep = satisfying end
