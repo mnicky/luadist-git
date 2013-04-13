@@ -516,18 +516,20 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] tree [MODULES...] [-VARIABLES...]
 
             -- if no modules specified explicitly, assume all modules
             if #modules == 0 then modules = depends.sort_by_names(manifest) end
+            print("Getting dependency information... (this may take a lot of time)")
 
-            local dep_manifest, err = {}, nil
             for _, module in pairs(modules) do
+
+                -- if all modules are being queried, extract the name
                 if type(module) == "table" then module = module.name end
-                dep_manifest, err = depends.dep_manifest(module)
+
+                local dep_manifest, err = dist.dependency_info(module)
                 if not dep_manifest then
                     print(err)
                     os.exit(1)
                 else
 
-                    -- dep_manifest = depends.sort_by_names(dep_manifest)
-
+                    -- print the dependency tree
                     local heading = "Dependency tree for " .. module .. ":"
                     print("\n\n" .. heading .. "")
                     print(string.rep("=", #heading) .. "\n\n")

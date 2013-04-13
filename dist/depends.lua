@@ -600,74 +600,91 @@ function compare_versions(version_a, version_b)
     return const.compareVersions(version_a, version_b)
 end
 
--- Returns manifest augmented with information about dependencies of given module
-function dep_manifest(module, depends_tbl)
-    depends_tbl = depends_tbl or {}
-    assert(type(module) == "string", "depends.dep_manifest: Argument 'module' is not a string.")
-    assert(type(depends_tbl) == "table", "depends.dep_manifest: Argument 'depends_tbl' is not a table.")
+-- Returns manifest with information about dependencies of given module
+-- table 'dep_manifest' contains infromation about relevant modules and will be returned
+-- table 'dep_cache' contains all information collected so far and is used like a cache
+function dependency_manifest(module, dep_manifest, dep_cache)
+    dep_manifest = dep_manifest or {}
+    dep_cache = dep_cache or {}
+    assert(type(module) == "string", "depends.dependency_manifest: Argument 'module' is not a string.")
+    assert(type(dep_cache) == "table", "depends.dependency_manifest: Argument 'dep_cache' is not a table.")
+    assert(type(dep_manifest) == "table", "depends.dependency_manifest: Argument 'dep_manifest' is not a table.")
 
-    local deps_tbl = utils.deepcopy(depends_tbl)
+    local dep_manifest = utils.deepcopy(dep_manifest)
+    local dep_cache = utils.deepcopy(dep_cache)
     local name, constraint = split_name_constraint(module)
     local name_ver = name .. (constraint and "-" .. constraint or "")
+    local dep_info = {}
 
-    -- if info about the module already is in the dependency manifest, just return it
-    if constraint and deps_tbl[name_ver] and cfg.cache then return deps_tbl end
+    -- if info about the module is in cache and cache not disabled, use it
+    if constraint and dep_cache[name_ver] and cfg.cache then
+        dep_info = dep_cache[name_ver]
+    else
+        local manifest, err = mf.get_manifest()
+        if not manifest then return nil, "Error when getting manifest: " .. err end
 
-    local manifest, err = mf.get_manifest()
-    if not manifest then return nil, "Error when getting manifest: " .. err end
+        -- find out available versions of package
+        local versions, err = package.retrieve_versions(name, manifest, not cfg.debug)
+        if not versions then return nil, err end
 
-    -- find out available versions of package
-    local versions, err = package.retrieve_versions(name, manifest, true)
-    if not versions then return nil, err end
-    for _, version in pairs(versions) do
-        table.insert(manifest, version)
+        for _, version in pairs(versions) do
+            table.insert(manifest, version)
+        end
+
+        -- find the module's package
+        local candidates = find_packages(name_ver, manifest)
+        if #candidates == 0 then return nil, "Package '" .. name_ver .. "' not found." end
+
+        candidates = sort_by_versions(candidates)
+        name_ver = candidates[1].name .. "-" .. candidates[1].version
+
+        -- if info about the module isn't in cache or cache disabled, download it
+        if dep_cache[name_ver] and cfg.cache then
+             dep_info = dep_cache[name_ver]
+        else
+            -- download the dependency info
+            local download_dir = sys.abs_path(sys.make_path(cfg.root_dir, cfg.temp_dir))
+            local downloaded_path, err = package.fetch_pkgs({candidates[1]}, download_dir, not cfg.debug)
+            if not downloaded_path then return nil, err end
+
+            local distinfo = sys.make_path(downloaded_path[1], "dist.info")
+            local dist_info, err = mf.load_distinfo(distinfo)
+            if not dist_info then return nil, "Error when loading dist.info file '" .. distinfo .. "': " .. err end
+
+            -- add information about this package to the cache
+            dep_info.name = dist_info.name
+            dep_info.version = dist_info.version
+            dep_info.path = candidates[1].path
+            dep_info.depends = dist_info.depends
+
+            dep_cache[name_ver] = dep_info
+            dep_manifest[name_ver] = dep_info
+        end
     end
 
-    -- find the module's package
-    local candidates = find_packages(name_ver, manifest)
-    if #candidates == 0 then return nil, "Package '" .. name_ver .. "' not found." end
-
-    -- download the dependency info
-    candidates = sort_by_versions(candidates)
-    local download_dir = sys.abs_path(sys.make_path(cfg.root_dir, cfg.temp_dir))
-    local downloaded_path = package.fetch_pkgs({candidates[1]}, download_dir, true)
-    if not downloaded_path then return nil, err end
-
-    local distinfo = sys.make_path(downloaded_path[1], "dist.info")
-    local dist_info = mf.load_distinfo(distinfo)
-    if not manifest then return nil, "Error when loading dist.info file '" .. distinfo .. "': " .. err end
-
-    -- add information about this package
-    local dep_info = {}
-    dep_info["name"] = dist_info.name
-    dep_info["version"] = dist_info.version
-    dep_info["path"] = candidates[1].path
-    dep_info["depends"] = dist_info.depends
-
-    deps_tbl[name_ver] = dep_info
-
-    local err
+    -- add information about the package to dependency manifest
+    dep_manifest[name_ver] = dep_info
 
     -- resolve dependencies
-    if dist_info.depends then
+    if dep_info.depends then
 
         -- collect all OS specific dependencies of pkg
-        for k, dep in pairs(dist_info.depends) do
+        for k, dep in pairs(dep_info.depends) do
             if type(dep) == "table" then
                 if k == cfg.arch then
                     for _, os_specific_depend in pairs(dep) do
-                        table.insert(dist_info.depends, os_specific_depend)
+                        table.insert(dep_info.depends, os_specific_depend)
                     end
                 end
             end
         end
 
-        for _, dep in ipairs(dist_info.depends) do
+        for _, dep in ipairs(dep_info.depends) do
             if type(dep) ~= "table" then
-                deps_tbl, err = dep_manifest(dep, deps_tbl)
+                dep_manifest, dep_cache, err = dependency_manifest(dep, dep_manifest, dep_cache)
             end
         end
     end
 
-    return deps_tbl, err
+    return dep_manifest, dep_cache, err
 end

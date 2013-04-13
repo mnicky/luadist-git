@@ -276,3 +276,28 @@ function upload_modules(deploy_dir, module_names, dest_git_base_url)
 
     return #modules_to_upload
 end
+
+-- Returns table with information about module's dependencies, using the cache.
+function dependency_info(module, cache_file)
+    cache_file = cache_file or sys.abs_path(sys.make_path(cfg.root_dir, cfg.dep_cache_file))
+    assert(type(module) == "string", "dist.dep_info: Argument 'module' is not a string.")
+    assert(type(cache_file) == "string", "dist.dep_info: Argument 'cache_file' is not a string.")
+
+    local dep_cache, err = {}
+    if sys.exists(cache_file) then
+        -- TODO: use current 'deploy_dir' for cache file, or 'root_dir'?
+        dep_cache, err = mf.load_manifest(cache_file)
+        if not dep_cache then return nil, err end
+    end
+
+    -- get dependency information and updated cache
+    local dep_manifest = {}
+    dep_manifest, dep_cache_or_err = depends.dependency_manifest(module, dep_manifest, dep_cache)
+    if not dep_manifest then return nil, dep_cache_or_err end
+
+    -- save updated cache
+    local ok, err = mf.save_manifest(dep_cache, cache_file)
+    if not ok then return nil, err end
+
+    return dep_manifest
+end
