@@ -22,9 +22,10 @@ distinfos_dir = sys.make_path("share", "luadist-git", "dists")
 test_dir      = sys.make_path("share", "luadist-git", "test")
 
 -- Files -------------------------------------------------------------
-manifest_file = sys.make_path(cache_dir, ".gitmodules")
-log_file      = sys.make_path(temp_dir, "luadist.log")
-cache_file    = ""
+manifest_file  = sys.make_path(cache_dir, ".gitmodules")
+dep_cache_file = sys.make_path(cache_dir, ".depcache")
+log_file       = sys.make_path(temp_dir, "luadist.log")
+cache_file     = ""
 
 -- Repositories ------------------------------------------------------
 repos = {
