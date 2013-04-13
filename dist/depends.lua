@@ -603,6 +603,8 @@ end
 -- Returns manifest with information about dependencies of given module
 -- table 'dep_manifest' contains infromation about relevant modules and will be returned
 -- table 'dep_cache' contains all information collected so far and is used like a cache
+--
+-- TODO: cache information which module satisfies which dependency
 function dependency_manifest(module, dep_manifest, dep_cache)
     dep_manifest = dep_manifest or {}
     dep_cache = dep_cache or {}
