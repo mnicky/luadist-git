@@ -294,6 +294,7 @@ function dependency_info(module, cache_file)
     local dep_manifest = {}
     dep_manifest, dep_cache_or_err = depends.dependency_manifest(module, dep_manifest, dep_cache)
     if not dep_manifest then return nil, dep_cache_or_err end
+    dep_cache = dep_cache_or_err
 
     -- save updated cache
     local ok, err = mf.save_manifest(dep_cache, cache_file)

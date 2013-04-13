@@ -603,8 +603,6 @@ end
 -- Returns manifest with information about dependencies of given module
 -- table 'dep_manifest' contains infromation about relevant modules and will be returned
 -- table 'dep_cache' contains all information collected so far and is used like a cache
---
--- TODO: cache information which module satisfies which dependency
 function dependency_manifest(module, dep_manifest, dep_cache)
     dep_manifest = dep_manifest or {}
     dep_cache = dep_cache or {}
@@ -670,6 +668,10 @@ function dependency_manifest(module, dep_manifest, dep_cache)
     -- resolve dependencies
     if dep_info.depends then
 
+        if not dep_manifest[name_ver].satisfied_by then
+            dep_manifest[name_ver].satisfied_by = {}
+        end
+
         -- collect all OS specific dependencies of pkg
         for k, dep in pairs(dep_info.depends) do
             if type(dep) == "table" then
@@ -681,12 +683,22 @@ function dependency_manifest(module, dep_manifest, dep_cache)
             end
         end
 
+        -- get dependency information of this module's dependencies
         for _, dep in ipairs(dep_info.depends) do
             if type(dep) ~= "table" then
-                dep_manifest, dep_cache, err = dependency_manifest(dep, dep_manifest, dep_cache)
+                local satisfying = dep_manifest[name_ver].satisfied_by[dep]
+                if satisfying then dep = satisfying end
+
+                dep_manifest, dep_cache_or_err, satisfying = dependency_manifest(dep, dep_manifest, dep_cache)
+                if not dep_manifest then return nil, dep_cache_or_err end
+                dep_cache = dep_cache_or_err
+
+                -- add 'satisfied-by' info
+                dep_manifest[name_ver].satisfied_by[dep] = satisfying
+                dep_cache[name_ver].satisfied_by[dep] = satisfying
             end
         end
     end
 
-    return dep_manifest, dep_cache, err
+    return dep_manifest, dep_cache, name_ver
 end
