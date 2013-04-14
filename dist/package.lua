@@ -319,10 +319,15 @@ end
 
 -- Fetch package (table 'pkg') to download_dir. Return path to the directory of
 -- downloaded package on success or an error message on error.
-function fetch_pkg(pkg, download_dir)
+--
+-- When optional 'suppress_printing' parameter is set to true, then messages
+-- for the user won't be printed during run of this function.
+function fetch_pkg(pkg, download_dir, suppress_printing)
     download_dir = download_dir or sys.current_dir()
+    suppress_printing = suppress_printing or false
     assert(type(pkg) == "table", "package.fetch_pkg: Argument 'pkg' is not a table.")
     assert(type(download_dir) == "string", "package.fetch_pkg: Argument 'download_dir' is not a string.")
+    assert(type(suppress_printing) == "boolean", "package.fetch_pkg: Argument 'suppress_printing' is not a boolean.")
     assert(type(pkg.name) == "string", "package.fetch_pkg: Argument 'pkg.name' is not a string.")
     assert(type(pkg.version) == "string", "package.fetch_pkg: Argument 'pkg.version' is not a string.")
     assert(type(pkg.path) == "string", "package.fetch_pkg: Argument 'pkg.path' is not a string.")
@@ -335,7 +340,7 @@ function fetch_pkg(pkg, download_dir)
     -- check if download_dir already exists, assuming the package was already downloaded
     if sys.exists(sys.make_path(clone_dir, "dist.info")) then
         if cfg.cache and not utils.cache_timeout_expired(cfg.cache_timeout, clone_dir) then
-            print("'" .. pkg_full_name .. "' already in cache, skipping downloading (use '-cache=false' to force download).")
+            if not suppress_printing then print("'" .. pkg_full_name .. "' already in cache, skipping downloading (use '-cache=false' to force download).") end
             return clone_dir
         else
             sys.delete(sys.make_path(clone_dir))
@@ -363,7 +368,7 @@ function fetch_pkg(pkg, download_dir)
 
     if use_binary then
 
-        print("Getting " .. pkg_full_name .. " (binary)...")
+        if not suppress_printing then print("Getting " .. pkg_full_name .. " (binary)...") end
 
         -- We fetch the binary tag.
         local sha
@@ -372,7 +377,7 @@ function fetch_pkg(pkg, download_dir)
 
     elseif cfg.source then
 
-        print("Getting " .. pkg_full_name .. " (source)...")
+        if not suppress_printing then print("Getting " .. pkg_full_name .. " (source)...") end
 
         -- If we want the 'scm' version, we fetch the 'master' branch, otherwise
         -- we fetch the tag, matching the desired package version.
@@ -409,10 +414,15 @@ end
 
 -- Fetch packages (table 'packages') to 'download_dir'. Return table of paths
 -- to the directories on success or an error message on error.
-function fetch_pkgs(packages, download_dir)
+--
+-- When optional 'suppress_printing' parameter is set to true, then messages
+-- for the user won't be printed during run of this function.
+function fetch_pkgs(packages, download_dir, suppress_printing)
     download_dir = download_dir or sys.current_dir()
+    suppress_printing = suppress_printing or false
     assert(type(packages) == "table", "package.fetch_pkgs: Argument 'packages' is not a table.")
     assert(type(download_dir) == "string", "package.fetch_pkgs: Argument 'download_dir' is not a string.")
+    assert(type(suppress_printing) == "boolean", "package.fetch_pkgs: Argument 'suppress_printing' is not a boolean.")
     download_dir = sys.abs_path(download_dir)
 
     local fetched_dirs = {}
@@ -424,7 +434,7 @@ function fetch_pkgs(packages, download_dir)
             dir, err = pkg.download_dir, nil
         -- else download it.
         else
-            dir, err = fetch_pkg(pkg, download_dir)
+            dir, err = fetch_pkg(pkg, download_dir, suppress_printing)
         end
         if not dir then
             return nil, err
@@ -437,9 +447,14 @@ function fetch_pkgs(packages, download_dir)
 end
 
 -- Return table with information about available versions of 'package'.
-function retrieve_versions(package, manifest)
+--
+-- When optional 'suppress_printing' parameter is set to true, then messages
+-- for the user won't be printed during run of this function.
+function retrieve_versions(package, manifest, suppress_printing)
+    suppress_printing = suppress_printing or false
     assert(type(package) == "string", "package.retrieve_versions: Argument 'string' is not a string.")
     assert(type(manifest) == "table", "package.retrieve_versions: Argument 'manifest' is not a table.")
+    assert(type(suppress_printing) == "boolean", "package.retrieve_versions: Argument 'suppress_printing' is not a boolean.")
 
     -- get package table
     local pkg_name = depends.split_name_constraint(package)
@@ -451,7 +466,7 @@ function retrieve_versions(package, manifest)
         package = tmp_packages[1]
     end
 
-    print("Finding out available versions of " .. package.name .. "...")
+    if not suppress_printing then print("Finding out available versions of " .. package.name .. "...") end
 
     -- get available versions
     local tags, err = git.get_remote_tags(package.path)

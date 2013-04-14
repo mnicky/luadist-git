@@ -31,6 +31,7 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] <COMMAND> [ARGUMENTS...] [-VARIABLES...]
         fetch     - download modules
         make      - manually deploy modules from local paths
         upload    - upload installed modules to their repositories
+        tree      - print dependency tree of a module
         selftest  - run the selftest of LuaDist
 
     To get help on specific command, run:
@@ -410,7 +411,7 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] info [MODULES...] [-VARIABLES...]
     repositories. This command also shows whether modules are installed
     in DEPLOYMENT_DIRECTORY.
 
-    If no MODULES are specified, all available modules are showed.
+    If no MODULES are specified, all available modules are shown.
     If DEPLOYMENT_DIRECTORY is not specified, the deployment directory
     of LuaDist is used.
 
@@ -483,6 +484,77 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] info [MODULES...] [-VARIABLES...]
                 end
                 return 0
             end
+
+        end
+    },
+
+    -- Print dependency tree.
+    ["tree"] = {
+        help = [[
+Usage: luadist [DEPLOYMENT_DIRECTORY] tree [MODULES...] [-VARIABLES...]
+
+    The 'tree' command prints dependency tree for specified modules.
+
+    If no MODULES are specified, trees for all available modules are printed.
+
+    Optional LuaDist configuration VARIABLES (e.g. -variable=value) can be
+    specified.
+        ]],
+
+        run = function (deploy_dir, modules)
+            deploy_dir = deploy_dir or dist.get_deploy_dir()
+            modules = modules or {}
+            assert(type(deploy_dir) == "string", "luadist.info: Argument 'deploy_dir' is not a string.")
+            assert(type(modules) == "table", "luadist.info: Argument 'modules' is not a table.")
+            deploy_dir = sys.abs_path(deploy_dir)
+
+            local manifest, err = mf.get_manifest()
+            if not manifest then
+                print(err)
+                os.exit(1)
+            end
+
+            -- if no modules specified explicitly, assume all modules
+            if #modules == 0 then modules = depends.sort_by_names(manifest) end
+            print("Getting dependency information... (this may take a lot of time)")
+
+            for _, module in pairs(modules) do
+
+                -- if all modules are being queried, extract the name
+                if type(module) == "table" then module = module.name end
+
+                local dep_manifest, err = dist.dependency_info(module)
+                if not dep_manifest then
+                    print(err)
+                    os.exit(1)
+                else
+
+                    -- print the dependency tree
+                    local heading = "Dependency tree of '" .. module .. "' (for " .. cfg.arch .. "-" .. cfg.type .. "):"
+                    print("\n\n" .. heading .. "")
+                    print(string.rep("=", #heading) .. "\n\n")
+
+                    for _, pkg in pairs(dep_manifest) do
+
+                        print("  " .. pkg.name .. "-" .. pkg.version .. " (" .. pkg.path .. ", " .. pkg.version .. ")")
+                        if pkg.depends then
+                            for _, dep in pairs(pkg.depends) do
+                                if type(dep) ~= "table" then
+                                    local found = depends.sort_by_versions(depends.find_packages(dep, dep_manifest))[1]
+                                    if not found then
+                                        print("Could not find the dependency '" .. dep .. "' in the dependency manifest.")
+                                        os.exit(1)
+                                    end
+                                    print("    * " .. found.name .. "-" .. found.version .. " (" .. found.path .. ", " .. found.version .. ")")
+                                end
+                            end
+                        end
+                        print()
+                    end
+
+                end
+            end
+            return 0
 
         end
     },
@@ -647,7 +719,7 @@ elseif commands[arg[1]] then
 else
     -- unknown command
     if arg[1] then
-        print("Unknown command. Printing help...\n")
+        print("Unknown command '" .. arg[1] .. "'. Printing help...\n")
         print_help()
         os.exit(1)
     end
