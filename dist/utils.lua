@@ -130,3 +130,22 @@ function system_dependency_available(name, command)
 
     return true
 end
+
+-- Obtain LuaDist location by checking available package locations
+function get_luadist_location()
+  local paths = {}
+  local path = package.path:gsub("([^;]+)", function(c) table.insert(paths, c) end)
+
+  for _, path in pairs(paths) do
+    if (sys.is_abs(path) and path:find("[/\\]lib[/\\]lua[/\\]%?.lua$")) then
+      -- Remove path to lib/lua
+      path = path:gsub("[/\\]lib[/\\]lua[/\\]%?.lua$", "")
+      -- Clean the path up a bit
+      path = path:gsub("[/\\]bin[/\\]%.[/\\]%.%.", "")
+      path = path:gsub("[/\\]bin[/\\]%.%.", "")
+      return path
+    end
+  end
+  return nil
+end
+

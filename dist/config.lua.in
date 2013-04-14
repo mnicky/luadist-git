@@ -3,19 +3,15 @@
 module ("dist.config", package.seeall)
 
 local sys = require "dist.sys"
+local utils = require "dist.utils"
 
 -- System information ------------------------------------------------
 version       = "@DIST_VERSION@"   -- Current LuaDist version
 arch          = "@DIST_ARCH@"      -- Host architecture
 type          = "@DIST_TYPE@"      -- Host type
 
--- Extract LuaDist location from package.path ------------------------
-local paths = {}
-package.path:gsub("([^;]+)", function(c) table.insert(paths, c) end)
-local path = paths[2]:gsub("[/\\]bin[/\\]%.%..*","")
-
 -- Directories -------------------------------------------------------
-root_dir      = path or os.getenv("DIST_ROOT") or sys.path_separator()
+root_dir      = os.getenv("DIST_ROOT") or utils.get_luadist_location() or sys.path_separator()
 temp_dir      = "tmp"
 cache_dir     = sys.make_path(temp_dir, "cache")
 distinfos_dir = sys.make_path("share", "luadist-git", "dists")
