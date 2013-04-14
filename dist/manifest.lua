@@ -74,7 +74,7 @@ function download_manifest(dest_dir, repository_urls)
             if not cfg.debug then sys.delete(clone_dir) end
             return nil, "Error when downloading the manifest from repository with url: '" .. repo .. "': " .. err
         else
-            for _, pkg in pairs(load_manifest(sys.make_path(clone_dir, ".gitmodules"))) do
+            for _, pkg in pairs(load_gitmodules(sys.make_path(clone_dir, ".gitmodules"))) do
                 table.insert(manifest, pkg)
             end
         end
@@ -97,22 +97,43 @@ function load_manifest(manifest_file)
 
     if sys.exists(manifest_file) then
         -- load the manifest file
-        local file, err = io.open(manifest_file, "r")
-        if not file then return nil, "Error when opening the manifest file '" .. manifest_file .. "':" .. err end
+        local manifest, err = loadfile(manifest_file)
+        if not manifest then return nil, "Error when loading manifest file '" .. manifest_file .. "':" .. err end
+
+        -- set clear environment for the manifest file execution
+        setfenv(manifest, {})
+
+        return manifest()
+    else
+        return nil, "Error when loading the manifest: file '" .. manifest_file .. "' doesn't exist."
+    end
+end
+
+-- Load '.gitmodules' file and returns manifest table.
+-- If the file is not present, return nil.
+function load_gitmodules(gitmodules_file)
+    gitmodules_file = gitmodules_file or sys.make_path(cfg.root_dir, cfg.manifest_file)
+    assert(type(gitmodules_file) == "string", "manifest.load_gitmodules: Argument 'gitmodules_file' is not a string.")
+    gitmodules_file = sys.abs_path(gitmodules_file)
+
+    if sys.exists(gitmodules_file) then
+        -- load the .gitmodules file
+        local file, err = io.open(gitmodules_file, "r")
+        if not file then return nil, "Error when opening the .gitmodules file '" .. gitmodules_file .. "':" .. err end
 
         local mf_text = file:read("*a")
         file:close()
-        if not mf_text then return nil, "Error when reading the manifest file '" .. manifest_file .. "':" .. err end
+        if not mf_text then return nil, "Error when reading the .gitmodules file '" .. gitmodules_file .. "':" .. err end
 
         manifest = {}
-        for url in mf_text:gmatch("git://%S+.git") do
-            pkg = {name = url:match("git:/.+/.+/(.*).git$"), version = "scm", path = url}
+        for url in mf_text:gmatch("git://%S+/%S+") do
+            pkg = {name = url:match("git://%S+/(%S+)%.git") or url:match("git://%S+/(%S+)"), version = "scm", path = url}
             table.insert(manifest, pkg)
         end
 
         return manifest
     else
-        return nil, "Error when loading the manifest: file '" .. manifest_file .. "' doesn't exist."
+        return nil, "Error when loading the .gitmodules: file '" .. gitmodules_file .. "' doesn't exist."
     end
 end
 
