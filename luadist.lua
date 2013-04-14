@@ -719,7 +719,7 @@ elseif commands[arg[1]] then
 else
     -- unknown command
     if arg[1] then
-        print("Unknown command. Printing help...\n")
+        print("Unknown command '" .. arg[1] .. "'. Printing help...\n")
         print_help()
         os.exit(1)
     end
