@@ -85,7 +85,7 @@ function exec(command, force_verbose)
     if cfg.debug then print("Executing the command: " .. command) end
     local ok = os.execute(command)
 
-    if ok ~= 0 then
+    if ok == nil then
         return nil, "Error when running the command: " .. command
     else
         return true, "Sucessfully executed the command: " .. command
@@ -205,7 +205,7 @@ end
 -- Compose path composed from specified parts or current
 -- working directory when no part specified.
 function make_path(...)
-    local parts = arg
+    local parts = table.pack(...)
     assert(type(parts) == "table", "sys.make_path: Argument 'parts' is not a table.")
 
     local path, err
