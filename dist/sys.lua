@@ -83,9 +83,12 @@ function exec(command, force_verbose)
     end
 
     if cfg.debug then print("Executing the command: " .. command) end
-    local ok = os.execute(command)
+    local ok, str, status  = os.execute(command)
 
-    if ok ~= 0 then
+    -- os.execute returned values on failure are:
+    --  nil or true, "exit", n or true, "signal", n for lua >= 5.2
+    --  status ~= 0 for lua 5.x < 5.2
+    if ok == nil or (str == "exit" and status ~= 0) or str == "signal" or (ok ~= 0 and ok ~= true) then
         return nil, "Error when running the command: " .. command
     else
         return true, "Sucessfully executed the command: " .. command
@@ -205,6 +208,8 @@ end
 -- Compose path composed from specified parts or current
 -- working directory when no part specified.
 function make_path(...)
+    -- arg is deprecated in lua 5.2 in favor of table.pack we mimic here
+    local arg = {n=select('#',...),...}
     local parts = arg
     assert(type(parts) == "table", "sys.make_path: Argument 'parts' is not a table.")
 

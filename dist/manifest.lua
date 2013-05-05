@@ -27,10 +27,10 @@ function get_manifest(manifest_file, force_no_cache)
     end
 
     -- load manifest from cache
-    local manifest, err = load_manifest(manifest_file)
-    if not manifest then return nil, "Error when loading manifest: " .. err end
+    local status, ret = load_manifest(manifest_file)
+    if not status then return nil, "Error when loading manifest: " .. ret end
 
-    return manifest
+    return ret
 end
 
 -- Download manifest from the table of git 'repository_urls' to 'dest_dir' and return true on success
@@ -88,25 +88,35 @@ function download_manifest(dest_dir, repository_urls)
     return true
 end
 
+-- A secure loadfile function
+-- If file code chunk has upvalues, the first upvalue is set to the given
+-- environement, if that parameter is given, or to the value of the global environment.
+local secure_loadfile = function(file, env)
+    assert(type(file) == "string", "secure_loadfile: Argument 'file' is not a string.")
+
+    -- use the given (or create a new) restricted environment
+    local env = env or {}
+
+    -- load the file and run in a protected call with the restricted env
+    -- setfenv is deprecated in lua 5.2 in favor of giving env in arguments
+    -- the additional loadfile arguments are simply ignored for previous lua versions
+    local f, err = loadfile(file, 'bt', env)
+    if f then
+        if setfenv ~= nil then 
+            setfenv(f, env)
+        end
+        return pcall(f)
+    else
+        return nil, err
+    end
+end
+
 -- Load and return manifest table from the manifest file.
 -- If manifest file not present, return nil.
 function load_manifest(manifest_file)
     manifest_file = manifest_file or sys.make_path(cfg.root_dir, cfg.manifest_file)
-    assert(type(manifest_file) == "string", "manifest.load_manifest: Argument 'manifest_file' is not a string.")
-    manifest_file = sys.abs_path(manifest_file)
 
-    if sys.exists(manifest_file) then
-        -- load the manifest file
-        local manifest, err = loadfile(manifest_file)
-        if not manifest then return nil, "Error when loading manifest file '" .. manifest_file .. "':" .. err end
-
-        -- set clear environment for the manifest file execution
-        setfenv(manifest, {})
-
-        return manifest()
-    else
-        return nil, "Error when loading the manifest: file '" .. manifest_file .. "' doesn't exist."
-    end
+    return secure_loadfile(sys.abs_path(manifest_file))
 end
 
 -- Load '.gitmodules' file and returns manifest table.
@@ -186,18 +196,10 @@ function load_distinfo(distinfo_file)
     assert(type(distinfo_file) == "string", "manifest.load_distinfo: Argument 'distinfo_file' is not a string.")
     distinfo_file = sys.abs_path(distinfo_file)
 
-    if not sys.exists(distinfo_file) then
-        return nil, "Error when loading the package info: file '" .. distinfo_file .. "' doesn't exist."
-    end
-
     -- load the distinfo file
-    local distinfo, err = loadfile(distinfo_file)
-    if not distinfo then return nil, "Error when loading package info:" .. err end
-
-    -- set clear environment for the distinfo file execution and collect values into it
     local distinfo_env = {}
-    setfenv(distinfo, distinfo_env)
-    distinfo()
+    local status, ret = secure_loadfile(distinfo_file, distinfo_env)
+    if not status then return nil, "Error when loading package info:" .. ret end
 
     return distinfo_env
 end
