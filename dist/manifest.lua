@@ -97,11 +97,9 @@ function load_manifest(manifest_file)
 
     if sys.exists(manifest_file) then
         -- load the manifest file
-        local manifest, err = loadfile(manifest_file)
+        local manifest_env = {}
+        local manifest, err = loadfile(manifest_file, 'bt', manifest_env)
         if not manifest then return nil, "Error when loading manifest file '" .. manifest_file .. "':" .. err end
-
-        -- set clear environment for the manifest file execution
-        setfenv(manifest, {})
 
         return manifest()
     else
@@ -191,12 +189,9 @@ function load_distinfo(distinfo_file)
     end
 
     -- load the distinfo file
-    local distinfo, err = loadfile(distinfo_file)
-    if not distinfo then return nil, "Error when loading package info:" .. err end
-
-    -- set clear environment for the distinfo file execution and collect values into it
     local distinfo_env = {}
-    setfenv(distinfo, distinfo_env)
+    local distinfo, err = loadfile(distinfo_file, 'bt', distinfo_env)
+    if not distinfo then return nil, "Error when loading package info:" .. err end
     distinfo()
 
     return distinfo_env
