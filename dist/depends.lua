@@ -158,6 +158,49 @@ local function packages_conflicts(pkg, installed_pkg, was_scm_version)
     return false
 end
 
+-- Return table of package dependencies 'depends' with OS specific dependencies extracted.
+--
+-- OS specific dependencies are stored in a subtable with 'arch' as a key.
+-- E.g. this table containing OS specific dependencies:
+-- depends = {
+--             "lua~>5.1",
+--             "luadist-git>=0.1",
+--             Linux = {
+--                       "iup>=3.6",
+--                       "wxlua>=2.8.10.0",
+--                     },
+--             Windows = {
+--                         "luagd>=2.0.33r2",
+--                         "luacom>=1.4.1",
+--                       },
+--           }
+--
+-- ...will be on the 'Linux' architecture (determined by cfg.arch) converted into:
+-- depends = {
+--             "lua~>5.1",
+--             "luadist-git>=0.1",
+--             "iup>=3.6",
+--             "wxlua>=2.8.10.0",
+--           }
+function extract_os_specific_depends(depends)
+    assert(type(depends) == "table", "depends.extract_os_specific_depends: Argument 'depends' is not a table.")
+    local extracted = {}
+    for k, depend in pairs(depends) do
+        -- if 'depend' is a table, then it must be a table of OS specific
+        -- dependencies, so extract it if it's for this architecture
+        if type(depend) == "table" then
+            if k == cfg.arch then
+                for _, os_specific_depend in pairs(depend) do
+                    table.insert(extracted, os_specific_depend)
+                end
+            end
+        else
+            table.insert(extracted, depend)
+        end
+    end
+    return extracted
+end
+
 -- Return all packages needed in order to install package 'pkg'
 -- and with specified 'installed' packages in the system using 'manifest'.
 -- 'pkg' can also contain version constraint (e.g. 'copas>=1.2.3', 'saci-1.0' etc.).
@@ -220,7 +263,7 @@ local function get_packages_to_install(pkg, installed, manifest, force_no_downlo
     -- table of packages needed to be installed (will be returned)
     local to_install = {}
 
-    -- find out available versions of 'pkg'
+    -- find out available versions of 'pkg' and insert them into manifest
     if not force_no_download then
         local versions, err = package.retrieve_versions(pkg, manifest)
         if not versions then return nil, err end
@@ -297,60 +340,44 @@ local function get_packages_to_install(pkg, installed, manifest, force_no_downlo
                 -- insert pkg into the stack of circular dependencies detection
                 table.insert(dependency_parents, pkg.name)
 
-                -- collect all OS specific dependencies of pkg
-                for k, depend in pairs(pkg.depends) do
-
-                    -- if 'depend' is a table of OS specific dependencies for
-                    -- this arch, add them to the normal dependencies of pkg
-                    if type(depend) == "table" then
-                        if k == cfg.arch then
-                            for _, os_specific_depend in pairs(depend) do
-                                table.insert(pkg.depends, os_specific_depend)
-                            end
-                        end
-                    end
-                end
+                -- extract all OS specific dependencies of pkg
+                pkg.depends = extract_os_specific_depends(pkg.depends)
 
                 -- for all dependencies of pkg
                 for _, depend in pairs(pkg.depends) do
+                    local dep_name = split_name_constraint(depend)
 
-                    -- skip tables of OS specific dependencies
-                    if type(depend) ~= "table" then
-                        local dep_name = split_name_constraint(depend)
-
-                        -- detect circular dependencies using 'dependency_parents'
-                        local is_circular_dependency = false
-                        for _, parent in pairs(dependency_parents) do
-                            if dep_name == parent then
-                                is_circular_dependency = true
-                                break
-                            end
+                    -- detect circular dependencies using 'dependency_parents'
+                    local is_circular_dependency = false
+                    for _, parent in pairs(dependency_parents) do
+                        if dep_name == parent then
+                            is_circular_dependency = true
+                            break
                         end
+                    end
 
-                        -- if circular dependencies not detected
-                        if not is_circular_dependency then
+                    -- if circular dependencies not detected
+                    if not is_circular_dependency then
 
-                            -- recursively call this function on the candidates of this pkg's dependency
-                            local depends_to_install, dep_err = get_packages_to_install(depend, installed, manifest, force_no_download, suppress_printing, deploy_dir, dependency_parents, tmp_installed)
+                        -- recursively call this function on the candidates of this pkg's dependency
+                        local depends_to_install, dep_err = get_packages_to_install(depend, installed, manifest, force_no_download, suppress_printing, deploy_dir, dependency_parents, tmp_installed)
 
-                            -- if any suitable dependency packages were found, insert them to the 'to_install' table
-                            if depends_to_install then
-                                for _, depend_to_install in pairs(depends_to_install) do
-                                    table.insert(to_install, depend_to_install)
-                                    table.insert(tmp_installed, depend_to_install)
-                                    table.insert(installed, depend_to_install)
-                                end
-                            else
-                                err = "Error getting dependency of '" .. pkg_full_name(pkg.name, pkg.version) .. "': " .. dep_err
-                                break
+                        -- if any suitable dependency packages were found, insert them to the 'to_install' table
+                        if depends_to_install then
+                            for _, depend_to_install in pairs(depends_to_install) do
+                                table.insert(to_install, depend_to_install)
+                                table.insert(tmp_installed, depend_to_install)
+                                table.insert(installed, depend_to_install)
                             end
-
-                        -- if circular dependencies detected
                         else
-                            err = "Error getting dependency of '" .. pkg_full_name(pkg.name, pkg.version) .. "': '" .. dep_name .. "' is a circular dependency."
+                            err = "Error getting dependency of '" .. pkg_full_name(pkg.name, pkg.version) .. "': " .. dep_err
                             break
                         end
 
+                    -- if circular dependencies detected
+                    else
+                        err = "Error getting dependency of '" .. pkg_full_name(pkg.name, pkg.version) .. "': '" .. dep_name .. "' is a circular dependency."
+                        break
                     end
                 end
 
@@ -453,6 +480,7 @@ function get_depends(packages, installed, manifest, force_no_download, suppress_
 
         local needed_to_install, err = get_packages_to_install(pkg, tmp_installed, manifest, force_no_download, suppress_printing, deploy_dir)
 
+        -- everything's fine
         if needed_to_install then
             for _, needed_pkg in pairs(needed_to_install) do
                 table.insert(to_install, needed_pkg)
@@ -464,6 +492,7 @@ function get_depends(packages, installed, manifest, force_no_download, suppress_
                     table.insert(tmp_installed, provided_pkg)
                 end
             end
+        -- error occured
         else
             -- delete already downloaded packages
             for _, pkg in pairs(to_install) do
