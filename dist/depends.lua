@@ -475,7 +475,7 @@ function get_depends(packages, installed, manifest, force_no_download, suppress_
 
     local to_install = {}
 
-    -- get packages needed to to satisfy dependencies
+    -- get packages needed to satisfy the dependencies
     for _, pkg in pairs(packages) do
 
         local needed_to_install, err = get_packages_to_install(pkg, tmp_installed, manifest, force_no_download, suppress_printing, deploy_dir)
