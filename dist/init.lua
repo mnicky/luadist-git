@@ -80,34 +80,37 @@ function install(package_names, deploy_dir, variables)
     if #dependencies == 0 then return nil, "No packages to install." end
 
     -- fetch the packages from repository
-    local dirs, err = package.fetch_pkgs(dependencies, sys.make_path(deploy_dir, cfg.temp_dir))
-    if not dirs then return nil, err end
+    local fetched_dirs = {}
+    for _, pkg in pairs(dependencies) do
+        local dir, err = package.fetch_pkg(pkg, sys.make_path(deploy_dir, cfg.temp_dir))
+        if not dir then return nil, err end
+        table.insert(fetched_dirs, dir)
+    end
 
     -- install fetched packages
-    for _, dir in pairs(dirs) do
-        ok, err = package.install_pkg(dir, deploy_dir, variables, false)
+    for _, dir in pairs(fetched_dirs) do
+        local ok, err = package.install_pkg(dir, deploy_dir, variables, false)
         if not ok then return nil, err end
     end
 
     return true
 end
 
--- Manually deploy packages from 'package_paths' to 'deploy_dir', using optional
--- CMake 'variables'. The 'package_paths' are preserved (will not be deleted).
-function make(deploy_dir, package_paths, variables)
+-- Manually deploy packages from 'package_dirs' to 'deploy_dir', using optional
+-- CMake 'variables'. The 'package_dirs' are preserved (will not be deleted).
+function make(deploy_dir, package_dirs, variables)
     deploy_dir = deploy_dir or cfg.root_dir
-    package_paths = package_paths or {}
+    package_dirs = package_dirs or {}
 
     assert(type(deploy_dir) == "string", "dist.make: Argument 'deploy_dir' is not a string.")
-    assert(type(package_paths) == "table", "dist.make: Argument 'package_paths' is not a table.")
+    assert(type(package_dirs) == "table", "dist.make: Argument 'package_dirs' is not a table.")
     deploy_dir = sys.abs_path(deploy_dir)
 
-    local ok, err
-    for _, path in pairs(package_paths) do
-        ok, err = package.install_pkg(sys.abs_path(path), deploy_dir, variables, true)
+    for _, dir in pairs(package_dirs) do
+        local ok, err = package.install_pkg(sys.abs_path(dir), deploy_dir, variables, true)
         if not ok then return nil, err end
     end
-    return ok
+    return true
 end
 
 -- Remove 'package_names' from 'deploy_dir' and return the number of removed
