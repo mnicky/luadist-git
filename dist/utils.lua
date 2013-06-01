@@ -28,20 +28,20 @@ end
 function filter(array, predicate_fn)
     assert(type(array) == "table", "utils.filter: Argument 'array' is not a table.")
     assert(type(predicate_fn) == "function", "utils.filter: Argument 'predicate_fn' is not a function.")
-    local tbl = {}
+    local filtered = {}
     for _,v in pairs(array) do
-        if predicate_fn(v) == true then table.insert(tbl, deepcopy(v)) end
+        if predicate_fn(v) == true then table.insert(filtered, deepcopy(v)) end
     end
-    return tbl
+    return filtered
 end
 
 -- Return deep copy of table 'array', sorted according to the 'compare_fn' function.
 function sort(array, compare_fn)
     assert(type(array) == "table", "utils.sort: Argument 'array' is not a table.")
     assert(type(compare_fn) == "function", "utils.sort: Argument 'compare_fn' is not a function.")
-    local tbl = deepcopy(array)
-    table.sort(tbl, compare_fn)
-    return tbl
+    local sorted = deepcopy(array)
+    table.sort(sorted, compare_fn)
+    return sorted
 end
 
 -- Return whether the 'value' is in the table 'tbl'.

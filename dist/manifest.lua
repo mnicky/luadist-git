@@ -102,7 +102,7 @@ local secure_loadfile = function(file, env)
     -- the additional loadfile arguments are simply ignored for previous lua versions
     local f, err = loadfile(file, 'bt', env)
     if f then
-        if setfenv ~= nil then 
+        if setfenv ~= nil then
             setfenv(f, env)
         end
         return pcall(f)
@@ -199,7 +199,7 @@ function load_distinfo(distinfo_file)
     -- load the distinfo file
     local distinfo_env = {}
     local status, ret = secure_loadfile(distinfo_file, distinfo_env)
-    if not status then return nil, "Error when loading package info:" .. ret end
+    if not status then return nil, "Error when loading package info: " .. ret end
 
     return distinfo_env
 end
