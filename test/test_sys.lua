@@ -172,9 +172,14 @@ tests.is_root_win_2 = function()
     assert(val == true, fail_msg(val, err))
 end
 ---
-tests.is_root_with_non_root_unix = function()
+tests.is_root_with_non_root_unix_1 = function()
     cfg.arch = "Linux"
     local val, err = sys.is_root("/dir/")
+    assert(val == false, fail_msg(val, err))
+end
+tests.is_root_with_non_root_unix_2 = function()
+    cfg.arch = "Linux"
+    local val, err = sys.is_root("./")
     assert(val == false, fail_msg(val, err))
 end
 
@@ -187,6 +192,12 @@ end
 tests.is_root_with_non_root_win_2 = function()
     cfg.arch = "Windows"
     local val, err = sys.is_root("\\dir\\")
+    assert(val == false, fail_msg(val, err))
+end
+
+tests.is_root_with_non_root_win_3 = function()
+    cfg.arch = "Windows"
+    local val, err = sys.is_root(".\\")
     assert(val == false, fail_msg(val, err))
 end
 
@@ -210,15 +221,26 @@ tests.is_abs_win_2 = function()
     assert(val == true, fail_msg(val, err))
 end
 ---
-tests.is_abs_with_non_abs_unix = function()
+tests.is_abs_with_non_abs_unix_1 = function()
     cfg.arch = "Linux"
     local val, err = sys.is_abs("dir1/dir2/file")
     assert(val == false, fail_msg(val, err))
 end
+tests.is_abs_with_non_abs_unix_2 = function()
+    cfg.arch = "Linux"
+    local val, err = sys.is_abs("./dir1/dir2/file")
+    assert(val == false, fail_msg(val, err))
+end
 
-tests.is_abs_with_non_abs_win = function()
+tests.is_abs_with_non_abs_win_1 = function()
     cfg.arch = "Windows"
     local val, err = sys.is_abs("dir1\\dir2\\file.ext")
+    assert(val == false, fail_msg(val, err))
+end
+
+tests.is_abs_with_non_abs_win_2 = function()
+    cfg.arch = "Windows"
+    local val, err = sys.is_abs(".\\dir1\\dir2\\file.ext")
     assert(val == false, fail_msg(val, err))
 end
 

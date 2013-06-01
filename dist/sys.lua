@@ -112,13 +112,13 @@ end
 -- Return whether the path is a root.
 function is_root(path)
     assert(type(path) == "string", "sys.is_root: Argument 'path' is not a string.")
-    return utils.to_boolean(path:find("^[%u%U.]?:?[/\\]$"))
+    return utils.to_boolean(path:find("^[a-zA-Z]:[/\\]$") or path:find("^[/\\]$"))
 end
 
 -- Return whether the path is absolute.
 function is_abs(path)
     assert(type(path) == "string", "sys.is_abs: Argument 'path' is not a string.")
-    return utils.to_boolean(path:find("^[%u%U.]?:?[/\\].*$"))
+    return utils.to_boolean(path:find("^[a-zA-Z]:[/\\].*$") or path:find("^[/\\].*$"))
 end
 
 -- Return whether the specified file or directory exists.
