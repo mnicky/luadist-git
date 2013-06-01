@@ -326,7 +326,7 @@ end
 function move_to(file_or_dir, dest_dir)
     assert(type(file_or_dir) == "string", "sys.move_to: Argument 'file_or_dir' is not a string.")
     assert(type(dest_dir) == "string", "sys.move_to: Argument 'dest_dir' is not a string.")
-    assert(is_dir(dest_dir), "sys.move_to: destination '" .. dest_dir .."' is not a directory.")
+    assert(is_dir(dest_dir), "sys.move_to: Destination '" .. dest_dir .."' is not a directory.")
 
     -- Extract file/dir name from its path
     local file_or_dir_name = extract_name(file_or_dir)

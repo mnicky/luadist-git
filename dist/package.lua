@@ -9,6 +9,22 @@ local mf = require "dist.manifest"
 local utils = require "dist.utils"
 local depends = require "dist.depends"
 
+-- Return whether the package in given 'pkg_dir' is of a source type.
+function is_source_type(pkg_dir)
+    assert(type(pkg_dir) == "string", "package.is_source_type: Argument 'pkg_dir' is not a string.")
+    pkg_dir = sys.abs_path(pkg_dir)
+    return utils.to_boolean(sys.exists(sys.make_path(pkg_dir, "CMakeLists.txt")))
+end
+
+-- Ensure proper arch and type for the given source 'dist_info' table and return it.
+-- WARNING: this function should be used only for 'dist_info' tables of modules that are of a source type!
+function ensure_source_arch_and_type(dist_info)
+    assert(type(dist_info) == "table", "package.ensure_source_arch_and_type: Argument 'dist_info' is not a table.")
+    dist_info.arch = dist_info.arch or "Universal"
+    dist_info.type = dist_info.type or "source"
+    return dist_info
+end
+
 -- Remove package from 'pkg_distinfo_dir' of 'deploy_dir'.
 function remove_pkg(pkg_distinfo_dir, deploy_dir)
     deploy_dir = deploy_dir or cfg.root_dir
@@ -93,18 +109,15 @@ function install_pkg(pkg_dir, deploy_dir, variables, preserve_pkg_dir)
     if not info then return nil, "Error installing: the directory '" .. pkg_dir .. "' doesn't exist or doesn't contain valid 'dist.info' file." end
 
     -- check if the package is source
-    if sys.exists(sys.make_path(pkg_dir, "CMakeLists.txt")) then
-        info.arch = info.arch or "Universal"
-        info.type = info.type or "source"
-    end
+    if is_source_type(pkg_dir) then info = ensure_source_arch_and_type(info) end
 
     -- check package's architecture
-    if info.arch ~= "Universal" and info.arch ~= cfg.arch then
+    if not (info.arch == "Universal" or info.arch == cfg.arch) then
         return nil, "Error installing '" .. info.name .. "-" .. info.version .. "': architecture '" .. info.arch .. "' is not suitable for this machine."
     end
 
     -- check package's type
-    if info.type ~= "all" and info.type ~= "source" and info.type ~= cfg.type then
+    if not (info.type == "all" or info.type == "source" or info.type == cfg.type) then
         return nil, "Error installing '" .. info.name .. "-" .. info.version .. "': architecture type '" .. info.type .. "' is not suitable for this machine."
     end
 
@@ -485,9 +498,8 @@ function retrieve_pkg_info(package, deploy_dir)
     if package.path then info.path = package.path end
 
     -- set default arch/type if not explicitly stated and package is of source type
-    if sys.exists(sys.make_path(pkg_dir, "CMakeLists.txt")) then
-        info.arch = info.arch or "Universal"
-        info.type = info.type or "source"
+    if is_source_type(pkg_dir) then
+        info = ensure_source_arch_and_type(info)
     elseif not (info.arch and info.type) then
         return nil, pkg_dir .. ": binary package missing arch or type in 'dist.info'."
     end
