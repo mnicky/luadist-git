@@ -46,6 +46,8 @@ end
 function quote(argument)
     assert(type(argument) == "string", "sys.quote: Argument 'argument' is not a string.")
 
+    -- TODO: This seems like a not very nice hack. Why is it needed?
+    --       Wouldn't it be better to fix the problem where it originates?
     -- replace '/' path separators for '\' on Windows
     if cfg.arch == "Windows" and argument:match("^[%u%U.]?:?[/\\].*") then
         argument = argument:gsub("//","\\"):gsub("/","\\")
