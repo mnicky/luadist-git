@@ -299,11 +299,12 @@ local function get_packages_to_install(pkg, installed, manifest, force_no_downlo
         pkg_is_installed, err = is_installed(pkg.name, tmp_installed, pkg_constraint)
         if pkg_is_installed then break end
 
+        -- used just for error explaining messages
         local was_scm_version = false
         if pkg.version == "scm" then was_scm_version = true end
 
-        -- download info about the package
-        if not force_no_download then
+        -- download info about the package if not already downloaded and downloading not prohibited
+        if not (pkg.download_dir or force_no_download) then
             local path_or_err
             pkg, path_or_err = package.retrieve_pkg_info(pkg, deploy_dir)
             if not pkg then
@@ -475,6 +476,39 @@ function get_depends(packages, installed, manifest, force_no_download, suppress_
     end
 
     local to_install = {}
+
+    -- If 'pkg' contains valid (architecture specific) path separator,
+    -- it is treated like a path to already downloaded package and
+    -- we assume that user wants to use this specific version of the
+    -- module to be installed. Hence, we will add information about
+    -- this version into the manifest and also remove references to
+    -- any other versions of this module from the manifest.
+    for k, pkg in pairs(packages) do
+        if pkg:find(sys.path_separator()) then
+            local pkg_dir = sys.abs_path(pkg)
+            local pkg_info, err = mf.load_distinfo(sys.make_path(pkg_dir, "dist.info"))
+            if not pkg_info then return nil, err end
+
+            -- add information about location of the package and mark it to be preserved after installation
+            pkg_info.download_dir = pkg_dir
+            pkg_info.preserve_pkg_dir = true
+
+            -- set default arch/type if not explicitly stated and package is of source type
+            if package.is_source_type(pkg_dir) then
+                pkg_info = package.ensure_source_arch_and_type(pkg_info)
+            elseif not (pkg_info.arch and pkg_info.type) then
+                return nil, pkg_dir .. ": binary package missing arch or type in 'dist.info'."
+            end
+
+            -- update manifest
+            manifest = utils.filter(manifest, function(p) return p.name ~= pkg_info.name and true end)
+            table.insert(manifest, pkg_info)
+
+            -- update packages to install
+            pkg = pkg_info.name .. "-" .. pkg_info.version
+            packages[k] = pkg
+        end
+    end
 
     -- get packages needed to satisfy the dependencies
     for _, pkg in pairs(packages) do

@@ -452,6 +452,14 @@ function retrieve_versions(package, manifest, suppress_printing)
         package = tmp_packages[1]
     end
 
+    -- if the package's already downloaded, we assume it's desired to install the downloaded version
+    if package.download_dir then
+        local pkg_type = "binary"
+        if is_source_type(package.download_dir) then pkg_type = "source" end
+        if not suppress_printing then print("Using " .. package.name .. "-" .. package.version .. " (" .. pkg_type .. ") provided by " .. package.download_dir) end
+        return {package}
+    end
+
     if not suppress_printing then print("Finding out available versions of " .. package.name .. "...") end
 
     -- get available versions
