@@ -309,8 +309,9 @@ local function get_packages_to_install(pkg, installed, manifest, force_no_downlo
             if not pkg then
                 err = "Error when resolving dependencies: " .. path_or_err
             else
-                -- set path to downloaded package - used to delete unused but downloaded
-                -- packages and also to install packages selected to install
+                -- set path to downloaded package - used to indicate that the
+                -- package was already downloaded, to delete unused but downloaded
+                -- packages and also to install choosen packages
                 pkg.download_dir = path_or_err
             end
         end

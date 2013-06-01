@@ -429,7 +429,7 @@ function fetch_pkgs(packages, download_dir, suppress_printing)
     local dir, err
 
     for _, pkg in pairs(packages) do
-        -- if package was downloaded by dependency resolving function, do not download it again.
+        -- if package was downloaded before (e.g. by dependency resolving function), do not download it again.
         if pkg.download_dir then
             dir, err = pkg.download_dir, nil
         -- else download it.
