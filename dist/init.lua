@@ -143,7 +143,7 @@ function remove(package_names, deploy_dir)
     return #pkgs_to_remove
 end
 
--- Download 'pkg_names' to 'fetch_dir'.
+-- Download 'pkg_names' to 'fetch_dir' and return the table of their directories.
 function fetch(pkg_names, fetch_dir)
     fetch_dir = fetch_dir or sys.current_dir()
     assert(type(pkg_names) == "table", "dist.fetch: Argument 'pkg_names' is not a string or table.")
@@ -153,7 +153,6 @@ function fetch(pkg_names, fetch_dir)
     local manifest = mf.get_manifest()
 
     local pkgs_to_fetch = {}
-
     for _, pkg_name in pairs(pkg_names) do
 
         -- retrieve available versions
@@ -170,13 +169,14 @@ function fetch(pkg_names, fetch_dir)
         table.insert(pkgs_to_fetch, packages[1])
     end
 
-    local ok, err = package.fetch_pkgs(pkgs_to_fetch, fetch_dir)
-
-    if not ok then
-        return nil, err
-    else
-        return ok
+    local fetched_dirs = {}
+    for _, pkg in pairs(pkgs_to_fetch) do
+        local dir, err = package.fetch_pkg(pkg, fetch_dir)
+        if not dir then return nil, err end
+        table.insert(fetched_dirs, dir)
     end
+
+    return fetched_dirs
 end
 
 -- Upload binary version of given modules installed in the specified

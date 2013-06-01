@@ -673,7 +673,7 @@ function dependency_manifest(module, dep_manifest, dep_cache)
         else
             -- download the dependency info
             local download_dir = sys.abs_path(sys.make_path(cfg.root_dir, cfg.temp_dir))
-            local downloaded_path, err = package.fetch_pkgs({candidates[1]}, download_dir, not cfg.debug)
+            local downloaded_path, err = package.fetch_pkg(candidates[1], download_dir, not cfg.debug)
             if not downloaded_path then return nil, err end
 
             local distinfo = sys.make_path(downloaded_path[1], "dist.info")

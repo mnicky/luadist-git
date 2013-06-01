@@ -322,6 +322,9 @@ end
 --
 -- When optional 'suppress_printing' parameter is set to true, then messages
 -- for the user won't be printed during run of this function.
+--
+-- If the 'pkg' contains the information about download directory (pkg.download_dir),
+-- we assume the package was already downloaded there and won't download it again.
 function fetch_pkg(pkg, download_dir, suppress_printing)
     download_dir = download_dir or sys.current_dir()
     suppress_printing = suppress_printing or false
@@ -330,6 +333,10 @@ function fetch_pkg(pkg, download_dir, suppress_printing)
     assert(type(suppress_printing) == "boolean", "package.fetch_pkg: Argument 'suppress_printing' is not a boolean.")
     assert(type(pkg.name) == "string", "package.fetch_pkg: Argument 'pkg.name' is not a string.")
     assert(type(pkg.version) == "string", "package.fetch_pkg: Argument 'pkg.version' is not a string.")
+
+    -- if the package is already downloaded don't download it again
+    if pkg.download_dir then return pkg.download_dir end
+
     assert(type(pkg.path) == "string", "package.fetch_pkg: Argument 'pkg.path' is not a string.")
     download_dir = sys.abs_path(download_dir)
 
@@ -410,40 +417,6 @@ function fetch_pkg(pkg, download_dir, suppress_printing)
     if not cfg.debug then sys.delete(sys.make_path(clone_dir, ".git")) end
 
     return clone_dir
-end
-
--- Fetch packages (table 'packages') to 'download_dir'. Return table of paths
--- to the directories on success or an error message on error.
---
--- When optional 'suppress_printing' parameter is set to true, then messages
--- for the user won't be printed during run of this function.
-function fetch_pkgs(packages, download_dir, suppress_printing)
-    download_dir = download_dir or sys.current_dir()
-    suppress_printing = suppress_printing or false
-    assert(type(packages) == "table", "package.fetch_pkgs: Argument 'packages' is not a table.")
-    assert(type(download_dir) == "string", "package.fetch_pkgs: Argument 'download_dir' is not a string.")
-    assert(type(suppress_printing) == "boolean", "package.fetch_pkgs: Argument 'suppress_printing' is not a boolean.")
-    download_dir = sys.abs_path(download_dir)
-
-    local fetched_dirs = {}
-    local dir, err
-
-    for _, pkg in pairs(packages) do
-        -- if package was downloaded before (e.g. by dependency resolving function), do not download it again.
-        if pkg.download_dir then
-            dir, err = pkg.download_dir, nil
-        -- else download it.
-        else
-            dir, err = fetch_pkg(pkg, download_dir, suppress_printing)
-        end
-        if not dir then
-            return nil, err
-        else
-            table.insert(fetched_dirs, dir)
-        end
-    end
-
-    return fetched_dirs
 end
 
 -- Return table with information about available versions of 'package'.
