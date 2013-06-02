@@ -475,8 +475,6 @@ function get_depends(packages, installed, manifest, force_no_download, suppress_
         end
     end
 
-    local to_install = {}
-
     -- If 'pkg' contains valid (architecture specific) path separator,
     -- it is treated like a path to already downloaded package and
     -- we assume that user wants to use this specific version of the
@@ -509,6 +507,8 @@ function get_depends(packages, installed, manifest, force_no_download, suppress_
             packages[k] = pkg
         end
     end
+
+    local to_install = {}
 
     -- get packages needed to satisfy the dependencies
     for _, pkg in pairs(packages) do
