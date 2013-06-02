@@ -330,13 +330,14 @@ function deploy_binary_pkg(pkg_dir, deploy_dir)
     return true, "Package '" .. pkg_name .. "' successfully deployed to '" .. deploy_dir .. "'."
 end
 
--- Fetch package (table 'pkg') to download_dir. Return path to the directory of
--- downloaded package on success or an error message on error.
+-- Fetch package (table 'pkg') to download_dir. Return the original 'pkg' table
+-- with 'pkg.download_dir' containing path to the directory of the
+-- downloaded package.
 --
 -- When optional 'suppress_printing' parameter is set to true, then messages
 -- for the user won't be printed during run of this function.
 --
--- If the 'pkg' contains the information about download directory (pkg.download_dir),
+-- If the 'pkg' already contains the information about download directory (pkg.download_dir),
 -- we assume the package was already downloaded there and won't download it again.
 function fetch_pkg(pkg, download_dir, suppress_printing)
     download_dir = download_dir or sys.current_dir()
@@ -348,7 +349,7 @@ function fetch_pkg(pkg, download_dir, suppress_printing)
     assert(type(pkg.version) == "string", "package.fetch_pkg: Argument 'pkg.version' is not a string.")
 
     -- if the package is already downloaded don't download it again
-    if pkg.download_dir then return pkg.download_dir end
+    if pkg.download_dir then return pkg end
 
     assert(type(pkg.path) == "string", "package.fetch_pkg: Argument 'pkg.path' is not a string.")
     download_dir = sys.abs_path(download_dir)
@@ -356,12 +357,13 @@ function fetch_pkg(pkg, download_dir, suppress_printing)
     local pkg_full_name = pkg.name .. "-" .. pkg.version
     local repo_url = pkg.path
     local clone_dir = sys.abs_path(sys.make_path(download_dir, pkg_full_name))
+    pkg.download_dir = clone_dir
 
     -- check if download_dir already exists, assuming the package was already downloaded
     if sys.exists(sys.make_path(clone_dir, "dist.info")) then
         if cfg.cache and not utils.cache_timeout_expired(cfg.cache_timeout, clone_dir) then
             if not suppress_printing then print("'" .. pkg_full_name .. "' already in cache, skipping downloading (use '-cache=false' to force download).") end
-            return clone_dir
+            return pkg
         else
             sys.delete(sys.make_path(clone_dir))
         end
@@ -429,7 +431,7 @@ function fetch_pkg(pkg, download_dir, suppress_printing)
     -- delete '.git' directory
     if not cfg.debug then sys.delete(sys.make_path(clone_dir, ".git")) end
 
-    return clone_dir
+    return pkg
 end
 
 -- Return table with information about available versions of 'package'.
@@ -495,24 +497,24 @@ function retrieve_pkg_info(package, deploy_dir)
     local tmp_dir = sys.abs_path(sys.make_path(deploy_dir, cfg.temp_dir))
 
     -- download the package
-    local pkg_dir, err = fetch_pkg(package, tmp_dir)
-    if not pkg_dir then return nil, "Error when retrieving the info about '" .. package.name .. "': " .. err end
+    local fetched_pkg, err = fetch_pkg(package, tmp_dir)
+    if not fetched_pkg then return nil, "Error when retrieving the info about '" .. package.name .. "': " .. err end
 
     -- load information from 'dist.info'
-    local info, err = mf.load_distinfo(sys.make_path(pkg_dir, "dist.info"))
+    local info, err = mf.load_distinfo(sys.make_path(fetched_pkg.download_dir, "dist.info"))
     if not info then return nil, err end
 
     -- add 'path' attribute
     if package.path then info.path = package.path end
 
     -- set default arch/type if not explicitly stated and package is of source type
-    if is_source_type(pkg_dir) then
+    if is_source_type(fetched_pkg.download_dir) then
         info = ensure_source_arch_and_type(info)
     elseif not (info.arch and info.type) then
-        return nil, pkg_dir .. ": binary package missing arch or type in 'dist.info'."
+        return nil, fetched_pkg.download_dir .. ": binary package missing arch or type in 'dist.info'."
     end
 
-    return info, pkg_dir
+    return info, fetched_pkg.download_dir
 end
 
 -- Return manifest, augmented with info about all available versions

@@ -80,16 +80,16 @@ function install(package_names, deploy_dir, variables)
     if #dependencies == 0 then return nil, "No packages to install." end
 
     -- fetch the packages from repository
-    local fetched_dirs = {}
+    local fetched_pkgs = {}
     for _, pkg in pairs(dependencies) do
-        local dir, err = package.fetch_pkg(pkg, sys.make_path(deploy_dir, cfg.temp_dir))
-        if not dir then return nil, err end
-        table.insert(fetched_dirs, dir)
+        local fetched_pkg, err = package.fetch_pkg(pkg, sys.make_path(deploy_dir, cfg.temp_dir))
+        if not fetched_pkg then return nil, err end
+        table.insert(fetched_pkgs, fetched_pkg)
     end
 
     -- install fetched packages
-    for _, dir in pairs(fetched_dirs) do
-        local ok, err = package.install_pkg(dir, deploy_dir, variables, false)
+    for _, pkg in pairs(fetched_pkgs) do
+        local ok, err = package.install_pkg(pkg.download_dir, deploy_dir, variables)
         if not ok then return nil, err end
     end
 
@@ -171,9 +171,9 @@ function fetch(pkg_names, fetch_dir)
 
     local fetched_dirs = {}
     for _, pkg in pairs(pkgs_to_fetch) do
-        local dir, err = package.fetch_pkg(pkg, fetch_dir)
-        if not dir then return nil, err end
-        table.insert(fetched_dirs, dir)
+        local fetched_pkg, err = package.fetch_pkg(pkg, fetch_dir)
+        if not fetched_pkg then return nil, err end
+        table.insert(fetched_dirs, fetched_pkg.download_dir)
     end
 
     return fetched_dirs

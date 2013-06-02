@@ -707,10 +707,10 @@ function dependency_manifest(module, dep_manifest, dep_cache)
         else
             -- download the dependency info
             local download_dir = sys.abs_path(sys.make_path(cfg.root_dir, cfg.temp_dir))
-            local downloaded_path, err = package.fetch_pkg(candidates[1], download_dir, not cfg.debug)
-            if not downloaded_path then return nil, err end
+            local downloaded_pkg, err = package.fetch_pkg(candidates[1], download_dir, not cfg.debug)
+            if not downloaded_pkg then return nil, err end
 
-            local distinfo = sys.make_path(downloaded_path, "dist.info")
+            local distinfo = sys.make_path(downloaded_pkg.download_dir, "dist.info")
             local dist_info, err = mf.load_distinfo(distinfo)
             if not dist_info then return nil, "Error when loading dist.info file '" .. distinfo .. "': " .. err end
 
