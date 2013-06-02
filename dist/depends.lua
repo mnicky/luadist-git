@@ -710,7 +710,7 @@ function dependency_manifest(module, dep_manifest, dep_cache)
             local downloaded_path, err = package.fetch_pkg(candidates[1], download_dir, not cfg.debug)
             if not downloaded_path then return nil, err end
 
-            local distinfo = sys.make_path(downloaded_path[1], "dist.info")
+            local distinfo = sys.make_path(downloaded_path, "dist.info")
             local dist_info, err = mf.load_distinfo(distinfo)
             if not dist_info then return nil, "Error when loading dist.info file '" .. distinfo .. "': " .. err end
 
