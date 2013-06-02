@@ -487,7 +487,7 @@ function get_depends(packages, installed, manifest, force_no_download, suppress_
             local pkg_info, err = mf.load_distinfo(sys.make_path(pkg_dir, "dist.info"))
             if not pkg_info then return nil, err end
 
-            -- add information about location of the package to prevent downloading it again
+            -- add information about location of the package, also to prevent downloading it again
             pkg_info.download_dir = pkg_dir
             -- mark package to skip deleting its directory after installation
             pkg_info.preserve_pkg_dir = true
