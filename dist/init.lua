@@ -89,7 +89,7 @@ function install(package_names, deploy_dir, variables)
 
     -- install fetched packages
     for _, pkg in pairs(fetched_pkgs) do
-        local ok, err = package.install_pkg(pkg.download_dir, deploy_dir, variables)
+        local ok, err = package.install_pkg(pkg.download_dir, deploy_dir, variables, pkg.preserve_pkg_dir)
         if not ok then return nil, err end
     end
 
