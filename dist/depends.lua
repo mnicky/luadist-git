@@ -480,7 +480,8 @@ function get_depends(packages, installed, manifest, force_no_download, suppress_
     -- we assume that user wants to use this specific version of the
     -- module to be installed. Hence, we will add information about
     -- this version into the manifest and also remove references to
-    -- any other versions of this module from the manifest.
+    -- any other versions of this module from the manifest. This will
+    -- enforce the version of the module required by the user.
     for k, pkg in pairs(packages) do
         if pkg:find(sys.path_separator()) then
             local pkg_dir = sys.abs_path(pkg)
