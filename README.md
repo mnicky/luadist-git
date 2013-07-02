@@ -16,7 +16,7 @@ Main Goals
 
  * add functionality for uploading binary versions of modules to repositories - **DONE**
 
- * once [libgit2](https://github.com/libgit2/libgit2) matures, use it instead of the git cli command
+ * once [libgit2](https://github.com/libgit2/libgit2) matures, use it instead of the git cli command - using [lua-git](https://github.com/mkottman/lua-git) in the meantime
 
 
 Useful Links
