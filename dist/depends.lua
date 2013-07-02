@@ -367,6 +367,9 @@ local function get_packages_to_install(pkg, installed, manifest, force_no_downlo
                         -- if any suitable dependency packages were found, insert them to the 'to_install' table
                         if depends_to_install then
                             for _, depend_to_install in pairs(depends_to_install) do
+                                if not depend_to_install.selected_by then
+                                    depend_to_install.selected_by = pkg.name .. "-" .. pkg.version
+                                end
                                 table.insert(to_install, depend_to_install)
                                 table.insert(tmp_installed, depend_to_install)
                                 table.insert(installed, depend_to_install)
