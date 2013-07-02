@@ -669,6 +669,45 @@ function compare_versions(version_a, version_b)
     return const.compareVersions(version_a, version_b)
 end
 
+-- Returns 'dep_manifest' updated with information about the 'pkg' package.
+-- 'installed' is table with installed packages
+-- 'to_install' is table with packages that are selected for installation
+-- Packages satisfying the dependencies will be searched for in these two tables.
+function update_dep_manifest(pkg, installed, to_install, dep_manifest)
+    dep_manifest = dep_manifest or {}
+    assert(type(pkg) == "table", "depends.update_dep_manifest: Argument 'pkg' is not a table.")
+    assert(type(installed) == "table", "depends.update_dep_manifest: Argument 'installed' is not a table.")
+    assert(type(to_install) == "table", "depends.update_dep_manifest: Argument 'to_install' is not a table.")
+    assert(type(dep_manifest) == "table", "depends.update_dep_manifest: Argument 'dep_manifest' is not a table.")
+
+    local name_ver = pkg.name .. "-" .. pkg.version
+
+    -- add to manifest
+    if not dep_manifest[name_ver] then
+        dep_manifest[name_ver] = {}
+        dep_manifest[name_ver].name = pkg.name
+        dep_manifest[name_ver].version = pkg.version
+        dep_manifest[name_ver].path = pkg.path
+        dep_manifest[name_ver].depends = pkg.depends
+
+        -- add information which dependency is satisfied by which package
+        if pkg.depends then
+
+            -- TODO: Won't it be better to add OS-specific 'satisfied_by' metadata in a format like OS-specific 'depends' ?
+            local all_deps = extract_os_specific_depends(pkg.depends)
+
+            dep_manifest[name_ver].satisfied_by = {}
+            for _, depend in pairs(all_deps) do
+                local satisfying = find_packages(depend, installed)[1] or find_packages(depend, to_install)[1]
+                dep_manifest[name_ver].satisfied_by[depend] = satisfying.name .. "-" .. satisfying.version
+            end
+
+        end
+    end
+
+    return dep_manifest
+end
+
 -- Returns manifest with information about dependencies of given module
 -- table 'dep_manifest' contains infromation about relevant modules and will be returned
 -- table 'dep_cache' contains all information collected so far and is used like a cache
