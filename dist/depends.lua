@@ -689,6 +689,8 @@ function update_dep_manifest(pkg, installed, to_install, dep_manifest)
         dep_manifest[name_ver].version = pkg.version
         dep_manifest[name_ver].path = pkg.path
         dep_manifest[name_ver].depends = pkg.depends
+        dep_manifest[name_ver].conflicts = pkg.conflicts
+        dep_manifest[name_ver].provides = pkg.provides
 
         -- add information which dependency is satisfied by which package
         if pkg.depends then
@@ -698,8 +700,28 @@ function update_dep_manifest(pkg, installed, to_install, dep_manifest)
 
             dep_manifest[name_ver].satisfied_by = {}
             for _, depend in pairs(all_deps) do
+
+                -- find package satisfying the dependency
                 local satisfying = find_packages(depend, installed)[1] or find_packages(depend, to_install)[1]
-                dep_manifest[name_ver].satisfied_by[depend] = satisfying.name .. "-" .. satisfying.version
+                satisfying = satisfying.name .. "-" .. satisfying.version
+                dep_manifest[name_ver].satisfied_by[depend] = satisfying
+
+                -- check whether the satisfying package isn't provided by other one
+                local provided_by = utils.filter(installed, function(pkg)
+                                                                return pkg.provides and utils.contains(pkg.provides, satisfying)
+                                                            end)
+                if #provided_by == 0 then
+                    provided_by = utils.filter(to_install, function(pkg)
+                                                               return pkg.provides and utils.contains(pkg.provides, satisfying)
+                                                           end)
+                end
+
+                if #provided_by ~= 0 then
+                    if not dep_manifest[name_ver].satisfying_provided_by then
+                        dep_manifest[name_ver].satisfying_provided_by = {}
+                    end
+                    dep_manifest[name_ver].satisfying_provided_by[satisfying] = provided_by[1].name .. "-" .. provided_by[1].version
+                end
             end
 
         end
