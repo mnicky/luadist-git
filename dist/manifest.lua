@@ -91,7 +91,7 @@ end
 -- A secure loadfile function
 -- If file code chunk has upvalues, the first upvalue is set to the given
 -- environement, if that parameter is given, or to the value of the global environment.
-local secure_loadfile = function(file, env)
+local function secure_loadfile(file, env)
     assert(type(file) == "string", "secure_loadfile: Argument 'file' is not a string.")
 
     -- use the given (or create a new) restricted environment
