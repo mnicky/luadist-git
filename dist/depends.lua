@@ -533,7 +533,9 @@ function get_depends(packages, installed, manifest, dependency_manifest, deploy_
 
             for _, needed_pkg in pairs(needed_to_install) do
 
-                -- TODO: why not to use 'installed' instead of 'tmp_installed' ?
+                -- TODO: why not to use 'installed' instead of 'tmp_installed'?
+                --       It's because provides aren't searched for by find()
+                --       function inside the update_dependency_manifest().
                 dependency_manifest = update_dependency_manifest(needed_pkg, tmp_installed, needed_to_install, dependency_manifest)
 
                 table.insert(to_install, needed_pkg)
@@ -551,7 +553,7 @@ function get_depends(packages, installed, manifest, dependency_manifest, deploy_
             for _, pkg in pairs(to_install) do
                 if pkg.download_dir and not cfg.debug then sys.delete(pkg.download_dir) end
             end
-            return nil, "Error when resolving dependencies of package '" .. pkg .. "': ".. err
+            return nil, "Cannot resolve dependencies for package '" .. pkg .. "': ".. err
         end
     end
 
