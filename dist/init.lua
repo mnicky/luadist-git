@@ -88,7 +88,7 @@ function install(package_names, deploy_dir, variables)
     end
 
     -- resolve dependencies
-    local dependencies, dep_manifest_or_err = depends.get_depends(package_names, installed, manifest, false, false, dep_manifest, deploy_dir)
+    local dependencies, dep_manifest_or_err = depends.get_depends(package_names, installed, manifest, dep_manifest, deploy_dir, false, false)
     if not dependencies then return nil, dep_manifest_or_err end
     if #dependencies == 0 then return nil, "No packages to install." end
 

@@ -446,35 +446,35 @@ end
 -- Also return the table of the dependencies determined during the process
 -- as the second return value.
 --
--- When optional 'force_no_download' parameter is set to true, then information
--- about packages won't be downloaded during dependency resolving, assuming that
--- entries in manifest are complete.
---
--- When optional 'suppress_printing' parameter is set to true, then messages
--- for the user won't be printed during dependency resolving.
---
 -- Optional argument 'dependency_manifest' is a table of dependencies examined
 -- from previous installations etc. It can be used to speed-up the dependency
 -- resolving procedure for example.
 --
 -- Optional argument 'deploy_dir' is used as a temporary place to place the
 -- downloaded packages into.
-function get_depends(packages, installed, manifest, force_no_download, suppress_printing, dependency_manifest, deploy_dir)
+--
+-- When optional 'force_no_download' parameter is set to true, then information
+-- about packages won't be downloaded during dependency resolving, assuming that
+-- entries in manifest are complete.
+--
+-- When optional 'suppress_printing' parameter is set to true, then messages
+-- for the user won't be printed during dependency resolving.
+function get_depends(packages, installed, manifest, dependency_manifest, deploy_dir, force_no_download, suppress_printing)
     if not packages then return {} end
     manifest = manifest or mf.get_manifest()
-    force_no_download = force_no_download or false
-    suppress_printing = suppress_printing or false
     dependency_manifest = dependency_manifest or {}
     deploy_dir = deploy_dir or cfg.root_dir
+    force_no_download = force_no_download or false
+    suppress_printing = suppress_printing or false
     if type(packages) == "string" then packages = {packages} end
 
     assert(type(packages) == "table", "depends.get_depends: Argument 'packages' is not a table or string.")
     assert(type(installed) == "table", "depends.get_depends: Argument 'installed' is not a table.")
     assert(type(manifest) == "table", "depends.get_depends: Argument 'manifest' is not a table.")
-    assert(type(force_no_download) == "boolean", "depends.get_depends: Argument 'force_no_download' is not a boolean.")
-    assert(type(suppress_printing) == "boolean", "depends.get_depends: Argument 'suppress_printing' is not a boolean.")
     assert(type(dependency_manifest) == "table", "depends.get_depends: Argument 'dependency_manifest' is not a table.")
     assert(type(deploy_dir) == "string", "depends.get_depends: Argument 'deploy_dir' is not a string.")
+    assert(type(force_no_download) == "boolean", "depends.get_depends: Argument 'force_no_download' is not a boolean.")
+    assert(type(suppress_printing) == "boolean", "depends.get_depends: Argument 'suppress_printing' is not a boolean.")
     deploy_dir = sys.abs_path(deploy_dir)
 
     local tmp_installed = utils.deepcopy(installed)
