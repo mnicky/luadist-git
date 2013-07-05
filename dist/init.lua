@@ -8,6 +8,7 @@ local git = require "dist.git"
 local sys = require "dist.sys"
 local package = require "dist.package"
 local mf = require "dist.manifest"
+local utils = require "dist.utils"
 
 -- Return the deployment directory.
 function get_deploy_dir()
@@ -74,10 +75,28 @@ function install(package_names, deploy_dir, variables)
     local manifest, err = mf.get_manifest()
     if not manifest then return nil, "Error getting manifest: " .. err end
 
+    -- get dependency manifest
+    -- TODO: Is it good that dep_manifest is deploy_dir-specific?
+    -- Probably it'd be better not to be specific, but then there're
+    -- problems with 'provides'. E.g. What to do if there's a module
+    -- installed, that is provided by two different modules in two deploy_dirs?
+    local dep_manifest_file = sys.abs_path(sys.make_path(deploy_dir, cfg.dep_cache_file))
+    local dep_manifest, status = {}
+    if sys.exists(dep_manifest_file) and cfg.cache and not utils.cache_timeout_expired(cfg.cache_timeout, dep_manifest_file) then
+        status, dep_manifest = mf.load_manifest(dep_manifest_file)
+        if not dep_manifest then return nil, status end
+    end
+
     -- resolve dependencies
-    local dependencies, err = depends.get_depends(package_names, installed, manifest, false, false, deploy_dir)
-    if err then return nil, err end
+    local dependencies, dep_manifest_or_err = depends.get_depends(package_names, installed, manifest, false, false, dep_manifest, deploy_dir)
+    if not dependencies then return nil, dep_manifest_or_err end
     if #dependencies == 0 then return nil, "No packages to install." end
+
+    -- save updated dependency manifest
+    local ok, err = sys.make_dir(sys.parent_dir(dep_manifest_file))
+    if not ok then return nil, err end
+    ok, err = mf.save_manifest(dep_manifest_or_err, dep_manifest_file)
+    if not ok then return nil, err end
 
     -- fetch the packages from repository
     local fetched_pkgs = {}
@@ -286,22 +305,7 @@ function dependency_info(module, cache_file)
     assert(type(module) == "string", "dist.dep_info: Argument 'module' is not a string.")
     assert(type(cache_file) == "string", "dist.dep_info: Argument 'cache_file' is not a string.")
 
-    local dep_cache, err = {}
-    if sys.exists(cache_file) then
-        -- TODO: use current 'deploy_dir' for cache file, or 'root_dir'?
-        dep_cache, err = mf.load_manifest(cache_file)
-        if not dep_cache then return nil, err end
-    end
-
-    -- get dependency information and updated cache
-    local dep_manifest = {}
-    dep_manifest, dep_cache_or_err = depends.dependency_manifest(module, dep_manifest, dep_cache)
-    if not dep_manifest then return nil, dep_cache_or_err end
-    dep_cache = dep_cache_or_err
-
-    -- save updated cache
-    local ok, err = mf.save_manifest(dep_cache, cache_file)
-    if not ok then return nil, err end
+    --
 
     return dep_manifest
 end

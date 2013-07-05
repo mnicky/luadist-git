@@ -443,6 +443,8 @@ end
 
 -- Resolve dependencies and return all packages needed in order to install
 -- 'packages' into the system with already 'installed' packages, using 'manifest'.
+-- Also return the table of the dependencies determined during the process
+-- as the second return value.
 --
 -- When optional 'force_no_download' parameter is set to true, then information
 -- about packages won't be downloaded during dependency resolving, assuming that
@@ -451,13 +453,18 @@ end
 -- When optional 'suppress_printing' parameter is set to true, then messages
 -- for the user won't be printed during dependency resolving.
 --
--- Optional argument 'deploy_dir' is used just as a temporary place to place
--- the downloaded packages into.
-function get_depends(packages, installed, manifest, force_no_download, suppress_printing, deploy_dir)
+-- Optional argument 'dependency_manifest' is a table of dependencies examined
+-- from previous installations etc. It can be used to speed-up the dependency
+-- resolving procedure for example.
+--
+-- Optional argument 'deploy_dir' is used as a temporary place to place the
+-- downloaded packages into.
+function get_depends(packages, installed, manifest, force_no_download, suppress_printing, dependency_manifest, deploy_dir)
     if not packages then return {} end
     manifest = manifest or mf.get_manifest()
     force_no_download = force_no_download or false
     suppress_printing = suppress_printing or false
+    dependency_manifest = dependency_manifest or {}
     deploy_dir = deploy_dir or cfg.root_dir
     if type(packages) == "string" then packages = {packages} end
 
@@ -466,6 +473,7 @@ function get_depends(packages, installed, manifest, force_no_download, suppress_
     assert(type(manifest) == "table", "depends.get_depends: Argument 'manifest' is not a table.")
     assert(type(force_no_download) == "boolean", "depends.get_depends: Argument 'force_no_download' is not a boolean.")
     assert(type(suppress_printing) == "boolean", "depends.get_depends: Argument 'suppress_printing' is not a boolean.")
+    assert(type(dependency_manifest) == "table", "depends.get_depends: Argument 'dependency_manifest' is not a table.")
     assert(type(deploy_dir) == "string", "depends.get_depends: Argument 'deploy_dir' is not a string.")
     deploy_dir = sys.abs_path(deploy_dir)
 
@@ -520,9 +528,14 @@ function get_depends(packages, installed, manifest, force_no_download, suppress_
 
         local needed_to_install, err = get_packages_to_install(pkg, tmp_installed, manifest, force_no_download, suppress_printing, deploy_dir)
 
-        -- everything's fine
+        -- if everything's fine
         if needed_to_install then
+
             for _, needed_pkg in pairs(needed_to_install) do
+
+                -- TODO: why not to use 'installed' instead of 'tmp_installed' ?
+                dependency_manifest = update_dependency_manifest(needed_pkg, tmp_installed, needed_to_install, dependency_manifest)
+
                 table.insert(to_install, needed_pkg)
                 table.insert(tmp_installed, needed_pkg)
                 -- add provides of needed_pkg to installed ones
@@ -532,17 +545,17 @@ function get_depends(packages, installed, manifest, force_no_download, suppress_
                     table.insert(tmp_installed, provided_pkg)
                 end
             end
-        -- error occured
+        -- if error occured
         else
             -- delete already downloaded packages
             for _, pkg in pairs(to_install) do
                 if pkg.download_dir and not cfg.debug then sys.delete(pkg.download_dir) end
             end
-            return nil, "Cannot install package '" .. pkg .. "': ".. err
+            return nil, "Error when resolving dependencies of package '" .. pkg .. "': ".. err
         end
     end
 
-    return to_install
+    return to_install, dependency_manifest
 end
 
 -- Return table of packages provided by specified package (from it's 'provides' field)
@@ -673,12 +686,12 @@ end
 -- 'installed' is table with installed packages
 -- 'to_install' is table with packages that are selected for installation
 -- Packages satisfying the dependencies will be searched for in these two tables.
-function update_dep_manifest(pkg, installed, to_install, dep_manifest)
+function update_dependency_manifest(pkg, installed, to_install, dep_manifest)
     dep_manifest = dep_manifest or {}
-    assert(type(pkg) == "table", "depends.update_dep_manifest: Argument 'pkg' is not a table.")
-    assert(type(installed) == "table", "depends.update_dep_manifest: Argument 'installed' is not a table.")
-    assert(type(to_install) == "table", "depends.update_dep_manifest: Argument 'to_install' is not a table.")
-    assert(type(dep_manifest) == "table", "depends.update_dep_manifest: Argument 'dep_manifest' is not a table.")
+    assert(type(pkg) == "table", "depends.update_dependency_manifest: Argument 'pkg' is not a table.")
+    assert(type(installed) == "table", "depends.update_dependency_manifest: Argument 'installed' is not a table.")
+    assert(type(to_install) == "table", "depends.update_dependency_manifest: Argument 'to_install' is not a table.")
+    assert(type(dep_manifest) == "table", "depends.update_dependency_manifest: Argument 'dep_manifest' is not a table.")
 
     local name_ver = pkg.name .. "-" .. pkg.version
 
