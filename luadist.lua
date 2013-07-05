@@ -523,7 +523,7 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] tree [MODULES...] [-VARIABLES...]
                 -- if all modules are being queried, extract the name
                 if type(module) == "table" then module = module.name end
 
-                local dep_manifest, err = dist.dependency_info(module)
+                local dep_manifest, err = dist.dependency_info(module, deploy_dir)
                 if not dep_manifest then
                     print(err)
                     os.exit(1)

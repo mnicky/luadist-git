@@ -265,7 +265,7 @@ local function get_packages_to_install(pkg, installed, manifest, force_no_downlo
 
     -- find out available versions of 'pkg' and insert them into manifest
     if not force_no_download then
-        local versions, err = package.retrieve_versions(pkg, manifest)
+        local versions, err = package.retrieve_versions(pkg, manifest, suppress_printing)
         if not versions then return nil, err end
         for _, version in pairs(versions) do
             table.insert(manifest, version)
@@ -306,7 +306,7 @@ local function get_packages_to_install(pkg, installed, manifest, force_no_downlo
         -- download info about the package if not already downloaded and downloading not prohibited
         if not (pkg.download_dir or force_no_download) then
             local path_or_err
-            pkg, path_or_err = package.retrieve_pkg_info(pkg, deploy_dir)
+            pkg, path_or_err = package.retrieve_pkg_info(pkg, deploy_dir, suppress_printing)
             if not pkg then
                 err = "Error when resolving dependencies: " .. path_or_err
             else

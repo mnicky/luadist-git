@@ -300,12 +300,39 @@ function upload_modules(deploy_dir, module_names, dest_git_base_url)
 end
 
 -- Returns table with information about module's dependencies, using the cache.
-function dependency_info(module, cache_file)
+function dependency_info(module, deploy_dir)
     cache_file = cache_file or sys.abs_path(sys.make_path(cfg.root_dir, cfg.dep_cache_file))
-    assert(type(module) == "string", "dist.dep_info: Argument 'module' is not a string.")
-    assert(type(cache_file) == "string", "dist.dep_info: Argument 'cache_file' is not a string.")
+    assert(type(module) == "string", "dist.dependency_info: Argument 'module' is not a string.")
+    assert(type(deploy_dir) == "string", "dist.dependency_info: Argument 'deploy_dir' is not a string.")
 
-    --
+    -- get manifest
+    local manifest, err = mf.get_manifest()
+    if not manifest then return nil, "Error getting manifest: " .. err end
 
-    return dep_manifest
+    -- get dependency manifest
+    -- TODO: Is it good that dep_manifest is deploy_dir-specific?
+    -- Probably it'd be better not to be specific, but then there're
+    -- problems with 'provides'. E.g. What to do if there's a module
+    -- installed, that is provided by two different modules in two deploy_dirs?
+    local dep_manifest_file = sys.abs_path(sys.make_path(deploy_dir, cfg.dep_cache_file))
+    local dep_manifest, status = {}
+    if sys.exists(dep_manifest_file) and cfg.cache and not utils.cache_timeout_expired(cfg.cache_timeout, dep_manifest_file) then
+        status, dep_manifest = mf.load_manifest(dep_manifest_file)
+        if not dep_manifest then return nil, status end
+    end
+
+    -- force getting the dependency information
+    local installed = {}
+
+    -- resolve dependencies
+    local dependencies, dep_manifest_or_err = depends.get_depends(module, installed, manifest, dep_manifest, deploy_dir, false, true and not cfg.debug)
+    if not dependencies then return nil, dep_manifest_or_err end
+
+    -- save updated dependency manifest
+    local ok, err = sys.make_dir(sys.parent_dir(dep_manifest_file))
+    if not ok then return nil, err end
+    ok, err = mf.save_manifest(dep_manifest_or_err, dep_manifest_file)
+    if not ok then return nil, err end
+
+    return dep_manifest_or_err
 end

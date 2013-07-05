@@ -488,7 +488,10 @@ end
 -- Return table with information from package's dist.info and path to downloaded
 -- package. Optional argument 'deploy_dir' is used just as a temporary
 -- place to place the downloaded packages into.
-function retrieve_pkg_info(package, deploy_dir)
+--
+-- When optional 'suppress_printing' parameter is set to true, then messages
+-- for the user won't be printed during the execution of this function.
+function retrieve_pkg_info(package, deploy_dir, suppress_printing)
     deploy_dir = deploy_dir or cfg.root_dir
     assert(type(package) == "table", "package.retrieve_pkg_info: Argument 'package' is not a table.")
     assert(type(deploy_dir) == "string", "package.retrieve_pkg_info: Argument 'deploy_dir' is not a string.")
@@ -497,7 +500,7 @@ function retrieve_pkg_info(package, deploy_dir)
     local tmp_dir = sys.abs_path(sys.make_path(deploy_dir, cfg.temp_dir))
 
     -- download the package
-    local fetched_pkg, err = fetch_pkg(package, tmp_dir)
+    local fetched_pkg, err = fetch_pkg(package, tmp_dir, suppress_printing)
     if not fetched_pkg then return nil, "Error when retrieving the info about '" .. package.name .. "': " .. err end
 
     -- load information from 'dist.info'
