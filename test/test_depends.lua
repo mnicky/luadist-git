@@ -1259,6 +1259,18 @@ tests.install_specific_version_with_conflicts_2 = function()
     assert(describe_packages(pkgs) == nil and err:find("conflicts"), pkgs_fail_msg(pkgs, err))
 end
 
+-- TODO: add an ability to find package that is only provided by another one?
+-- a-1.0 provides c, install c
+--[[
+tests.install_package_provided_by_another_package = function()
+    local manifest, installed = {}, {}
+    manifest.a = {name="a", arch="Universal", type="all", version="1.0", provides={"b"}}
+
+    local pkgs, err = depends.get_depends({'b'}, installed, manifest, nil, nil, true, true)
+    assert(describe_packages(pkgs) == "a-1.0", pkgs_fail_msg(pkgs, err))
+end
+--]]
+
 
 -- actually run the test suite
 run_tests(tests)
