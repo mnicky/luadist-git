@@ -82,7 +82,7 @@ function install(package_names, deploy_dir, variables)
     -- installed, that is provided by two different modules in two deploy_dirs?
     local dep_manifest_file = sys.abs_path(sys.make_path(deploy_dir, cfg.dep_cache_file))
     local dep_manifest, status = {}
-    if sys.exists(dep_manifest_file) and cfg.cache and not utils.cache_timeout_expired(cfg.cache_timeout, dep_manifest_file) then
+    if sys.exists(dep_manifest_file) and not utils.cache_timeout_expired(cfg.cache_timeout, dep_manifest_file) then
         status, dep_manifest = mf.load_manifest(dep_manifest_file)
         if not dep_manifest then return nil, status end
     end

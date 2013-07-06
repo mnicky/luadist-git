@@ -208,6 +208,10 @@ end
 -- Directory where the package was downloaded is stored in 'download_dir' attribute
 -- of that package in the table of packages returned by this function.
 --
+-- Optional argument 'dependency_manifest' is a table of dependencies examined
+-- from previous installations etc. It can be used to speed-up the dependency
+-- resolving procedure for example.
+--
 -- When optional 'force_no_download' parameter is set to true, then information
 -- about packages won't be downloaded during dependency resolving, assuming that
 -- entries in the provided manifest are already complete.
@@ -227,8 +231,9 @@ end
 -- in installed packages between the recursive calls of this function.
 --
 -- TODO: refactor this spaghetti code!
-local function get_packages_to_install(pkg, installed, manifest, force_no_download, suppress_printing, deploy_dir, dependency_parents, tmp_installed)
+local function get_packages_to_install(pkg, installed, manifest, dependency_manifest, force_no_download, suppress_printing, deploy_dir, dependency_parents, tmp_installed)
     manifest = manifest or mf.get_manifest()
+    dependency_manifest = dependency_manifest or {}
     force_no_download = force_no_download or false
     suppress_printing = suppress_printing or false
     deploy_dir = deploy_dir or cfg.root_dir
@@ -240,6 +245,7 @@ local function get_packages_to_install(pkg, installed, manifest, force_no_downlo
     assert(type(pkg) == "string", "depends.get_packages_to_install: Argument 'pkg' is not a string.")
     assert(type(installed) == "table", "depends.get_packages_to_install: Argument 'installed' is not a table.")
     assert(type(manifest) == "table", "depends.get_packages_to_install: Argument 'manifest' is not a table.")
+    assert(type(dependency_manifest) == "table", "depends.get_packages_to_install: Argument 'dependency_manifest' is not a table.")
     assert(type(force_no_download) == "boolean", "depends.get_packages_to_install: Argument 'force_no_download' is not a boolean.")
     assert(type(suppress_printing) == "boolean", "depends.get_packages_to_install: Argument 'suppress_printing' is not a boolean.")
     assert(type(deploy_dir) == "string", "depends.get_packages_to_install: Argument 'deploy_dir' is not a string.")
@@ -302,17 +308,23 @@ local function get_packages_to_install(pkg, installed, manifest, force_no_downlo
         -- will be rewritten by information taken from pkg's dist.info file
         if pkg.version == "scm" then pkg.was_scm_version = true end
 
-        -- download info about the package if not already downloaded and downloading not prohibited
-        if not (pkg.download_dir or force_no_download) then
-            local path_or_err
-            pkg, path_or_err = package.retrieve_pkg_info(pkg, deploy_dir, suppress_printing)
-            if not pkg then
-                err = "Error when resolving dependencies: " .. path_or_err
-            else
-                -- set path to downloaded package - used to indicate that the
-                -- package was already downloaded, to delete unused but downloaded
-                -- packages and also to install choosen packages
-                pkg.download_dir = path_or_err
+        -- TODO: HERE?
+        -- Try to obtain cached dependency information from the dependency manifest
+        if dependency_manifest[pkg.name .. "-" .. pkg.version] and cfg.dep_cache then
+            pkg = dependency_manifest[pkg.name .. "-" .. pkg.version]
+        else
+            -- download info about the package if not already downloaded and downloading not prohibited
+            if not (pkg.download_dir or force_no_download) then
+                local path_or_err
+                pkg, path_or_err = package.retrieve_pkg_info(pkg, deploy_dir, suppress_printing)
+                if not pkg then
+                    err = "Error when resolving dependencies: " .. path_or_err
+                else
+                    -- set path to downloaded package - used to indicate that the
+                    -- package was already downloaded, to delete unused but downloaded
+                    -- packages and also to install choosen packages
+                    pkg.download_dir = path_or_err
+                end
             end
         end
 
@@ -528,7 +540,7 @@ function get_depends(packages, installed, manifest, dependency_manifest, deploy_
     -- get packages needed to satisfy the dependencies
     for _, pkg in pairs(packages) do
 
-        local needed_to_install, err = get_packages_to_install(pkg, tmp_installed, manifest, force_no_download, suppress_printing, deploy_dir)
+        local needed_to_install, err = get_packages_to_install(pkg, tmp_installed, manifest, dependency_manifest, force_no_download, suppress_printing, deploy_dir)
 
         -- if everything's fine
         if needed_to_install then
@@ -705,10 +717,16 @@ function update_dependency_manifest(pkg, installed, to_install, dep_manifest)
         dep_manifest[name_ver] = {}
         dep_manifest[name_ver].name = pkg.name
         dep_manifest[name_ver].version = pkg.version
+        dep_manifest[name_ver].arch = pkg.arch
+        dep_manifest[name_ver].type = pkg.type
         dep_manifest[name_ver].path = pkg.path
         dep_manifest[name_ver].depends = pkg.depends
         dep_manifest[name_ver].conflicts = pkg.conflicts
         dep_manifest[name_ver].provides = pkg.provides
+        dep_manifest[name_ver].license = pkg.license
+        dep_manifest[name_ver].desc = pkg.desc
+        dep_manifest[name_ver].author = pkg.author
+        dep_manifest[name_ver].maintainer = pkg.maintainer
 
         -- add information which dependency is satisfied by which package
         if pkg.depends then
