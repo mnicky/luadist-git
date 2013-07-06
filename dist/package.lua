@@ -507,8 +507,9 @@ function retrieve_pkg_info(package, deploy_dir, suppress_printing)
     local info, err = mf.load_distinfo(sys.make_path(fetched_pkg.download_dir, "dist.info"))
     if not info then return nil, err end
 
-    -- add 'path' attribute
+    -- add other attributes
     if package.path then info.path = package.path end
+    if package.was_scm_version then info.was_scm_version = package.was_scm_version end
 
     -- set default arch/type if not explicitly stated and package is of source type
     if is_source_type(fetched_pkg.download_dir) then

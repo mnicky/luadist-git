@@ -107,17 +107,16 @@ end
 
 -- Check whether the package 'pkg' conflicts with 'installed_pkg' and return
 -- false or error message.
-local function packages_conflicts(pkg, installed_pkg, was_scm_version)
+local function packages_conflicts(pkg, installed_pkg)
     assert(type(pkg) == "table", "depends.packages_conflicts: Argument 'pkg' is not a table.")
     assert(type(installed_pkg) == "table", "depends.packages_conflicts: Argument 'installed_pkg' is not a table.")
-    assert(type(was_scm_version) == "boolean", "depends.packages_conflicts: Argument 'was_scm_version' is not a boolean.")
 
     -- check if pkg doesn't provide an already installed_pkg
     if pkg.provides then
         -- for all of pkg's provides
         for _, provided_pkg in pairs(get_provides(pkg)) do
             if provided_pkg.name == installed_pkg.name then
-                return "Package '" .. pkg_full_name(pkg.name, pkg.version, was_scm_version) .. "' provides '" .. pkg_full_name(provided_pkg.name, provided_pkg.version) .. "' but package '" .. pkg_full_name(installed_pkg.name, installed_pkg.version) .. "' is already " .. selected_or_installed(installed_pkg) .. "."
+                return "Package '" .. pkg_full_name(pkg.name, pkg.version, pkg.was_scm_version) .. "' provides '" .. pkg_full_name(provided_pkg.name, provided_pkg.version) .. "' but package '" .. pkg_full_name(installed_pkg.name, installed_pkg.version) .. "' is already " .. selected_or_installed(installed_pkg) .. "."
             end
         end
     end
@@ -126,7 +125,7 @@ local function packages_conflicts(pkg, installed_pkg, was_scm_version)
     if pkg.conflicts then
         for _, conflict in pairs (pkg.conflicts) do
             if conflict == installed_pkg.name then
-                return "Package '" .. pkg_full_name(pkg.name, pkg.version, was_scm_version) .. "' conflicts with already " .. selected_or_installed(installed_pkg) .. " package '" .. pkg_full_name(installed_pkg.name, installed_pkg.version) .. "'."
+                return "Package '" .. pkg_full_name(pkg.name, pkg.version, pkg.was_scm_version) .. "' conflicts with already " .. selected_or_installed(installed_pkg) .. " package '" .. pkg_full_name(installed_pkg.name, installed_pkg.version) .. "'."
             end
         end
     end
@@ -137,7 +136,7 @@ local function packages_conflicts(pkg, installed_pkg, was_scm_version)
         -- direct conflicts with 'pkg'
         for _, conflict in pairs (installed_pkg.conflicts) do
             if conflict == pkg.name then
-                return "Already " .. selected_or_installed(installed_pkg) .. " package '" .. pkg_full_name(installed_pkg.name, installed_pkg.version) .. "' conflicts with package '" .. pkg_full_name(pkg.name, pkg.version, was_scm_version) .. "'."
+                return "Already " .. selected_or_installed(installed_pkg) .. " package '" .. pkg_full_name(installed_pkg.name, installed_pkg.version) .. "' conflicts with package '" .. pkg_full_name(pkg.name, pkg.version, pkg.was_scm_version) .. "'."
             end
         end
 
@@ -147,7 +146,7 @@ local function packages_conflicts(pkg, installed_pkg, was_scm_version)
                 -- for all of pkg's provides
                 for _, provided_pkg in pairs(get_provides(pkg)) do
                     if conflict == provided_pkg.name then
-                        return "Already '" .. selected_or_installed(installed_pkg) .. " package '" .. pkg_full_name(installed_pkg.name, installed_pkg.version) .. "' conflicts with package '" .. pkg_full_name(provided_pkg.name, provided_pkg.version) .. "' provided by '" .. pkg_full_name(pkg.name, pkg.version, was_scm_version) .. "'."
+                        return "Already '" .. selected_or_installed(installed_pkg) .. " package '" .. pkg_full_name(installed_pkg.name, installed_pkg.version) .. "' conflicts with package '" .. pkg_full_name(provided_pkg.name, provided_pkg.version) .. "' provided by '" .. pkg_full_name(pkg.name, pkg.version, pkg.was_scm_version) .. "'."
                     end
                 end
             end
@@ -289,19 +288,19 @@ local function get_packages_to_install(pkg, installed, manifest, force_no_downlo
         print('  -is installed: ', is_installed(pkg.name, tmp_installed, pkg_constraint))
         --]]
 
-        -- if there's an error from previous candidate, print the reason for trying another one
+        -- if there's an error from the previous candidate, print the reason for trying another one
         if not suppress_printing and err then print(" - trying another candidate due to: " .. err) end
 
-        -- clear the state from previous candidate
+        -- clear the state from the previous candidate
         pkg_is_installed, err = false, nil
 
         -- check whether this package has already been added to 'tmp_installed' by another of its candidates
         pkg_is_installed, err = is_installed(pkg.name, tmp_installed, pkg_constraint)
         if pkg_is_installed then break end
 
-        -- used just for error explaining messages
-        local was_scm_version = false
-        if pkg.version == "scm" then was_scm_version = true end
+        -- preserve information about the 'scm' version, because pkg.version
+        -- will be rewritten by information taken from pkg's dist.info file
+        if pkg.version == "scm" then pkg.was_scm_version = true end
 
         -- download info about the package if not already downloaded and downloading not prohibited
         if not (pkg.download_dir or force_no_download) then
@@ -328,7 +327,7 @@ local function get_packages_to_install(pkg, installed, manifest, force_no_downlo
         -- checks for conflicts with other installed (or previously selected) packages
         if not err then
             for _, installed_pkg in pairs(tmp_installed) do
-                err = packages_conflicts(pkg, installed_pkg, was_scm_version)
+                err = packages_conflicts(pkg, installed_pkg)
                 if err then break end
             end
         end
@@ -362,14 +361,17 @@ local function get_packages_to_install(pkg, installed, manifest, force_no_downlo
                     if not is_circular_dependency then
 
                         -- recursively call this function on the candidates of this pkg's dependency
-                        local depends_to_install, dep_err = get_packages_to_install(depend, installed, manifest, force_no_download, suppress_printing, deploy_dir, dependency_parents, tmp_installed)
+                        local depends_to_install, dep_err = get_packages_to_install(depend, installed, manifest, dependency_manifest, force_no_download, suppress_printing, deploy_dir, dependency_parents, tmp_installed)
 
                         -- if any suitable dependency packages were found, insert them to the 'to_install' table
                         if depends_to_install then
                             for _, depend_to_install in pairs(depends_to_install) do
+
+                                -- add some meta information
                                 if not depend_to_install.selected_by then
                                     depend_to_install.selected_by = pkg.name .. "-" .. pkg.version
                                 end
+
                                 table.insert(to_install, depend_to_install)
                                 table.insert(tmp_installed, depend_to_install)
                                 table.insert(installed, depend_to_install)
@@ -412,9 +414,9 @@ local function get_packages_to_install(pkg, installed, manifest, force_no_downlo
                 if pkg.download_dir and not cfg.debug then sys.delete(pkg.download_dir) end
 
                 -- set tables of 'packages to install' and 'installed packages' to their original state
+
                 to_install = {}
                 tmp_installed = utils.deepcopy(installed)
-
                 -- add provided packages to installed ones
                 for _, installed_pkg in pairs(tmp_installed) do
                     for _, pkg in pairs(get_provides(installed_pkg)) do
@@ -638,6 +640,7 @@ end
 function pkg_full_name(name, version, was_scm_version)
     name = name or ""
     version = version or ""
+    was_scm_version = was_scm_version or false
     if type(version) == "number" then version = tostring(version) end
 
     assert(type(name) == "string", "depends.pkg_full_name: Argument 'name' is not a string.")
