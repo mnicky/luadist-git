@@ -172,7 +172,7 @@ function save_manifest(manifest_table, file)
                 if type(v) == "string" then
                     file:write('[[' .. v .. ']]')
                 else
-                    file:write(v)
+                    file:write(tostring(v))
                 end
             end
             file:write(",\n")
