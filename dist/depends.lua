@@ -748,6 +748,7 @@ function update_dependency_manifest(pkg, installed, to_install, dep_manifest)
     return dep_manifest
 end
 
+-- TODO: handle the 'scm' version correctly (just copy dep_manifest[name_ver] to dep_manifest[name_scm] ?)
 -- Returns manifest with information about dependencies of given module
 -- table 'dep_manifest' contains infromation about relevant modules and will be returned
 -- table 'dep_cache' contains all information collected so far and is used like a cache
