@@ -280,7 +280,7 @@ local function get_packages_to_install(pkg, installed, manifest, dependency_mani
     -- find candidates & sort them
     local candidates_to_install = find_packages(pkg, manifest)
     if #candidates_to_install == 0 then
-        return nil, "No suitable candidate for package '" .. pkg .. "' found."
+        return nil, "No suitable candidate for '" .. pkg .. "' found."
     end
     candidates_to_install = sort_by_versions(candidates_to_install)
 
@@ -567,7 +567,7 @@ function get_depends(packages, installed, manifest, dependency_manifest, deploy_
             for _, pkg in pairs(to_install) do
                 if pkg.download_dir and not cfg.debug then sys.delete(pkg.download_dir) end
             end
-            return nil, "Cannot resolve dependencies for package '" .. pkg .. "': ".. err
+            return nil, "Cannot resolve dependencies for '" .. pkg .. "': ".. err
         end
     end
 
