@@ -536,7 +536,11 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] tree [MODULES...] [-VARIABLES...]
 
                     for _, pkg in pairs(dep_manifest) do
 
-                        print("  " .. pkg.name .. "-" .. pkg.version .. " (" .. pkg.path .. ", " .. pkg.version .. ")")
+                        local pkg_version, pkg_tag = pkg.version, pkg.version
+                        if pkg.was_scm_version then
+                            pkg_version, pkg_tag = "scm", "HEAD"
+                        end
+                        print("  " .. pkg.name .. "-" .. pkg_version .. " (" .. pkg.path .. ", " .. pkg_tag .. ")")
                         if pkg.depends then
                             for _, dep in pairs(pkg.depends) do
                                 if type(dep) ~= "table" then

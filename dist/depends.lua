@@ -306,7 +306,7 @@ local function get_packages_to_install(pkg, installed, manifest, dependency_mani
 
         -- preserve information about the 'scm' version, because pkg.version
         -- will be rewritten by information taken from pkg's dist.info file
-        if pkg.version == "scm" then pkg.was_scm_version = true end
+        local was_scm_version = (pkg.version == "scm")
 
         -- Try to obtain cached dependency information from the dependency manifest
         if dependency_manifest[pkg.name .. "-" .. pkg.version] and cfg.dep_cache then
@@ -326,6 +326,8 @@ local function get_packages_to_install(pkg, installed, manifest, dependency_mani
                 end
             end
         end
+
+        if was_scm_version then pkg.was_scm_version = true end
 
         -- check arch & type
         if not err then
@@ -698,7 +700,7 @@ function compare_versions(version_a, version_b)
     return const.compareVersions(version_a, version_b)
 end
 
--- Returns 'dep_manifest' updated with information about the 'pkg' package.
+-- Returns 'dep_manifest' updated with information about the 'pkg'.
 -- 'installed' is table with installed packages
 -- 'to_install' is table with packages that are selected for installation
 -- Packages satisfying the dependencies will be searched for in these two tables.
@@ -709,13 +711,14 @@ function update_dependency_manifest(pkg, installed, to_install, dep_manifest)
     assert(type(to_install) == "table", "depends.update_dependency_manifest: Argument 'to_install' is not a table.")
     assert(type(dep_manifest) == "table", "depends.update_dependency_manifest: Argument 'dep_manifest' is not a table.")
 
-    local name_ver = pkg.name .. "-" .. pkg.version
+    local name_ver = pkg.name .. "-" .. (pkg.was_scm_version  and "scm" or pkg.version)
 
     -- add to manifest
     if not dep_manifest[name_ver] then
         dep_manifest[name_ver] = {}
         dep_manifest[name_ver].name = pkg.name
         dep_manifest[name_ver].version = pkg.version
+        dep_manifest[name_ver].was_scm_version = pkg.was_scm_version
         dep_manifest[name_ver].arch = pkg.arch
         dep_manifest[name_ver].type = pkg.type
         dep_manifest[name_ver].path = pkg.path
@@ -765,7 +768,6 @@ function update_dependency_manifest(pkg, installed, to_install, dep_manifest)
     return dep_manifest
 end
 
--- TODO: handle the 'scm' version correctly (just copy dep_manifest[name_ver] to dep_manifest[name_scm] ?)
 -- Returns manifest with information about dependencies of given module
 -- table 'dep_manifest' contains infromation about relevant modules and will be returned
 -- table 'dep_cache' contains all information collected so far and is used like a cache

@@ -337,7 +337,7 @@ function dependency_info(module, deploy_dir)
     -- collect just relevant dependencies from dependency manifest
     local relevant_deps = {}
     for _, dep in pairs(dependencies) do
-        local name_ver = dep.name .. "-" .. dep.version
+        local name_ver = dep.name .. "-" .. (dep.was_scm_version and "scm" or dep.version)
         if dep_manifest_or_err[name_ver] then
             table.insert(relevant_deps, dep_manifest_or_err[name_ver])
         else
