@@ -308,7 +308,6 @@ local function get_packages_to_install(pkg, installed, manifest, dependency_mani
         -- will be rewritten by information taken from pkg's dist.info file
         if pkg.version == "scm" then pkg.was_scm_version = true end
 
-        -- TODO: HERE?
         -- Try to obtain cached dependency information from the dependency manifest
         if dependency_manifest[pkg.name .. "-" .. pkg.version] and cfg.dep_cache then
             pkg = dependency_manifest[pkg.name .. "-" .. pkg.version]
