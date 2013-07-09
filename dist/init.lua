@@ -334,5 +334,16 @@ function dependency_info(module, deploy_dir)
     ok, err = mf.save_manifest(dep_manifest_or_err, dep_manifest_file)
     if not ok then return nil, err end
 
-    return dep_manifest_or_err
+    -- collect just relevant dependencies from dependency manifest
+    local relevant_deps = {}
+    for _, dep in pairs(dependencies) do
+        local name_ver = dep.name .. "-" .. dep.version
+        if dep_manifest_or_err[name_ver] then
+            table.insert(relevant_deps, dep_manifest_or_err[name_ver])
+        else
+            return nil, "Error: dependency information for '" .. name_ver .. "' not found in dependency manifest."
+        end
+    end
+
+    return relevant_deps
 end
