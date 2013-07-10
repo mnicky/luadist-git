@@ -727,6 +727,7 @@ function update_dependency_manifest(pkg, installed, to_install, dep_manifest)
         dep_manifest[name_ver].provides = pkg.provides
         dep_manifest[name_ver].license = pkg.license
         dep_manifest[name_ver].desc = pkg.desc
+        dep_manifest[name_ver].url = pkg.url
         dep_manifest[name_ver].author = pkg.author
         dep_manifest[name_ver].maintainer = pkg.maintainer
 
