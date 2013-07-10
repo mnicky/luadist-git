@@ -508,6 +508,7 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] tree [MODULES...] [-VARIABLES...]
     The 'tree' command prints dependency tree for specified modules.
 
     If no MODULES are specified, trees for all available modules are printed.
+    This information about modules is being cached in dependency manifest.
 
     Optional LuaDist configuration VARIABLES (e.g. -variable=value) can be
     specified.
