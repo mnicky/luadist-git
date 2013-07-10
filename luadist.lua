@@ -157,7 +157,9 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] remove MODULES... [-VARIABLES...]
 Usage: luadist [DEPLOYMENT_DIRECTORY] refresh [-VARIABLES...]
 
     The 'refresh' command will update information about modules in all software
-    repositories of specified DEPLOYMENT_DIRECTORY.
+    repositories of specified DEPLOYMENT_DIRECTORY. Also, the cached dependency
+    manifest, built from previous installations or invocations of 'tree'
+    functionality will be deleted.
 
     If DEPLOYMENT_DIRECTORY is not specified, the deployment directory
     of LuaDist is used.
@@ -171,12 +173,22 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] refresh [-VARIABLES...]
             assert(type(deploy_dir) == "string", "luadist.refresh: Argument 'deploy_dir' is not a string.")
             deploy_dir = sys.abs_path(deploy_dir)
 
+            -- TODO: should be deleting the dep_manifest decoupled from refreshing the repository info?
+            -- delete cached dependency manifest
+            local dep_manifest_file = sys.abs_path(sys.make_path(deploy_dir, cfg.dep_cache_file))
+            local dep_mf_deleted = false
+            if sys.exists(dep_manifest_file) then
+                sys.delete(dep_manifest_file)
+                dep_mf_deleted = true
+            end
+
+            -- refresh repository information
             local ok, err = dist.update_manifest(deploy_dir)
             if not ok then
                 print(err)
                 os.exit(1)
             else
-               print("Repositories successfuly updated.")
+               print("Repositories successfuly updated" .. (dep_mf_deleted and " and dependency cache deleted" or "") .. ".")
                return 0
             end
         end
