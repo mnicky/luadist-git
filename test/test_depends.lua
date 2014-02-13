@@ -3,6 +3,7 @@
 local dist = require "dist"
 local cfg = require "dist.config"
 local depends = require "dist.depends"
+local const = require "dist.constraints"
 
 -- Return string describing packages and versions in 'pkgs' table, separated by space.
 -- e.g.: "luadist-1.2 coxpcall-0.4 luafilesystem 0.3"
@@ -1271,6 +1272,65 @@ tests.install_package_provided_by_another_package = function()
 end
 --]]
 
+-- Test version comparison logic
+tests.compare_versions = function()
+    assert(const.parseVersion("") == const.parseVersion(""))
+    assert(const.parseVersion("") ~= const.parseVersion("test"))
+    assert(const.compareVersions("2", "1"))
+    assert(const.compareVersions("2.0", "0"))
+    assert(const.compareVersions("2", "1.0"))
+    assert(const.parseVersion("3.2") < const.parseVersion("3.3.2"))
+    assert(not(const.parseVersion("1.0.0-alpha") < const.parseVersion("1.0-alpha")))
+    assert(not(const.parseVersion("1.0.0-alpha") > const.parseVersion("1.0-alpha")))
+    assert(const.parseVersion("1.0.0-alpha2") == const.parseVersion("1.0-alpha2"))
+    assert(const.compareVersions("1.0.0-beta", "1.0.0-alpha"))
+    assert(const.compareVersions("1.0.0-beta", "alpha-1.0.0"))
+    assert(const.compareVersions("1.0-beta", "1.0.0-alpha"))
+    assert(not(const.compareVersions("1.0-beta", "1.1.0-alpha")))
+    assert(not(const.compareVersions("1.0.0-beta", "1.0-beta")))
+    assert(not(const.compareVersions("1.0.0-alpha", "1.0-alpha")))
+
+    -- because of possible multiple sets of numbers (e.g. 1_0_0alpha3.4), the 
+    -- comparison can only match for consistent version syntax
+    assert(not(const.parseVersion("1.0.0-alpha") == const.parseVersion("alpha-1.0.0")))
+    assert(const.parseVersion("1.0.0-alpha3") == const.parseVersion("1.0.0-alpha3"))
+    assert(const.parseVersion("alpha3-1.0.0") == const.parseVersion("alpha3-1.0.0"))
+    assert(const.parseVersion("1.0.0-beta") ~= const.parseVersion("beta-1.0.0"))
+
+    assert(const.parseVersion("1.4.2") == const.parseVersion("1.4.2"))
+    assert(const.parseVersion("1.1.2") < const.parseVersion("1.2"))
+    assert(const.parseVersion("1.1.2") < const.parseVersion("1.2.0"))
+    assert(const.parseVersion("1.1.2") < const.parseVersion("1.2.1"))
+    assert(const.parseVersion("1.1.2") < const.parseVersion("1.12"))
+    assert(const.parseVersion("1.2") == const.parseVersion("1.2"))
+    assert(const.parseVersion("1.2") == const.parseVersion("1.2.0"))
+    assert(not (const.parseVersion("1.2") < const.parseVersion("1.2.0")))
+    assert(not (const.parseVersion("1.2") > const.parseVersion("1.2.0")))
+    assert(const.parseVersion("1.2") < const.parseVersion("1.2.1"))
+    assert(const.parseVersion("1.2") < const.parseVersion("1.12"))
+    assert(const.parseVersion("1.2.0") == const.parseVersion("1.2.0"))
+    assert(const.parseVersion("1.2.0") <= const.parseVersion("1.2.0"))
+    assert(const.parseVersion("1.2.0") < const.parseVersion("1.2.1"))
+    assert(const.parseVersion("1.2.0") < const.parseVersion("1.12"))
+    assert(const.parseVersion("1.2.0") <= const.parseVersion("1.12"))
+    assert(const.parseVersion("1.3") > const.parseVersion("1.3-alpha"))
+    assert(const.parseVersion("1.3") > const.parseVersion("1.3-beta"))
+    assert(const.parseVersion("1.3") > const.parseVersion("1.3-scm"))
+    assert(const.parseVersion("1.3-alpha") == const.parseVersion("1.3-alpha"))
+    assert(const.parseVersion("1.3-alpha") < const.parseVersion("1.3-beta"))
+    assert(const.parseVersion("1.3-alpha") < const.parseVersion("1.3-scm"))
+    assert(const.parseVersion("1.3-beta") == const.parseVersion("1.3-beta"))
+    assert(const.parseVersion("1.3-beta") > const.parseVersion("1.3-noisy_word"))
+    assert(const.parseVersion("1rc3") < const.parseVersion("1.1rc2"))
+    assert(const.parseVersion("1.1.2scm") < const.parseVersion("1.1.2"))
+    assert(const.parseVersion("1.1.2rc") < const.parseVersion("1.1.2_scm"))
+    assert(const.parseVersion("1.1.2-pre") < const.parseVersion("1.1.2_rc"))
+    assert(const.parseVersion("1.1.2_beta") < const.parseVersion("1.1.2_pre"))
+    assert(const.parseVersion("1.1.2_alpha") < const.parseVersion("1.1.2_beta"))
+    assert(const.parseVersion("1.1.2_work") < const.parseVersion("1.1.2_alpha"))
+    assert(const.parseVersion("1.1.2_whatever") < const.parseVersion("1.1.2_work"))
+    assert(const.parseVersion("V4") > const.parseVersion("V2.9"))
+end
 
 -- actually run the test suite
 run_tests(tests)
