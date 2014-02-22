@@ -295,7 +295,6 @@ function build_pkg(src_dir, deploy_dir, variables)
         -- Search for installed dependencies
         local installed = depends.get_installed(deploy_dir)
         for k, dep in pairs(dependencies) do
-            print("2:"..k.." ; "..dep)
             local version
             local name = depends.split_name_constraint(dep)
             for i, package in pairs(installed) do
@@ -317,7 +316,7 @@ function build_pkg(src_dir, deploy_dir, variables)
         -- Store the dependencies
         info.depends = dependencies
     end
-    
+
     -- save modified 'dist.info' file
     local pkg_distinfo_dir = sys.make_path(deploy_dir, cfg.distinfos_dir, pkg_name)
     sys.make_dir(pkg_distinfo_dir)
