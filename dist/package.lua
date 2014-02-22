@@ -308,8 +308,10 @@ function build_pkg(src_dir, deploy_dir, variables)
             -- Convert version to major/minor only, assuming semantic versioning
             if version then
                 local ver = constraints.parseVersion(version)
-                if ( ver and ver[1] and ver[2] ) then
-                    version = ver[1].."."..ver[2]
+                if ver and ver[1] then
+                    local major = ver[1][1] or "0"
+                    local minor = ver[1][2] or "0"
+                    version = major.."."..minor
                     dependencies[k] = name.."~="..version
                 end
             end
@@ -352,7 +354,7 @@ function deploy_binary_pkg(pkg_dir, deploy_dir)
 
     -- If we do not have a file list make one
     if not info.files then
-        info.files["Unspecified"] = sys.get_file_list(pkg_dir)
+        info.files = { Unspecified = sys.get_file_list(pkg_dir) }
     end
 
     -- copy all components of the module to the deploy_dir
