@@ -8,6 +8,7 @@ local sys = require "dist.sys"
 local mf = require "dist.manifest"
 local utils = require "dist.utils"
 local depends = require "dist.depends"
+local constraints = require "dist.constraints"
 
 -- Return whether the package in given 'pkg_dir' is of a source type.
 function is_source_type(pkg_dir)
