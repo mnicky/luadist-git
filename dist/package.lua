@@ -306,6 +306,11 @@ function deploy_binary_pkg(pkg_dir, deploy_dir)
         return true, "Simulated deployment of package '" .. pkg_name .. "' sucessfull."
     end
 
+    -- If we do not have a file list make one
+    if not info.files then
+        info.files["Unspecified"] = sys.get_file_list(pkg_dir)
+    end
+
     -- copy all components of the module to the deploy_dir
     for _, component in ipairs(cfg.components) do
         if info.files[component] then
