@@ -274,6 +274,50 @@ function build_pkg(src_dir, deploy_dir, variables)
         if not ok then return nil, "Error when testing the module '" .. pkg_name .. "' with CTest." end
     end
 
+    -- Rewrite dependencies for binary package
+    if info.depends then
+        local dependencies = {}
+        -- collect all dependencies in single table
+        for k, dep in pairs(info.depends) do
+            -- if 'depend' is a table of OS specific dependencies for
+            -- this arch, add them to the normal dependencies of pkg
+            if type(dep) == "table" then
+                if k == cfg.arch then
+                    for _, os_specific_depend in pairs(dep) do
+                        table.insert(dependencies, os_specific_depend)
+                    end
+                end
+            elseif type(dep) == "string" then
+                table.insert(dependencies, dep)
+            end
+        end
+
+        -- Search for installed dependencies
+        local installed = depends.get_installed(deploy_dir)
+        for k, dep in pairs(dependencies) do
+            print("2:"..k.." ; "..dep)
+            local version
+            local name = depends.split_name_constraint(dep)
+            for i, package in pairs(installed) do
+                if (package.name == name) then
+                    version = package.version
+                end
+            end
+            dependencies[k] = name
+
+            -- Convert version to major/minor only, assuming semantic versioning
+            if version then
+                local ver = constraints.parseVersion(version)
+                if ( ver and ver[1] and ver[2] ) then
+                    version = ver[1].."."..ver[2]
+                    dependencies[k] = name.."~="..version
+                end
+            end
+        end
+        -- Store the dependencies
+        info.depends = dependencies
+    end
+    
     -- save modified 'dist.info' file
     local pkg_distinfo_dir = sys.make_path(deploy_dir, cfg.distinfos_dir, pkg_name)
     sys.make_dir(pkg_distinfo_dir)
